@@ -1,31 +1,8 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { cars, carInCategory } from '../data'
+import { carInCategory } from '../data'
+import { fetchCars, isCarAvailable, effectiveBadge } from '../lib/cars'
 import Logo from '../components/Logo'
-
-/*
-  Availability is determined by a deterministic formula so it works
-  for any date the user picks (not just hardcoded June 2026).
-
-  Rules:
-    - Car 6 (Mercedes Classe E) : always unavailable — too popular
-    - Car 5 (Land Cruiser)      : unavailable when week-number is even
-    - Car 3 (Peugeot 508)       : unavailable when day-of-month ≤ 15
-    - Car 1 (Dacia Logan)       : unavailable when day-of-month is 1–7
-    - Others                    : always available
-*/
-function isAvailable(carId, depart) {
-  if (!depart) return true
-  const d    = new Date(depart)
-  const day  = d.getDate()
-  const week = Math.ceil(day / 7)          // rough week 1-4 in month
-
-  if (carId === 6) return false            // Mercedes : toujours pris
-  if (carId === 5) return week % 2 !== 0  // Land Cruiser : semaines impaires seulement
-  if (carId === 3) return day > 15         // Peugeot : disponible 2e quinzaine
-  if (carId === 1) return day > 7          // Dacia : indispo début de mois
-  return true
-}
 
 function daysBetween(d1, d2) {
   if (!d1) return 1
@@ -180,8 +157,8 @@ function ResultCard({ car, days, available, onCall }) {
         ) : (
           <span className="result-brand-initial">{car.name.split(' ')[0]}</span>
         )}
-        {car.badge && (
-          <span className={`result-badge result-badge--${car.badgeColor}`}>{car.badge}</span>
+        {effectiveBadge(car) && (
+          <span className={`result-badge result-badge--${car.badgeColor}`}>{effectiveBadge(car)}</span>
         )}
         <span className={`avail-tag ${available ? 'avail-tag--ok' : 'avail-tag--no'}`}>
           {available ? '✅ Disponible' : '❌ Non disponible'}
@@ -266,6 +243,7 @@ export default function SearchResults() {
   const depart  = searchParams.get('depart')    || ''
   const retour  = searchParams.get('retour')    || ''
   const catParam = searchParams.get('categorie') || ''
+  const carId   = searchParams.get('car')       || ''  // single-car mode
 
   const [sort,        setSort]        = useState('prix-asc')
   const [filterDispo, setFilterDispo] = useState(false)
@@ -274,11 +252,19 @@ export default function SearchResults() {
 
   const days = daysBetween(depart, retour)
 
-  // Base list: all cars with availability — no category filter yet
-  const baseList = useMemo(() =>
-    cars.map(car => ({ ...car, available: isAvailable(car.id, depart) })),
-    [depart]
-  )
+  const [cars, setCars] = useState([])
+  useEffect(() => {
+    let alive = true
+    fetchCars().then(list => { if (alive) setCars(list) })
+    return () => { alive = false }
+  }, [])
+
+  // Base list: cars with real availability (date-range based) — no category filter yet.
+  // When a ?car=<id> is present, narrow to just that one car.
+  const baseList = useMemo(() => {
+    const source = carId ? cars.filter(c => String(c.id) === String(carId)) : cars
+    return source.map(car => ({ ...car, available: isCarAvailable(car, depart, retour) }))
+  }, [cars, carId, depart, retour])
 
   const ALL_TABS = [
     { value: 'economique', label: 'Économique' },

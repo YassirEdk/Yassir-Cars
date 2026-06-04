@@ -687,6 +687,21 @@ ul { list-style: none; }
 .phone-modal__car { font-size: 14px; color: var(--gray-600); margin-bottom: 28px; }
 .phone-modal__car strong { color: var(--dark); }
 
+/* Availability modal (opened from a car card) */
+.avail-modal {
+  background: #fff; border-radius: 24px; padding: 32px 32px 28px;
+  width: 100%; max-width: 460px; position: relative;
+  box-shadow: 0 24px 80px rgba(0,0,0,.25);
+  animation: slideUp .25s cubic-bezier(.4,0,.2,1);
+}
+.avail-modal__title { font-size: 22px; font-weight: 800; color: var(--dark); font-family: 'Playfair Display', serif; margin-bottom: 4px; }
+.avail-modal__car { font-size: 14px; color: var(--red); font-weight: 700; margin-bottom: 22px; }
+.avail-modal__form { display: flex; flex-direction: column; gap: 16px; text-align: left; }
+.avail-modal__dates { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.avail-modal .avail-err { border-color: #ff4444 !important; background: rgba(255,80,80,.06) !important; }
+.avail-modal__btn { width: 100%; justify-content: center; margin-top: 4px; }
+@media (max-width: 480px) { .avail-modal__dates { grid-template-columns: 1fr; } }
+
 .phone-modal__numbers { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
 
 .phone-modal__btn {
