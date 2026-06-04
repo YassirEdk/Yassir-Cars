@@ -225,3 +225,35 @@ export async function deletePeriod(periodId) {
   const { error } = await supabase.from('unavailable_periods').delete().eq('id', periodId)
   if (error) throw error
 }
+
+// ── Admin: car services (maintenance log) ───────────────────────────────────
+export async function fetchCarServices(carId) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('car_services')
+    .select('*')
+    .eq('car_id', carId)
+    .order('service_date', { ascending: false, nullsFirst: false })
+  if (error) throw error
+  return data.map(s => ({
+    id: s.id, service: s.service, date: s.service_date,
+    mileage: s.mileage, cost: s.cost, note: s.note,
+  }))
+}
+
+export async function addCarService(carId, s) {
+  const { error } = await supabase.from('car_services').insert({
+    car_id: carId,
+    service: s.service,
+    service_date: s.date || null,
+    mileage: s.mileage ? Number(s.mileage) : null,
+    cost: s.cost ? Number(s.cost) : null,
+    note: s.note || null,
+  })
+  if (error) throw error
+}
+
+export async function deleteCarService(id) {
+  const { error } = await supabase.from('car_services').delete().eq('id', id)
+  if (error) throw error
+}

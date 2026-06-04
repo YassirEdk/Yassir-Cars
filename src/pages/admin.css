@@ -84,23 +84,89 @@
 }
 .admin-price { font-weight: 700; color: #0d5fab; font-size: .9rem; }
 
+/* List pop-up (all reservations / all services) */
+.admin-list-modal {
+  width: 100%; max-width: 740px; background: #fff; border-radius: 16px;
+  padding: 1.4rem 1.6rem; max-height: 86vh; display: flex; flex-direction: column;
+  box-shadow: 0 24px 70px rgba(0,0,0,.3);
+}
+.admin-list-modal__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.admin-list-modal__head h3 { margin: 0; font-size: 1.1rem; }
+.admin-list-modal__filters { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #eef0f3; }
+.admin-list-modal__filters .admin-search { flex: 1; min-width: 180px; max-width: none; }
+.admin-list-modal__filters label { display: flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 600; color: #374151; }
+.admin-list-modal__filters input[type="date"] { padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .85rem; }
+.admin-list-modal__body { overflow-y: auto; }
+
+/* Car services (maintenance log) */
+.admin-services { margin-top: 1rem; border-top: 1px dashed #e5e7eb; padding-top: .9rem; }
+.admin-services__toggle {
+  display: inline-flex; align-items: center; gap: .5rem; background: #f1f5f9; border: 1px solid #e2e8f0;
+  color: #0f172a; font-size: .85rem; font-weight: 700; padding: .5rem .9rem; border-radius: 9px; cursor: pointer;
+  transition: background .15s;
+}
+.admin-services__toggle:hover { background: #e2e8f0; }
+.admin-services__chev { font-size: .7rem; color: #64748b; }
+.admin-services__body { margin-top: .8rem; }
+.admin-svc-list { list-style: none; margin: 0 0 .7rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
+.admin-svc-list li {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  background: #f8fafc; border: 1px solid #e5e7eb; padding: .55rem .8rem; border-radius: 9px;
+}
+.admin-svc-item { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .82rem; color: #374151; }
+.admin-svc-item strong {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: linear-gradient(135deg, #d1fae5, #ccfbf1); color: #0f766e;
+  padding: .36rem .72rem; border-radius: 9px; font-size: .82rem; font-weight: 700;
+  box-shadow: 0 1px 2px rgba(15,23,42,.05);
+}
+.svc-chip {
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .36rem .72rem; border-radius: 9px; font-size: .79rem; font-weight: 600;
+  border: 1px solid transparent; box-shadow: 0 1px 2px rgba(15,23,42,.05);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.svc-chip:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(15,23,42,.12); }
+.svc-chip .svc-ico { opacity: .85; }
+.svc-ico { width: 15px; height: 15px; flex-shrink: 0; }
+.admin-services__toggle .svc-ico { width: 16px; height: 16px; }
+.svc-chip--date { background: #eff6ff; color: #1d4ed8; border-color: #dbeafe; }
+.svc-chip--km   { background: #f5f3ff; color: #6d28d9; border-color: #ede9fe; }
+.svc-chip--cost { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+.svc-chip--note { background: #f8fafc; color: #475569; border-color: #e2e8f0; }
+
 /* Reservations */
 .admin-resa { margin-top: 1rem; border-top: 1px dashed #e5e7eb; padding-top: .9rem; }
 .admin-resa__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .6rem; }
 .admin-resa__head h4 { margin: 0; font-size: .9rem; }
 .admin-link-del { background: none; border: none; color: #b91c1c; cursor: pointer; font-size: .8rem; text-decoration: underline; }
+.admin-link-more {
+  background: none; border: none; color: #0d5fab; cursor: pointer; font-size: .82rem;
+  font-weight: 600; padding: .3rem 0; margin-top: .2rem;
+}
+.admin-link-more:hover { text-decoration: underline; }
+.admin-all-btn { margin-top: .6rem; }
 
 .admin-resa-list { list-style: none; margin: 0 0 .6rem; padding: 0; display: flex; flex-direction: column; gap: .45rem; }
 .admin-resa-list li {
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
   background: #f0f7ff; border: 1px solid #dbeafe; padding: .55rem .8rem; border-radius: 9px;
 }
-.admin-resa-item { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem .9rem; font-size: .82rem; color: #374151; }
-.admin-resa-item strong { color: #0d3b66; }
+.admin-resa-item { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; font-size: .82rem; color: #374151; }
+.admin-resa-item strong {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: linear-gradient(135deg, #e0e7ff, #dbeafe); color: #1e40af;
+  padding: .36rem .72rem; border-radius: 9px; font-weight: 700;
+  box-shadow: 0 1px 2px rgba(15,23,42,.05);
+}
+.svc-chip--plate { background: #ecfeff; color: #0e7490; border-color: #cffafe; }
+.svc-chip--tel   { background: #f0fdf4; color: #15803d; border-color: #dcfce7; }
+.svc-chip--cin   { background: #fdf4ff; color: #a21caf; border-color: #f5d0fe; }
 
 .admin-resa-form { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 11px; padding: 1rem; }
 .admin-resa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem .9rem; }
 .admin-resa-grid label { display: flex; flex-direction: column; gap: .25rem; font-size: .76rem; font-weight: 600; color: #374151; }
+.admin-resa-grid .resa-full { grid-column: 1 / -1; }
 .admin-resa-grid input {
   padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .85rem; font-weight: 400;
 }

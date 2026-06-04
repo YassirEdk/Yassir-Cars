@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { carInCategory, colorName } from '../data'
-import { fetchCars, mergeByModel, isModelAvailable, effectiveBadge } from '../lib/cars'
+import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge } from '../lib/cars'
 import Logo from '../components/Logo'
 
 function daysBetween(d1, d2) {
@@ -127,14 +127,25 @@ function PhoneModal({ car, onClose }) {
 }
 
 /* ── Individual result card ── */
-function ResultCard({ car, days, available, onCall }) {
+function ResultCard({ car, days, available, depart, retour, availableOnly, onCall }) {
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
   // Pick a colour → switch to that unit (photos, price, specs follow it).
-  const units = car.units ?? [car]
-  const colors = car.colors ?? (car.color ? [car.color] : [])
-  const [selColor, setSelColor] = useState(colors[0] ?? null)
-  const active = units.find(u => u.color === selColor) ?? car
+  const allUnits = car.units ?? [car]
+  const allColors = car.colors ?? (car.color ? [car.color] : [])
+  const unitFree = (u) => !u || isCarAvailable(u, depart, retour)
+  const colorFree = (hex) => unitFree(allUnits.find(u => u.color === hex))
+  // "Disponibles seulement" → drop the colours/units reserved for the dates.
+  const units = availableOnly ? allUnits.filter(unitFree) : allUnits
+  const colors = availableOnly ? allColors.filter(colorFree) : allColors
+  // Default to a colour that's actually free for the chosen dates.
+  const firstFreeColor = (units.find(unitFree) ?? units[0])?.color ?? colors[0] ?? null
+  const [selColor, setSelColor] = useState(firstFreeColor)
+  // Keep the selection valid when the visible colour set changes (filter toggle).
+  const effColor = colors.includes(selColor) ? selColor : (colors[0] ?? selColor)
+  const active = allUnits.find(u => u.color === effColor) ?? car
+  // The tag reflects the SELECTED unit, not the whole model.
+  const activeAvailable = unitFree(active)
 
   const gallery = active.photos?.length ? active.photos : (active.photo ? [active.photo] : [])
   const [activePhoto, setActivePhoto] = useState(gallery[0] || active.photo)
@@ -157,7 +168,7 @@ function ResultCard({ car, days, available, onCall }) {
   const oldTotal = active.price * days
 
   return (
-    <div className={`result-card ${available ? '' : 'result-card--unavailable'}`}>
+    <div className={`result-card ${activeAvailable ? '' : 'result-card--unavailable'}`}>
       <div className="result-card__img" style={{ background: shownPhoto && !photoFailed ? '#fff' : active.brandColor }}>
         {shownPhoto && !photoFailed ? (
           <img
@@ -183,8 +194,8 @@ function ResultCard({ car, days, available, onCall }) {
         {effectiveBadge(active) && (
           <span className={`result-badge result-badge--${active.badgeColor}`}>{effectiveBadge(active)}</span>
         )}
-        <span className={`avail-tag ${available ? 'avail-tag--ok' : 'avail-tag--no'}`}>
-          {available ? '✅ Disponible' : '❌ Non disponible'}
+        <span className={`avail-tag ${activeAvailable ? 'avail-tag--ok' : 'avail-tag--no'}`}>
+          {activeAvailable ? '✅ Disponible' : '❌ Non disponible'}
         </span>
 
         {gallery.length > 1 && (
@@ -226,14 +237,18 @@ function ResultCard({ car, days, available, onCall }) {
                   <button
                     type="button"
                     key={hex}
-                    className={`car-color-dot ${hex === selColor ? 'active' : ''}`}
+                    className={`car-color-dot ${hex === effColor ? 'active' : ''} ${depart && !colorFree(hex) ? 'taken' : ''}`}
                     style={{ background: hex }}
-                    title={colorName(hex)}
+                    title={`${colorName(hex)}${depart && !colorFree(hex) ? ' — réservé' : ''}`}
                     onClick={pickColor(hex)}
                     aria-label={`Couleur ${colorName(hex)}`}
                   />
                 ))}
-                {selColor && <span className="car-colors__label">{colorName(selColor)}</span>}
+                {effColor && (
+                  <span className="car-colors__label">
+                    {colorName(effColor)}{!activeAvailable ? ' — réservé' : ''}
+                  </span>
+                )}
               </div>
             )}
           </div>
@@ -315,6 +330,7 @@ export default function SearchResults() {
   const [filterDispo, setFilterDispo] = useState(false)
   const [filterCat,   setFilterCat]   = useState(() => urlCatToKey(catParam))
   const [callingCar,  setCallingCar]  = useState(null)
+  const [nameQuery,   setNameQuery]   = useState('')   // text search by model
 
   const days = daysBetween(depart, retour)
 
@@ -363,6 +379,9 @@ export default function SearchResults() {
       list = list.filter(c => carInCategory(c, filterCat))
     }
 
+    const q = nameQuery.trim().toLowerCase()
+    if (q) list = list.filter(c => c.name.toLowerCase().includes(q))
+
     if (filterDispo) list = list.filter(c => c.available)
 
     if (sort === 'prix-asc')  list.sort((a, b) => a.price - b.price)
@@ -372,7 +391,7 @@ export default function SearchResults() {
     list.sort((a, b) => (b.available ? 1 : 0) - (a.available ? 1 : 0))
 
     return list
-  }, [baseList, filterCat, filterDispo, sort])
+  }, [baseList, filterCat, filterDispo, sort, nameQuery])
 
   const availableCount = results.filter(c => c.available).length
 
@@ -428,29 +447,44 @@ export default function SearchResults() {
       {/* Toolbar */}
       <div className="results-toolbar">
         <div className="container results-toolbar__inner">
-          {/* Category tabs — only show tabs that have cars */}
-          <div className="results-cats">
-            <button
-              className={`results-cat-btn ${filterCat === 'all' ? 'active' : ''}`}
-              onClick={() => setFilterCat('all')}
-            >
-              Tous ({countBase.length})
-            </button>
-            {visibleTabs.map(opt => {
-              const count = countBase.filter(c => carInCategory(c, opt.value)).length
-              return (
-                <button
-                  key={opt.value}
-                  className={`results-cat-btn ${filterCat === opt.value ? 'active' : ''}`}
-                  onClick={() => setFilterCat(opt.value)}
-                >
-                  {opt.label} ({count})
-                </button>
-              )
-            })}
+          {/* Top line: category tabs + search bar */}
+          <div className="results-toolbar__top">
+            <div className="results-cats">
+              <button
+                className={`results-cat-btn ${filterCat === 'all' ? 'active' : ''}`}
+                onClick={() => setFilterCat('all')}
+              >
+                Tous ({countBase.length})
+              </button>
+              {visibleTabs.map(opt => {
+                const count = countBase.filter(c => carInCategory(c, opt.value)).length
+                return (
+                  <button
+                    key={opt.value}
+                    className={`results-cat-btn ${filterCat === opt.value ? 'active' : ''}`}
+                    onClick={() => setFilterCat(opt.value)}
+                  >
+                    {opt.label} ({count})
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Text search by model */}
+            <div className="results-search-wrap">
+              <span className="results-search-icon" aria-hidden>🔍</span>
+              <input
+                type="search"
+                className="results-search"
+                placeholder="Rechercher un modèle…"
+                value={nameQuery}
+                onChange={e => setNameQuery(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div className="results-toolbar__right">
+          {/* Second line: filters + sort, aligned under the search */}
+          <div className="results-toolbar__controls">
             {/* Dispo filter */}
             <label className="dispo-toggle">
               <input
@@ -500,7 +534,7 @@ export default function SearchResults() {
           ) : (
             <div className="result-list">
               {results.map(car => (
-                <ResultCard key={car.id} car={car} days={days} available={car.available} onCall={setCallingCar} />
+                <ResultCard key={car.id} car={car} days={days} available={car.available} depart={depart} retour={retour} availableOnly={filterDispo} onCall={setCallingCar} />
               ))}
             </div>
           )}

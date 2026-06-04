@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
   fetchCars, createCar, updateCar, deleteCar,
   uploadCarPhotos, addReservation, deletePeriod,
+  fetchCarServices, addCarService, deleteCarService,
 } from '../lib/cars'
 import './admin.css'
 
@@ -62,11 +63,280 @@ function Login({ onAuthed }) {
   )
 }
 
+/* ── Car services (maintenance log) panel ─────────────────────────────────── */
+const COMMON_SERVICES = [
+  'Vidange', 'Freins', 'Pneus', 'Filtre à huile', 'Filtre à air', 'Révision',
+  'Climatisation', 'Batterie', 'Courroie de distribution', 'Bougies', 'Embrayage', 'Autre',
+]
+const EMPTY_SERVICE = { service: '', date: '', mileage: '', cost: '', note: '' }
+
+// Show a number grouped by thousands with dots: 152687 → "152.687".
+const formatKm = (val) => {
+  const d = String(val ?? '').replace(/\D/g, '')
+  return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
+}
+
+// Crisp vector icons (Lucide-style) — inherit the surrounding text colour.
+const ICONS = {
+  wrench:   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
+  gauge:    <><path d="m12 14 4-4" /><path d="M3.34 19a10 10 0 1 1 17.32 0" /></>,
+  money:    <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2" /><path d="M6 12h.01M18 12h.01" /></>,
+  note:     <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></>,
+  user:     <><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
+  car:      <><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>,
+  phone:    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />,
+  id:       <><rect width="18" height="14" x="3" y="5" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M15 9h3M15 13h3M6 15a3 3 0 0 1 6 0" /></>,
+}
+function Ico({ name }) {
+  return (
+    <svg className="svc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      {ICONS[name]}
+    </svg>
+  )
+}
+
+/* ── Reusable filter bar (search + date range) for the list pop-ups ───────── */
+function ListFilters({ q, setQ, from, setFrom, to, setTo, placeholder }) {
+  return (
+    <div className="admin-list-modal__filters">
+      <input className="admin-search" type="search" placeholder={placeholder} value={q} onChange={e => setQ(e.target.value)} />
+      <label>Du <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
+      <label>Au <input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
+      {(q || from || to) && (
+        <button className="admin-btn admin-btn--sm" onClick={() => { setQ(''); setFrom(''); setTo('') }}>Réinitialiser</button>
+      )}
+    </div>
+  )
+}
+
+/* ── Pop-up: all reservations with search + date range ────────────────────── */
+function ReservationsModal({ reservations, onClose, onRemove }) {
+  const [q, setQ] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+
+  const filtered = reservations.filter(r => {
+    const text = `${r.clientName || ''} ${r.cin || ''} ${r.tel || ''}`.toLowerCase()
+    if (q && !text.includes(q.trim().toLowerCase())) return false
+    if (from && (r.end || '') < from) return false   // ends before the range
+    if (to && (r.start || '') > to) return false      // starts after the range
+    return true
+  })
+
+  return (
+    <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
+      <div className="admin-list-modal">
+        <div className="admin-list-modal__head">
+          <h3>📋 Toutes les réservations ({reservations.length})</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+        </div>
+        <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="🔎 Client, CIN, téléphone…" />
+        <div className="admin-list-modal__body">
+          {filtered.length === 0 ? (
+            <p className="admin-muted">Aucune réservation ne correspond.</p>
+          ) : (
+            <ul className="admin-resa-list">
+              {filtered.map(r => (
+                <li key={r.id}>
+                  <div className="admin-resa-item">
+                    <strong><Ico name="user" /> {r.clientName || 'Client'}</strong>
+                    <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {r.start} → {r.end}</span>
+                    {r.tel && <span className="svc-chip svc-chip--tel"><Ico name="phone" /> {r.tel}</span>}
+                    {r.cin && <span className="svc-chip svc-chip--cin"><Ico name="id" /> {r.cin}</span>}
+                  </div>
+                  <button onClick={() => onRemove(r.id)} className="admin-link-del">Annuler</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Pop-up: all services with search + date range ────────────────────────── */
+function ServicesModal({ services, onClose, onRemove }) {
+  const [q, setQ] = useState('')
+  const [from, setFrom] = useState('')
+  const [to, setTo] = useState('')
+
+  const filtered = services.filter(s => {
+    const text = `${s.service || ''} ${s.note || ''}`.toLowerCase()
+    if (q && !text.includes(q.trim().toLowerCase())) return false
+    if (from && (s.date || '') < from) return false
+    if (to && (s.date || '') > to) return false
+    return true
+  })
+
+  return (
+    <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
+      <div className="admin-list-modal">
+        <div className="admin-list-modal__head">
+          <h3>🔧 Tous les services ({services.length})</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+        </div>
+        <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="🔎 Type de service, note…" />
+        <div className="admin-list-modal__body">
+          {filtered.length === 0 ? (
+            <p className="admin-muted">Aucun service ne correspond.</p>
+          ) : (
+            <ul className="admin-svc-list">
+              {filtered.map(s => (
+                <li key={s.id}>
+                  <div className="admin-svc-item">
+                    <strong><Ico name="wrench" /> {s.service}</strong>
+                    {s.date && <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {s.date}</span>}
+                    {s.mileage != null && <span className="svc-chip svc-chip--km"><Ico name="gauge" /> {formatKm(s.mileage)} km</span>}
+                    {s.cost != null && <span className="svc-chip svc-chip--cost"><Ico name="money" /> {s.cost.toLocaleString('fr-FR')} MAD</span>}
+                    {s.note && <span className="svc-chip svc-chip--note"><Ico name="note" /> {s.note}</span>}
+                  </div>
+                  <button onClick={() => onRemove(s.id)} className="admin-link-del">Supprimer</button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ServicesManager({ car }) {
+  const [expanded, setExpanded] = useState(false)
+  const [services, setServices] = useState(null)  // null = not loaded yet
+  const [open, setOpen] = useState(false)          // add form open
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState(EMPTY_SERVICE)
+  const [busy, setBusy] = useState(false)
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const load = async () => {
+    try { setServices(await fetchCarServices(car.id)) }
+    catch (e) { alert('Erreur : ' + e.message) }
+  }
+  const toggle = () => {
+    const next = !expanded
+    setExpanded(next)
+    if (next && services === null) load()
+  }
+  const save = async () => {
+    if (!form.service.trim()) return alert('Indiquez le type de service.')
+    setBusy(true)
+    try {
+      await addCarService(car.id, form)
+      setForm(EMPTY_SERVICE); setOpen(false); load()
+    } catch (e) { alert('Erreur : ' + e.message) }
+    setBusy(false)
+  }
+  const remove = async (id) => {
+    if (!confirm('Supprimer ce service ?')) return
+    try { await deleteCarService(id); load() }
+    catch (e) { alert('Erreur : ' + e.message) }
+  }
+
+  const count = services?.length ?? 0
+  // Services come already sorted newest-first from the DB.
+  const shownServices = (services ?? []).slice(0, 3)
+
+  return (
+    <div className="admin-services">
+      <button className="admin-services__toggle" onClick={toggle}>
+        <Ico name="wrench" /> Services voiture{services ? ` (${count})` : ''} <span className="admin-services__chev">{expanded ? '▲' : '▼'}</span>
+      </button>
+
+      {expanded && (
+        <div className="admin-services__body">
+          {services === null ? (
+            <p className="admin-muted">Chargement…</p>
+          ) : (
+            <>
+              {count === 0 && !open && <p className="admin-muted">Aucun service enregistré.</p>}
+
+              {count > 0 && (
+                <ul className="admin-svc-list">
+                  {shownServices.map(s => (
+                    <li key={s.id}>
+                      <div className="admin-svc-item">
+                        <strong><Ico name="wrench" /> {s.service}</strong>
+                        {s.date && <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {s.date}</span>}
+                        {s.mileage != null && <span className="svc-chip svc-chip--km"><Ico name="gauge" /> {formatKm(s.mileage)} km</span>}
+                        {s.cost != null && <span className="svc-chip svc-chip--cost"><Ico name="money" /> {s.cost.toLocaleString('fr-FR')} MAD</span>}
+                        {s.note && <span className="svc-chip svc-chip--note"><Ico name="note" /> {s.note}</span>}
+                      </div>
+                      <button onClick={() => remove(s.id)} className="admin-link-del">Supprimer</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {count > 0 && (
+                <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setModalOpen(true)}>
+                  🔧 Voir tous les services ({count})
+                </button>
+              )}
+
+              {modalOpen && (
+                <ServicesModal
+                  services={services ?? []}
+                  onClose={() => setModalOpen(false)}
+                  onRemove={remove}
+                />
+              )}
+
+              {!open ? (
+                <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => setOpen(true)}>
+                  ➕ Ajouter un service
+                </button>
+              ) : (
+                <div className="admin-resa-form">
+                  <div className="admin-resa-grid">
+                    <label>Type de service *
+                      <input list={`svc-${car.id}`} value={form.service} onChange={set('service')} placeholder="Vidange, Freins…" autoFocus />
+                      <datalist id={`svc-${car.id}`}>
+                        {COMMON_SERVICES.map(s => <option key={s} value={s} />)}
+                      </datalist>
+                    </label>
+                    <label>Date
+                      <input type="date" value={form.date} onChange={set('date')} />
+                    </label>
+                    <label>Kilométrage (km)
+                      <input
+                        type="text" inputMode="numeric"
+                        value={formatKm(form.mileage)}
+                        onChange={e => setForm(f => ({ ...f, mileage: e.target.value.replace(/\D/g, '') }))}
+                      />
+                    </label>
+                    <label>Coût (MAD)
+                      <input type="number" min="0" value={form.cost} onChange={set('cost')} />
+                    </label>
+                    <label className="resa-full">Note
+                      <input type="text" value={form.note} onChange={set('note')} placeholder="Garage, pièces changées…" />
+                    </label>
+                  </div>
+                  <div className="admin-resa-actions">
+                    <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_SERVICE) }}>Annuler</button>
+                    <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
+                      {busy ? 'Enregistrement…' : 'Enregistrer le service'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Reservations panel for one car ───────────────────────────────────────── */
-const EMPTY_RESA = { clientName: '', cin: '', tel: '', matriculation: '', start: '', end: '' }
+const EMPTY_RESA = { clientName: '', cin: '', tel: '', start: '', end: '' }
 
 function ReservationManager({ car, onChange }) {
   const [open, setOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState(EMPTY_RESA)
   const [busy, setBusy] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -78,7 +348,8 @@ function ReservationManager({ car, onChange }) {
     if (form.end < form.start) return alert('La date de fin doit être après le début.')
     setBusy(true)
     try {
-      await addReservation(car.id, form)
+      // The plate comes from the car itself — no need to type it.
+      await addReservation(car.id, { ...form, matriculation: car.immatriculation || null })
       setForm(EMPTY_RESA); setOpen(false)
       onChange()
     } catch (e) { alert('Erreur : ' + e.message) }
@@ -91,7 +362,9 @@ function ReservationManager({ car, onChange }) {
     catch (e) { alert('Erreur : ' + e.message) }
   }
 
-  const resas = car.unavailable ?? []
+  // Newest reservations first (by start date).
+  const resas = [...(car.unavailable ?? [])].sort((a, b) => (b.start || '').localeCompare(a.start || ''))
+  const shownResas = resas.slice(0, 3)
 
   return (
     <div className="admin-resa">
@@ -110,19 +383,32 @@ function ReservationManager({ car, onChange }) {
 
       {resas.length > 0 && (
         <ul className="admin-resa-list">
-          {resas.map(r => (
+          {shownResas.map(r => (
             <li key={r.id}>
               <div className="admin-resa-item">
-                <strong>{r.clientName || 'Client'}</strong>
-                <span>📅 {r.start} → {r.end}</span>
-                {r.matriculation && <span>🚗 {r.matriculation}</span>}
-                {r.tel && <span>📞 {r.tel}</span>}
-                {r.cin && <span>🪪 {r.cin}</span>}
+                <strong><Ico name="user" /> {r.clientName || 'Client'}</strong>
+                <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {r.start} → {r.end}</span>
+                {r.tel && <span className="svc-chip svc-chip--tel"><Ico name="phone" /> {r.tel}</span>}
+                {r.cin && <span className="svc-chip svc-chip--cin"><Ico name="id" /> {r.cin}</span>}
               </div>
               <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
             </li>
           ))}
         </ul>
+      )}
+
+      {resas.length > 0 && (
+        <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setModalOpen(true)}>
+          📋 Voir toutes les réservations ({resas.length})
+        </button>
+      )}
+
+      {modalOpen && (
+        <ReservationsModal
+          reservations={resas}
+          onClose={() => setModalOpen(false)}
+          onRemove={remove}
+        />
       )}
 
       {open && (
@@ -137,9 +423,7 @@ function ReservationManager({ car, onChange }) {
             <label>Téléphone
               <input type="tel" value={form.tel} onChange={set('tel')} />
             </label>
-            <label>Matricule de la voiture
-              <input type="text" value={form.matriculation} onChange={set('matriculation')} />
-            </label>
+            <div aria-hidden />
             <label>Date de début *
               <input type="date" min={today} value={form.start} onChange={set('start')} />
             </label>
@@ -490,6 +774,7 @@ function Dashboard({ onLogout }) {
                     <button className="admin-btn admin-btn--sm admin-btn--danger" onClick={() => remove(car)}>Supprimer</button>
                   </div>
                 </div>
+                <ServicesManager car={car} />
                 <ReservationManager car={car} onChange={load} />
               </div>
             </div>
