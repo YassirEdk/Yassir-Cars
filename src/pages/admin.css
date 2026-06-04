@@ -42,9 +42,11 @@
 /* Header */
 .admin-header {
   display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-  padding: 1.4rem 2rem; background: #fff; border-bottom: 1px solid #e5e7eb;
+  padding: 1.1rem 2rem; background: #0d0d0d; border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.admin-header h1 { margin: 0; font-size: 1.3rem; }
+.admin-header__brand { display: flex; align-items: center; gap: 14px; }
+.admin-header h1 { margin: 0; font-size: 1.15rem; color: #fff; }
+.admin-header .admin-muted { color: rgba(255,255,255,.5); }
 .admin-header__actions { display: flex; gap: .6rem; flex-wrap: wrap; }
 
 /* Car list */

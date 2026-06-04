@@ -20,6 +20,28 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  // Lock page scroll while the mobile menu overlay is open. On mobile,
+  // `overflow:hidden` alone doesn't stop touch-dragging, so we pin the body
+  // with `position:fixed` (and restore the scroll position on close).
+  useEffect(() => {
+    if (!menuOpen) return
+    const scrollY = window.scrollY
+    const { body } = document
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
+    return () => {
+      body.style.position = ''
+      body.style.top = ''
+      body.style.left = ''
+      body.style.right = ''
+      body.style.width = ''
+      window.scrollTo(0, scrollY)
+    }
+  }, [menuOpen])
+
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="container nav-inner">

@@ -5,7 +5,7 @@ import { moroccanCities } from '../data'
 
 const HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1800&q=80'
 
-const tabs = ['Aller-retour', 'Aller simple', 'Longue durée']
+const tabs = ['Aller-retour', 'Longue durée']
 const categories = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
 
 const stats = [
@@ -58,7 +58,7 @@ export default function Hero() {
     else if (form.depart < today)
       newErrors.depart = 'La date de départ ne peut pas être dans le passé'
 
-    if (activeTab !== 1 && !form.retour)
+    if (!form.retour)
       newErrors.retour = 'Veuillez choisir une date de retour'
     else if (form.retour && form.retour < today)
       newErrors.retour = 'La date de retour ne peut pas être dans le passé'
@@ -155,7 +155,7 @@ export default function Hero() {
                 {errors.depart && <span className="field-error">⚠ {errors.depart}</span>}
               </div>
 
-              <div className={`form-group ${activeTab === 1 ? 'field-hidden' : ''}`}>
+              <div className="form-group">
                 <label>📅 Date de retour</label>
                 <DatePicker
                   value={form.retour}

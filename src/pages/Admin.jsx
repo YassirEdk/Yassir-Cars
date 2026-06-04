@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import Logo from '../components/Logo'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
   fetchCars, createCar, updateCar, deleteCar,
@@ -263,9 +264,12 @@ function Dashboard({ onLogout }) {
   return (
     <div className="admin-shell">
       <header className="admin-header">
-        <div>
-          <h1>🚗 Gestion de la flotte</h1>
-          <p className="admin-muted">{cars.length} véhicule{cars.length > 1 ? 's' : ''}</p>
+        <div className="admin-header__brand">
+          <Logo size={42} animated={false} />
+          <div>
+            <h1>Gestion de la flotte</h1>
+            <p className="admin-muted">{cars.length} véhicule{cars.length > 1 ? 's' : ''}</p>
+          </div>
         </div>
         <div className="admin-header__actions">
           <Link to="/" className="admin-btn">Voir le site</Link>
