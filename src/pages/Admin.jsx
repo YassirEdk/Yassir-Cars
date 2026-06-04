@@ -1,11 +1,14 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
+import DatePicker from '../components/DatePicker'
+import { DialogHost, showError, confirmAsync } from '../components/AdminDialog'
 import { carColors, colorName } from '../data'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
   fetchCars, createCar, updateCar, deleteCar,
-  uploadCarPhotos, addReservation, deletePeriod,
+  uploadCarPhotos, addReservation, updateReservation, deletePeriod,
+  confirmPickup, confirmReturn, updateDepartureKm, findCinConflict, findCinDamage,
   fetchCarServices, addCarService, deleteCarService,
 } from '../lib/cars'
 import './admin.css'
@@ -23,7 +26,7 @@ const EMPTY_CAR = {
   brandLogo: '', brandColor: '#1a1a1a', whiteFilter: false,
   price: 250, currency: 'MAD', fuel: 'Diesel', transmission: 'Manuel',
   seats: 5, extra: 'Clim', badge: '', sortOrder: 0,
-  color: '', immatriculation: '',
+  color: '', immatriculation: '', damaged: false,
 }
 
 /* ── Login screen ─────────────────────────────────────────────────────────── */
@@ -76,6 +79,13 @@ const formatKm = (val) => {
   return d ? d.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
 }
 
+// Show an ISO date (2026-10-16) as JJ/MM/AAAA → "16/10/2026".
+const formatDate = (iso) => {
+  if (!iso) return ''
+  const [y, m, d] = String(iso).split('-')
+  return (y && m && d) ? `${d}/${m}/${y}` : iso
+}
+
 // Crisp vector icons (Lucide-style) — inherit the surrounding text colour.
 const ICONS = {
   wrench:   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />,
@@ -87,6 +97,9 @@ const ICONS = {
   car:      <><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h6" /><circle cx="17" cy="17" r="2" /></>,
   phone:    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />,
   id:       <><rect width="18" height="14" x="3" y="5" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M15 9h3M15 13h3M6 15a3 3 0 0 1 6 0" /></>,
+  globe:    <><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20" /></>,
+  logout:   <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></>,
+  carplus:  <><path d="M5 17H3c-.6 0-1-.4-1-1v-3c0-.9.7-1.7 1.5-1.9C5.3 10.6 8 10 8 10s1.3-1.4 2.2-2.3c.5-.4 1.1-.7 1.8-.7h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h5" /><circle cx="16" cy="17" r="2" /><path d="M19 8v6M16 11h6" /></>,
 }
 function Ico({ name }) {
   return (
@@ -101,8 +114,8 @@ function ListFilters({ q, setQ, from, setFrom, to, setTo, placeholder }) {
   return (
     <div className="admin-list-modal__filters">
       <input className="admin-search" type="search" placeholder={placeholder} value={q} onChange={e => setQ(e.target.value)} />
-      <label>Du <input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
-      <label>Au <input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
+      <label>Du <DatePicker value={from} onChange={setFrom} placeholder="JJ-MMM-AAAA" allowPast /></label>
+      <label>Au <DatePicker value={to} onChange={setTo} min={from || undefined} placeholder="JJ-MMM-AAAA" allowPast /></label>
       {(q || from || to) && (
         <button className="admin-btn admin-btn--sm" onClick={() => { setQ(''); setFrom(''); setTo('') }}>Réinitialiser</button>
       )}
@@ -110,8 +123,86 @@ function ListFilters({ q, setQ, from, setFrom, to, setTo, placeholder }) {
   )
 }
 
-/* ── Pop-up: all reservations with search + date range ────────────────────── */
-function ReservationsModal({ reservations, onClose, onRemove }) {
+/* ── Shared client/date/contact info block for a reservation row ──────────── */
+// `flow` switches from the fixed column grid (used in the Réservations list so
+// rows line up) to a wrapping flex (used where extra km chips appear).
+function ResaInfo({ r, flow, children }) {
+  return (
+    <div className={`admin-resa-item ${flow ? 'admin-resa-item--flow' : ''}`}>
+      <strong><Ico name="user" /> {r.clientName || 'Client'}</strong>
+      <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {formatDate(r.start)} → {formatDate(r.end)}</span>
+      {r.tel && <span className="svc-chip svc-chip--tel"><Ico name="phone" /> {r.tel}</span>}
+      {r.cin && <span className="svc-chip svc-chip--cin"><Ico name="id" /> {r.cin}</span>}
+      {children}
+    </div>
+  )
+}
+
+// Inline odometer field shown when confirming a pick-up or a return.
+// When `withDamage` is set, also shows a "car came back damaged" checkbox and
+// passes its value to onSubmit(km, damaged).
+function KmConfirm({ label, actionLabel, onSubmit, onCancel, withDamage }) {
+  const [km, setKm] = useState('')
+  const [damaged, setDamaged] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const submit = async () => {
+    if (km === '') return showError('Indiquez le kilométrage.')
+    setBusy(true)
+    try { await onSubmit(km, damaged) }
+    catch (e) { showError('Erreur : ' + e.message); setBusy(false) }
+  }
+  return (
+    <div className="admin-km-confirm">
+      <label><Ico name="gauge" /> {label}
+        <input
+          type="text" inputMode="numeric" autoFocus
+          value={formatKm(km)}
+          onChange={e => setKm(e.target.value.replace(/\D/g, ''))}
+          placeholder="ex: 152.687"
+          onKeyDown={e => { if (e.key === 'Enter') submit() }}
+        />
+      </label>
+      {withDamage && (
+        <label className="admin-km-confirm__damage">
+          <input type="checkbox" checked={damaged} onChange={e => setDamaged(e.target.checked)} />
+          <span>🛠 La voiture est endommagée</span>
+        </label>
+      )}
+      <div className="admin-km-confirm__actions">
+        <button className="admin-btn admin-btn--sm" onClick={onCancel} disabled={busy}>Annuler</button>
+        <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={submit} disabled={busy}>
+          {busy ? '…' : actionLabel}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// Distance covered during a finished rental (null if we can't compute it).
+const kmDone = (r) =>
+  (r.returnKm != null && r.departureKm != null && r.returnKm >= r.departureKm)
+    ? r.returnKm - r.departureKm
+    : null
+
+// The km chips shown for in-progress / finished rentals.
+function KmChips({ r }) {
+  return (
+    <>
+      {r.departureKm != null && (
+        <span className="svc-chip svc-chip--km"><Ico name="gauge" /> Départ {formatKm(r.departureKm)} km</span>
+      )}
+      {r.returnKm != null && (
+        <span className="svc-chip svc-chip--km"><Ico name="gauge" /> Retour {formatKm(r.returnKm)} km</span>
+      )}
+      {kmDone(r) != null && (
+        <span className="svc-chip svc-chip--dist"><Ico name="car" /> {formatKm(kmDone(r))} km parcourus</span>
+      )}
+    </>
+  )
+}
+
+/* ── Pop-up: all reservations / rental history with search + date range ───── */
+function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel = 'Annuler', history = false }) {
   const [q, setQ] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -126,29 +217,72 @@ function ReservationsModal({ reservations, onClose, onRemove }) {
 
   return (
     <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
-      <div className="admin-list-modal">
+      <div className="admin-list-modal admin-list-modal--wide">
         <div className="admin-list-modal__head">
-          <h3>📋 Toutes les réservations ({reservations.length})</h3>
+          <h3>{title} ({reservations.length})</h3>
           <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
         </div>
-        <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="🔎 Client, CIN, téléphone…" />
+        <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="Client, CIN, téléphone…" />
         <div className="admin-list-modal__body">
           {filtered.length === 0 ? (
-            <p className="admin-muted">Aucune réservation ne correspond.</p>
+            <p className="admin-muted">Aucun résultat ne correspond.</p>
+          ) : history ? (
+            /* Finished rentals → Excel-style table, one row per rental. */
+            <div className="admin-hist-table-wrap">
+              <table className="admin-hist-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Période</th>
+                    <th>Téléphone</th>
+                    <th>CIN</th>
+                    <th>Départ km</th>
+                    <th>Retour km</th>
+                    <th>Parcourus</th>
+                    <th>État</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(r => (
+                    <tr key={r.id}>
+                      <td><strong>{r.clientName || '—'}</strong></td>
+                      <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                      <td>{r.tel || '—'}</td>
+                      <td>{r.cin || '—'}</td>
+                      <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
+                      <td>{r.returnKm != null ? formatKm(r.returnKm) + ' km' : '—'}</td>
+                      <td className="admin-hist-table__dist">{kmDone(r) != null ? formatKm(kmDone(r)) + ' km' : '—'}</td>
+                      <td>{r.damaged ? <span className="admin-damage-badge">🛠 Endommagée</span> : <span className="admin-ok-badge">✓ OK</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <ul className="admin-resa-list">
-              {filtered.map(r => (
-                <li key={r.id}>
-                  <div className="admin-resa-item">
-                    <strong><Ico name="user" /> {r.clientName || 'Client'}</strong>
-                    <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {r.start} → {r.end}</span>
-                    {r.tel && <span className="svc-chip svc-chip--tel"><Ico name="phone" /> {r.tel}</span>}
-                    {r.cin && <span className="svc-chip svc-chip--cin"><Ico name="id" /> {r.cin}</span>}
-                  </div>
-                  <button onClick={() => onRemove(r.id)} className="admin-link-del">Annuler</button>
-                </li>
-              ))}
-            </ul>
+            <div className="admin-hist-table-wrap">
+              <table className="admin-hist-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Période</th>
+                    <th>Téléphone</th>
+                    <th>CIN</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(r => (
+                    <tr key={r.id}>
+                      <td><strong>{r.clientName || '—'}</strong></td>
+                      <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                      <td>{r.tel || '—'}</td>
+                      <td>{r.cin || '—'}</td>
+                      <td>{onRemove && <button onClick={() => onRemove(r.id)} className="admin-link-del">{removeLabel}</button>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
@@ -172,30 +306,42 @@ function ServicesModal({ services, onClose, onRemove }) {
 
   return (
     <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
-      <div className="admin-list-modal">
+      <div className="admin-list-modal admin-list-modal--wide">
         <div className="admin-list-modal__head">
           <h3>🔧 Tous les services ({services.length})</h3>
           <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
         </div>
-        <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="🔎 Type de service, note…" />
+        <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="Type de service, note…" />
         <div className="admin-list-modal__body">
           {filtered.length === 0 ? (
             <p className="admin-muted">Aucun service ne correspond.</p>
           ) : (
-            <ul className="admin-svc-list">
-              {filtered.map(s => (
-                <li key={s.id}>
-                  <div className="admin-svc-item">
-                    <strong><Ico name="wrench" /> {s.service}</strong>
-                    {s.date && <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {s.date}</span>}
-                    {s.mileage != null && <span className="svc-chip svc-chip--km"><Ico name="gauge" /> {formatKm(s.mileage)} km</span>}
-                    {s.cost != null && <span className="svc-chip svc-chip--cost"><Ico name="money" /> {s.cost.toLocaleString('fr-FR')} MAD</span>}
-                    {s.note && <span className="svc-chip svc-chip--note"><Ico name="note" /> {s.note}</span>}
-                  </div>
-                  <button onClick={() => onRemove(s.id)} className="admin-link-del">Supprimer</button>
-                </li>
-              ))}
-            </ul>
+            <div className="admin-hist-table-wrap">
+              <table className="admin-hist-table">
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Date</th>
+                    <th>Kilométrage</th>
+                    <th>Coût</th>
+                    <th>Note</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map(s => (
+                    <tr key={s.id}>
+                      <td><strong>{s.service}</strong></td>
+                      <td className="admin-hist-table__dates">{s.date ? formatDate(s.date) : '—'}</td>
+                      <td>{s.mileage != null ? formatKm(s.mileage) + ' km' : '—'}</td>
+                      <td>{s.cost != null ? s.cost.toLocaleString('fr-FR') + ' MAD' : '—'}</td>
+                      <td>{s.note || '—'}</td>
+                      <td><button onClick={() => onRemove(s.id)} className="admin-link-del">Supprimer</button></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
@@ -214,7 +360,7 @@ function ServicesManager({ car }) {
 
   const load = async () => {
     try { setServices(await fetchCarServices(car.id)) }
-    catch (e) { alert('Erreur : ' + e.message) }
+    catch (e) { showError('Erreur : ' + e.message) }
   }
   const toggle = () => {
     const next = !expanded
@@ -222,23 +368,29 @@ function ServicesManager({ car }) {
     if (next && services === null) load()
   }
   const save = async () => {
-    if (!form.service.trim()) return alert('Indiquez le type de service.')
+    if (!form.service.trim()) return showError('Indiquez le type de service.')
     setBusy(true)
     try {
       await addCarService(car.id, form)
       setForm(EMPTY_SERVICE); setOpen(false); load()
-    } catch (e) { alert('Erreur : ' + e.message) }
+    } catch (e) { showError('Erreur : ' + e.message) }
     setBusy(false)
   }
   const remove = async (id) => {
-    if (!confirm('Supprimer ce service ?')) return
+    if (!await confirmAsync('Supprimer ce service ?', { confirmLabel: 'Supprimer', danger: true })) return
     try { await deleteCarService(id); load() }
-    catch (e) { alert('Erreur : ' + e.message) }
+    catch (e) { showError('Erreur : ' + e.message) }
   }
 
   const count = services?.length ?? 0
-  // Services come already sorted newest-first from the DB.
-  const shownServices = (services ?? []).slice(0, 3)
+  const todayMs = Date.now()
+  // Sort by closest date to today first (smallest absolute distance in ms).
+  const sortedServices = [...(services ?? [])].sort((a, b) => {
+    const distA = a.date ? Math.abs(new Date(a.date) - todayMs) : Infinity
+    const distB = b.date ? Math.abs(new Date(b.date) - todayMs) : Infinity
+    return distA - distB
+  })
+  const shownServices = sortedServices.slice(0, 3)
 
   return (
     <div className="admin-services">
@@ -255,20 +407,32 @@ function ServicesManager({ car }) {
               {count === 0 && !open && <p className="admin-muted">Aucun service enregistré.</p>}
 
               {count > 0 && (
-                <ul className="admin-svc-list">
-                  {shownServices.map(s => (
-                    <li key={s.id}>
-                      <div className="admin-svc-item">
-                        <strong><Ico name="wrench" /> {s.service}</strong>
-                        {s.date && <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {s.date}</span>}
-                        {s.mileage != null && <span className="svc-chip svc-chip--km"><Ico name="gauge" /> {formatKm(s.mileage)} km</span>}
-                        {s.cost != null && <span className="svc-chip svc-chip--cost"><Ico name="money" /> {s.cost.toLocaleString('fr-FR')} MAD</span>}
-                        {s.note && <span className="svc-chip svc-chip--note"><Ico name="note" /> {s.note}</span>}
-                      </div>
-                      <button onClick={() => remove(s.id)} className="admin-link-del">Supprimer</button>
-                    </li>
-                  ))}
-                </ul>
+                <div className="admin-hist-table-wrap">
+                  <table className="admin-hist-table">
+                    <thead>
+                      <tr>
+                        <th>Service</th>
+                        <th>Date</th>
+                        <th>Kilométrage</th>
+                        <th>Coût</th>
+                        <th>Note</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shownServices.map(s => (
+                        <tr key={s.id}>
+                          <td><strong>{s.service}</strong></td>
+                          <td className="admin-hist-table__dates">{s.date ? formatDate(s.date) : '—'}</td>
+                          <td>{s.mileage != null ? formatKm(s.mileage) + ' km' : '—'}</td>
+                          <td>{s.cost != null ? s.cost.toLocaleString('fr-FR') + ' MAD' : '—'}</td>
+                          <td>{s.note || '—'}</td>
+                          <td><button onClick={() => remove(s.id)} className="admin-link-del">Supprimer</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
 
               {count > 0 && (
@@ -331,40 +495,198 @@ function ServicesManager({ car }) {
   )
 }
 
+/* ── Inline edit for just the pick-up odometer (Voiture avec qui) ─────────── */
+function EditDepartureKm({ r, onSaved, onCancel }) {
+  const [km, setKm] = useState(r.departureKm != null ? String(r.departureKm) : '')
+  const [busy, setBusy] = useState(false)
+
+  const save = async () => {
+    if (km === '') return showError('Indiquez le kilométrage de départ.')
+    setBusy(true)
+    try { await updateDepartureKm(r.id, km); onSaved() }
+    catch (e) { showError('Erreur : ' + e.message) }
+    setBusy(false)
+  }
+
+  return (
+    <div className="admin-km-confirm admin-km-confirm--edit">
+      <label><Ico name="gauge" /> Modifier le kilométrage de départ
+        <input
+          type="text" inputMode="numeric" autoFocus
+          value={formatKm(km)}
+          onChange={e => setKm(e.target.value.replace(/\D/g, ''))}
+          placeholder="ex: 152.687"
+          onKeyDown={e => { if (e.key === 'Enter') save() }}
+        />
+      </label>
+      <div className="admin-km-confirm__actions">
+        <button className="admin-btn admin-btn--sm" onClick={onCancel} disabled={busy}>Annuler</button>
+        <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
+          {busy ? '…' : 'Enregistrer'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Inline edit form for an existing reservation ────────────────────────── */
+function EditResaForm({ r, onSaved, onCancel }) {
+  const [form, setForm] = useState({ clientName: r.clientName || '', cin: r.cin || '', tel: r.tel || '', start: r.start || '', end: r.end || '' })
+  const [busy, setBusy] = useState(false)
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+
+  const save = async () => {
+    if (!form.clientName.trim()) return showError('Le nom du client est obligatoire.')
+    if (!form.start || !form.end) return showError('Choisissez les dates.')
+    if (form.end < form.start) return showError('La date de fin doit être après le début.')
+    setBusy(true)
+    try { await updateReservation(r.id, form); onSaved() }
+    catch (e) { showError('Erreur : ' + e.message) }
+    setBusy(false)
+  }
+
+  return (
+    <div className="admin-resa-form admin-resa-edit-form">
+      <div className="admin-resa-grid">
+        <label>Nom complet *
+          <input type="text" value={form.clientName} onChange={set('clientName')} autoFocus />
+        </label>
+        <label>CIN
+          <input type="text" value={form.cin} onChange={set('cin')} />
+        </label>
+        <label>Téléphone
+          <input type="tel" value={form.tel} onChange={set('tel')} />
+        </label>
+        <div aria-hidden />
+        <label>Date de début *
+          <input type="date" value={form.start} onChange={set('start')} />
+        </label>
+        <label>Date de fin *
+          <input type="date" min={form.start} value={form.end} onChange={set('end')} />
+        </label>
+      </div>
+      <div className="admin-resa-actions">
+        <button className="admin-btn admin-btn--sm" onClick={onCancel}>Annuler</button>
+        <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
+          {busy ? 'Enregistrement…' : 'Enregistrer'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 /* ── Reservations panel for one car ───────────────────────────────────────── */
 const EMPTY_RESA = { clientName: '', cin: '', tel: '', start: '', end: '' }
 
 function ReservationManager({ car, onChange }) {
   const [open, setOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [histOpen, setHistOpen] = useState(false)
+  const [confirming, setConfirming] = useState(null)    // id of the row whose km field is open
+  const [editingId, setEditingId] = useState(null)      // id of the row being edited
+  const [ongoingError, setOngoingError] = useState(null) // id of the row that triggered the block
   const [form, setForm] = useState(EMPTY_RESA)
+  const [formError, setFormError] = useState(null) // { message, conflict } | null
+  const [cinConflict, setCinConflict] = useState(null) // existing name under same CIN, or null
+  const [cinChecking, setCinChecking] = useState(false)
+  const [damageWarn, setDamageWarn] = useState(false)  // CIN has a past damage record
   const [busy, setBusy] = useState(false)
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+  // Editing the CIN or name invalidates any prior CIN check.
+  const set = (k) => (e) => {
+    setFormError(null)
+    if (k === 'cin' || k === 'clientName') setCinConflict(null)
+    setForm(f => ({ ...f, [k]: e.target.value }))
+  }
   const today = new Date().toISOString().split('T')[0]
 
+  // One CIN = one identity. Checked when the admin leaves the CIN field.
+  const checkCin = async () => {
+    if (!form.cin.trim()) { setCinConflict(null); return }
+    setCinChecking(true)
+    try { setCinConflict(await findCinConflict(form.cin, form.clientName)) }
+    catch { /* network hiccup — don't block on it; re-checked on save */ }
+    setCinChecking(false)
+  }
+
   const save = async () => {
-    if (!form.clientName.trim()) return alert('Le nom du client est obligatoire.')
-    if (!form.start || !form.end) return alert('Choisissez les dates de début et de fin.')
-    if (form.end < form.start) return alert('La date de fin doit être après le début.')
+    if (!form.clientName.trim()) return setFormError({ message: 'Le nom du client est obligatoire.' })
+    if (!form.start || !form.end) return setFormError({ message: 'Choisissez les dates de début et de fin.' })
+    if (form.end < form.start) return setFormError({ message: 'La date de fin doit être après le début.' })
+    // Security: block if this CIN is already registered under a different name.
+    let cinOwner = cinConflict
+    try { cinOwner = await findCinConflict(form.cin, form.clientName) } catch { /* keep prior result */ }
+    if (cinOwner) {
+      setCinConflict(cinOwner)
+      return setFormError({ message: `Ce CIN est déjà enregistré sous le nom de « ${cinOwner} ». Un même CIN ne peut pas avoir deux noms différents.` })
+    }
+    // Check overlap with every active reservation (reservee or en_cours).
+    const active = all.filter(r => r.status !== 'terminee')
+    const conflict = active.find(r => r.start < form.end && r.end > form.start)
+    if (conflict) return setFormError({ message: null, conflict })
+    // Damage history: warn (but allow override) if this CIN damaged a car before.
+    try {
+      if (await findCinDamage(form.cin)) { setDamageWarn(true); return }
+    } catch { /* network hiccup — don't block on it */ }
+    doSave()
+  }
+
+  // The actual insert — called directly, or after the admin overrides the damage warning.
+  const doSave = async () => {
     setBusy(true)
     try {
       // The plate comes from the car itself — no need to type it.
       await addReservation(car.id, { ...form, matriculation: car.immatriculation || null })
-      setForm(EMPTY_RESA); setOpen(false)
+      setForm(EMPTY_RESA); setOpen(false); setDamageWarn(false)
       onChange()
-    } catch (e) { alert('Erreur : ' + e.message) }
+    } catch (e) { showError('Erreur : ' + e.message) }
     setBusy(false)
   }
 
   const remove = async (id) => {
-    if (!confirm('Annuler cette réservation ?')) return
+    if (!await confirmAsync('Supprimer définitivement cette ligne ?', { confirmLabel: 'Supprimer', danger: true })) return
     try { await deletePeriod(id); onChange() }
-    catch (e) { alert('Erreur : ' + e.message) }
+    catch (e) { showError('Erreur : ' + e.message) }
   }
 
-  // Newest reservations first (by start date).
-  const resas = [...(car.unavailable ?? [])].sort((a, b) => (b.start || '').localeCompare(a.start || ''))
-  const shownResas = resas.slice(0, 3)
+  // reservee → en_cours: client picks up the car (record departure odometer).
+  const pickup = async (id, km) => { await confirmPickup(id, km); setConfirming(null); onChange() }
+  // en_cours → terminee: client returns the car (record return odometer + damage).
+  const giveBack = async (id, km, damaged) => { await confirmReturn(id, km, damaged); setConfirming(null); onChange() }
+
+  // Split every period of this car by its workflow stage.
+  const todayMs = Date.now()
+  // Nearest start date to today first (for reservee); newest first for history.
+  const byNearest = (a, b) => {
+    const distA = a.start ? Math.abs(new Date(a.start) - todayMs) : Infinity
+    const distB = b.start ? Math.abs(new Date(b.start) - todayMs) : Infinity
+    return distA - distB
+  }
+  const byStartDesc = (a, b) => (b.start || '').localeCompare(a.start || '')
+  const all = car.unavailable ?? []
+
+  // Build the set of greyed-out dates for the reservation popup calendar.
+  // Rule: strictly interior dates of every active reservation are blocked.
+  // Additionally, if an end date of one reservation equals the start of another, block it too.
+  const blockedDates = useMemo(() => {
+    const active = all.filter(r => r.status !== 'terminee')
+    const startSet = new Set(active.map(r => r.start))
+    const set = new Set()
+    for (const r of active) {
+      const cur = new Date(r.start)
+      cur.setDate(cur.getDate() + 1)
+      const end = new Date(r.end)
+      while (cur < end) {
+        set.add(cur.toISOString().split('T')[0])
+        cur.setDate(cur.getDate() + 1)
+      }
+      if (startSet.has(r.end)) set.add(r.end)
+    }
+    return set
+  }, [all])
+
+  const reserved = all.filter(r => (r.status ?? 'reservee') === 'reservee').sort(byNearest)
+  const ongoing  = all.filter(r => r.status === 'en_cours').sort(byNearest)
+  const history  = all.filter(r => r.status === 'terminee').sort(byStartDesc)
 
   return (
     <div className="admin-resa">
@@ -377,65 +699,253 @@ function ReservationManager({ car, onChange }) {
         )}
       </div>
 
-      {resas.length === 0 && !open && (
-        <p className="admin-muted">Aucune réservation — voiture toujours disponible.</p>
+      {reserved.length === 0 && !open && (
+        <p className="admin-muted">Aucune réservation en attente.</p>
       )}
 
-      {resas.length > 0 && (
-        <ul className="admin-resa-list">
-          {shownResas.map(r => (
-            <li key={r.id}>
-              <div className="admin-resa-item">
-                <strong><Ico name="user" /> {r.clientName || 'Client'}</strong>
-                <span className="svc-chip svc-chip--date"><Ico name="calendar" /> {r.start} → {r.end}</span>
-                {r.tel && <span className="svc-chip svc-chip--tel"><Ico name="phone" /> {r.tel}</span>}
-                {r.cin && <span className="svc-chip svc-chip--cin"><Ico name="id" /> {r.cin}</span>}
-              </div>
-              <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
-            </li>
-          ))}
-        </ul>
+      {reserved.length > 0 && (
+        <div className="admin-hist-table-wrap">
+          <table className="admin-hist-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Période</th>
+                <th>Téléphone</th>
+                <th>CIN</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {reserved.slice(0, 3).map(r => (
+                <React.Fragment key={r.id}>
+                  <tr>
+                    <td><strong>{r.clientName || '—'}</strong></td>
+                    <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                    <td>{r.tel || '—'}</td>
+                    <td>{r.cin || '—'}</td>
+                    <td>
+                      {confirming === r.id ? (
+                        <KmConfirm
+                          label="Kilométrage de départ"
+                          actionLabel="Valider la réception"
+                          onSubmit={(km) => pickup(r.id, km)}
+                          onCancel={() => setConfirming(null)}
+                        />
+                      ) : (
+                        <div className="admin-resa-actions-inline">
+                          {ongoingError === r.id && (
+                            <span className="admin-resa-block-error">⚠ Tu dois confirmer le retour d'abord</span>
+                          )}
+                          <button
+                            className="admin-btn admin-btn--sm admin-btn--confirm"
+                            onClick={() => {
+                              if (ongoing.length > 0) { setOngoingError(r.id); return }
+                              setOngoingError(null); setConfirming(r.id)
+                            }}
+                          >
+                            ✓ Confirmer la réception
+                          </button>
+                          <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingId(editingId === r.id ? null : r.id)}>✏ Modifier</button>
+                          <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                  {editingId === r.id && (
+                    <tr key={r.id + '-edit'} className="admin-edit-row">
+                      <td colSpan={5}>
+                        <EditResaForm r={r} onSaved={() => { setEditingId(null); onChange() }} onCancel={() => setEditingId(null)} />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
-      {resas.length > 0 && (
+      {reserved.length > 3 && (
         <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setModalOpen(true)}>
-          📋 Voir toutes les réservations ({resas.length})
+          📋 Voir toutes les réservations ({reserved.length})
+        </button>
+      )}
+
+      {/* ── Stage 2: cars currently handed over to a client ─────────────── */}
+      {ongoing.length > 0 && (
+        <>
+          <div className="admin-resa__subhead admin-resa__subhead--ongoing">
+            <Ico name="car" /> Voiture avec qui ({ongoing.length})
+          </div>
+          <div className="admin-hist-table-wrap">
+            <table className="admin-hist-table admin-hist-table--ongoing">
+              <thead>
+                <tr>
+                  <th>Client</th>
+                  <th>Période</th>
+                  <th>Téléphone</th>
+                  <th>CIN</th>
+                  <th>Départ km</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {ongoing.map(r => (
+                  <React.Fragment key={r.id}>
+                    <tr>
+                      <td><strong>{r.clientName || '—'}</strong></td>
+                      <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                      <td>{r.tel || '—'}</td>
+                      <td>{r.cin || '—'}</td>
+                      <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
+                      <td>
+                        {confirming === r.id ? (
+                          <KmConfirm
+                            label="Nouveau kilométrage (au retour)"
+                            actionLabel="Valider le retour"
+                            withDamage
+                            onSubmit={(km, damaged) => {
+                              if (r.departureKm != null && Number(km) <= r.departureKm)
+                                return Promise.reject(new Error(`Le kilométrage de retour (${formatKm(km)} km) doit être supérieur au kilométrage de départ (${formatKm(r.departureKm)} km).`))
+                              return giveBack(r.id, km, damaged)
+                            }}
+                            onCancel={() => setConfirming(null)}
+                          />
+                        ) : (
+                          <div className="admin-resa-actions-inline">
+                              <button className="admin-btn admin-btn--sm admin-btn--confirm" onClick={() => setConfirming(r.id)}>
+                              ↩ Confirmer le retour
+                            </button>
+                            <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingId(editingId === r.id ? null : r.id)}>✏ Modifier</button>
+                            <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                    {editingId === r.id && (
+                      <tr key={r.id + '-edit'} className="admin-edit-row">
+                        <td colSpan={6}>
+                          <EditDepartureKm r={r} onSaved={() => { setEditingId(null); onChange() }} onCancel={() => setEditingId(null)} />
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+
+      {/* ── Stage 3: finished rentals — just a button that opens the full list ── */}
+      {history.length > 0 && (
+        <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setHistOpen(true)}>
+          📜 Location historique ({history.length})
         </button>
       )}
 
       {modalOpen && (
         <ReservationsModal
-          reservations={resas}
+          title="📋 Toutes les réservations"
+          reservations={reserved}
           onClose={() => setModalOpen(false)}
           onRemove={remove}
         />
       )}
 
+      {histOpen && (
+        <ReservationsModal
+          title="📜 Location historique"
+          reservations={history}
+          history
+          removeLabel="Supprimer"
+          onClose={() => setHistOpen(false)}
+          onRemove={remove}
+        />
+      )}
+
       {open && (
-        <div className="admin-resa-form">
-          <div className="admin-resa-grid">
-            <label>Nom complet du client *
-              <input type="text" value={form.clientName} onChange={set('clientName')} autoFocus />
-            </label>
-            <label>CIN
-              <input type="text" value={form.cin} onChange={set('cin')} />
-            </label>
-            <label>Téléphone
-              <input type="tel" value={form.tel} onChange={set('tel')} />
-            </label>
-            <div aria-hidden />
-            <label>Date de début *
-              <input type="date" min={today} value={form.start} onChange={set('start')} />
-            </label>
-            <label>Date de fin *
-              <input type="date" min={form.start || today} value={form.end} onChange={set('end')} />
-            </label>
+        <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) { setOpen(false); setForm(EMPTY_RESA); setFormError(null); setCinConflict(null); setDamageWarn(false) } }}>
+          <div className="admin-resa-popup">
+            <div className="admin-resa-popup__head">
+              <h3>➕ Nouvelle réservation — {car.name}</h3>
+              <button className="phone-modal__close" onClick={() => { setOpen(false); setForm(EMPTY_RESA); setFormError(null); setCinConflict(null); setDamageWarn(false) }} aria-label="Fermer">✕</button>
+            </div>
+            {formError?.message && (
+              <div className="admin-resa-popup__error"><p>{formError.message}</p></div>
+            )}
+            <div className="admin-resa-grid">
+              <label>Nom complet du client *
+                <input type="text" value={form.clientName} onChange={set('clientName')} autoFocus />
+              </label>
+              <label>CIN
+                <input
+                  type="text" value={form.cin}
+                  onChange={set('cin')} onBlur={checkCin}
+                  className={cinConflict ? 'admin-input-error' : ''}
+                />
+                {cinChecking && <small className="admin-hint">Vérification…</small>}
+                {cinConflict && <small className="admin-cin-warn">⚠ CIN déjà utilisé par « {cinConflict} »</small>}
+              </label>
+              <label>Téléphone
+                <input type="tel" value={form.tel} onChange={set('tel')} />
+              </label>
+              <div aria-hidden />
+              <label>Date de début *
+                <DatePicker value={form.start} onChange={v => { setFormError(null); setForm(f => ({ ...f, start: v })) }} min={today} placeholder="JJ-MMM-AAAA" blockedDates={blockedDates} />
+              </label>
+              <label>Date de fin *
+                <DatePicker value={form.end} onChange={v => { setFormError(null); setForm(f => ({ ...f, end: v })) }} min={form.start || today} placeholder="JJ-MMM-AAAA" blockedDates={blockedDates} />
+              </label>
+            </div>
+            <div className="admin-resa-actions">
+              <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_RESA); setFormError(null); setCinConflict(null) }}>Annuler</button>
+              <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy || cinChecking || !!cinConflict}>
+                {busy ? 'Enregistrement…' : 'Enregistrer la réservation'}
+              </button>
+            </div>
           </div>
-          <div className="admin-resa-actions">
-            <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_RESA) }}>Annuler</button>
-            <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
-              {busy ? 'Enregistrement…' : 'Enregistrer la réservation'}
-            </button>
+        </div>
+      )}
+
+      {formError?.conflict && (
+        <div className="admin-modal admin-modal--conflict" onClick={() => setFormError(null)}>
+          <div className="admin-conflict-popup">
+            <div className="admin-conflict-popup__head">
+              <span className="admin-conflict-popup__icon">⚠</span>
+              <h3>Dates non disponibles</h3>
+              <button className="phone-modal__close" onClick={() => setFormError(null)} aria-label="Fermer">✕</button>
+            </div>
+            <p className="admin-conflict-popup__desc">Ces dates chevauchent une réservation existante :</p>
+            <div className="admin-resa-popup__conflict">
+              <span className="conflict-chip conflict-chip--name"><Ico name="user" /> {formError.conflict.clientName || 'Client'}</span>
+              <span className="conflict-chip conflict-chip--date"><Ico name="calendar" /> {formatDate(formError.conflict.start)} → {formatDate(formError.conflict.end)}</span>
+              {formError.conflict.tel && <span className="conflict-chip conflict-chip--tel"><Ico name="phone" /> {formError.conflict.tel}</span>}
+              {formError.conflict.cin && <span className="conflict-chip conflict-chip--cin"><Ico name="id" /> {formError.conflict.cin}</span>}
+            </div>
+            <button className="admin-btn admin-btn--sm admin-conflict-popup__close" onClick={() => setFormError(null)}>Fermer</button>
+          </div>
+        </div>
+      )}
+
+      {damageWarn && (
+        <div className="admin-modal admin-modal--conflict" onClick={() => setDamageWarn(false)}>
+          <div className="admin-conflict-popup admin-conflict-popup--danger" onClick={e => e.stopPropagation()}>
+            <div className="admin-conflict-popup__head">
+              <span className="admin-conflict-popup__icon">🛠</span>
+              <h3>Client à risque</h3>
+              <button className="phone-modal__close" onClick={() => setDamageWarn(false)} aria-label="Fermer">✕</button>
+            </div>
+            <p className="admin-conflict-popup__desc">
+              Ce client (<strong>{form.clientName}</strong> — CIN {form.cin}) a <strong>déjà endommagé</strong> une voiture lors d'une location précédente.
+            </p>
+            <p className="admin-conflict-popup__hint">Voulez-vous quand même créer cette réservation ?</p>
+            <div className="admin-conflict-popup__actions">
+              <button className="admin-btn admin-btn--sm" onClick={() => setDamageWarn(false)}>Annuler la réservation</button>
+              <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={doSave} disabled={busy}>
+                {busy ? 'Enregistrement…' : 'Confirmer quand même'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -473,7 +983,7 @@ function CarForm({ initial, onSaved, onCancel }) {
         const photos = [...(c.photos ?? []), ...urls]
         return { ...c, photos, photo: photos[0] }
       })
-    } catch (err) { alert('Échec de l’upload : ' + err.message) }
+    } catch (err) { showError('Échec de l’upload : ' + err.message) }
     setUploading(false)
   }
 
@@ -518,14 +1028,14 @@ function CarForm({ initial, onSaved, onCancel }) {
 
   const save = async (e) => {
     e.preventDefault()
-    if (!car.name.trim()) return alert('Le nom est obligatoire.')
-    if (!(car.categories ?? []).length) return alert('Choisissez au moins une catégorie.')
+    if (!car.name.trim()) return showError('Le nom est obligatoire.')
+    if (!(car.categories ?? []).length) return showError('Choisissez au moins une catégorie.')
     setBusy(true)
     try {
       if (car.id) await updateCar(car.id, car)
       else await createCar(car)
       onSaved()
-    } catch (err) { alert('Erreur : ' + err.message) }
+    } catch (err) { showError('Erreur : ' + err.message) }
     setBusy(false)
   }
 
@@ -666,6 +1176,11 @@ function CarForm({ initial, onSaved, onCancel }) {
         </label>
       </div>
 
+      <label className={`admin-damaged-toggle ${car.damaged ? 'is-on' : ''}`}>
+        <input type="checkbox" checked={!!car.damaged} onChange={e => set('damaged', e.target.checked)} />
+        <span><Ico name="wrench" /> Voiture endommagée — la rendre indisponible</span>
+      </label>
+
       <div className="admin-form-actions">
         <button type="button" className="admin-btn" onClick={onCancel}>Annuler</button>
         <button className="admin-btn admin-btn--primary" disabled={busy || uploading}>
@@ -698,15 +1213,16 @@ function Dashboard({ onLogout }) {
   useEffect(() => { load() }, [load])
 
   const remove = async (car) => {
-    if (!confirm(`Supprimer "${car.name}" ? Cette action est définitive.`)) return
+    if (!await confirmAsync(`Supprimer « ${car.name} » ? Cette action est définitive.`, { confirmLabel: 'Supprimer', danger: true })) return
     try { await deleteCar(car.id); load() }
-    catch (e) { alert('Erreur : ' + e.message) }
+    catch (e) { showError('Erreur : ' + e.message) }
   }
 
   const onSaved = () => { setEditing(null); load() }
 
   return (
     <div className="admin-shell">
+      <DialogHost />
       <header className="admin-header">
         <div className="admin-header__brand">
           <Logo size={42} animated={false} />
@@ -716,9 +1232,9 @@ function Dashboard({ onLogout }) {
           </div>
         </div>
         <div className="admin-header__actions">
-          <Link to="/" className="admin-btn">Voir le site</Link>
-          <button className="admin-btn" onClick={onLogout}>Déconnexion</button>
-          <button className="admin-btn admin-btn--primary" onClick={() => setEditing('new')}>➕ Ajouter</button>
+          <Link to="/" className="admin-btn admin-btn--ghost"><Ico name="globe" /> Voir le site</Link>
+          <button className="admin-btn admin-btn--logout" onClick={onLogout}><Ico name="logout" /> Déconnexion</button>
+          <button className="admin-btn admin-btn--add" onClick={() => setEditing('new')}><Ico name="carplus" /> Ajouter une voiture</button>
         </div>
       </header>
 
@@ -738,7 +1254,7 @@ function Dashboard({ onLogout }) {
         <div className="admin-toolbar">
           <input
             type="search" className="admin-search"
-            placeholder="🔎 Rechercher par modèle ou immatriculation…"
+            placeholder="Rechercher par modèle ou immatriculation…"
             value={query} onChange={e => setQuery(e.target.value)}
           />
           {q && <span className="admin-muted">{visible.length} résultat{visible.length > 1 ? 's' : ''}</span>}
@@ -770,8 +1286,8 @@ function Dashboard({ onLogout }) {
                     </div>
                   </div>
                   <div className="admin-car__btns">
-                    <button className="admin-btn admin-btn--sm" onClick={() => setEditing(car)}>Modifier</button>
-                    <button className="admin-btn admin-btn--sm admin-btn--danger" onClick={() => remove(car)}>Supprimer</button>
+                    <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditing(car)}>✏ Modifier</button>
+                    <button className="admin-btn admin-btn--sm admin-btn--delcar" onClick={() => remove(car)}>🗑 Supprimer</button>
                   </div>
                 </div>
                 <ServicesManager car={car} />

@@ -29,7 +29,9 @@ function fromRow(row) {
     createdAt: row.created_at,
     color: row.color,
     immatriculation: row.immatriculation,
+    damaged: row.damaged ?? false,
     // Reservations that block this car (date range + client details).
+    // `status` walks through reservee → en_cours → terminee (see migration-rentals.sql).
     unavailable: (row.unavailable_periods ?? []).map(p => ({
       id: p.id,
       start: p.start_date,
@@ -39,6 +41,10 @@ function fromRow(row) {
       cin: p.cin,
       tel: p.tel,
       matriculation: p.matriculation,
+      status: p.status ?? 'reservee',
+      departureKm: p.departure_km,
+      returnKm: p.return_km,
+      damaged: p.damaged ?? false,
     })),
   }
 }
@@ -100,6 +106,7 @@ function toRow(car) {
     sort_order: Number(car.sortOrder) || 0,
     color: car.color || null,
     immatriculation: car.immatriculation || null,
+    damaged: !!car.damaged,
   }
 }
 
@@ -153,6 +160,8 @@ export async function fetchCars() {
 // Overlap rule: period.start <= retour AND period.end >= depart.
 // If no return date is given, we treat it as a single-day request (= depart).
 export function isCarAvailable(car, depart, retour) {
+  // A damaged / out-of-service car is never available.
+  if (car.damaged) return false
   if (!depart) return true
   const end = retour || depart
   const periods = car.unavailable ?? []
@@ -221,9 +230,91 @@ export async function addReservation(carId, r) {
   }
 }
 
+// Security check: one CIN should map to one identity. Returns an existing
+// client name registered under this CIN that DIFFERS from `name` (or null).
+// Uses an indexed `cin` lookup (see migration-cin-index.sql) so it stays light
+// — it only fetches rows for this single CIN, never the whole table.
+export async function findCinConflict(cin, name) {
+  const c = (cin || '').trim()
+  if (!c || !isSupabaseConfigured) return null
+  const { data, error } = await supabase
+    .from('unavailable_periods')
+    .select('client_name')
+    .eq('cin', c)
+    .limit(100)
+  if (error) throw error
+  const target = (name || '').trim().toLowerCase()
+  for (const row of data) {
+    const existing = (row.client_name || '').trim()
+    if (existing && existing.toLowerCase() !== target) return existing
+  }
+  return null
+}
+
+export async function updateReservation(periodId, r) {
+  const { error } = await supabase
+    .from('unavailable_periods')
+    .update({
+      start_date: r.start,
+      end_date: r.end,
+      client_name: r.clientName || null,
+      cin: r.cin || null,
+      tel: r.tel || null,
+    })
+    .eq('id', periodId)
+  if (error) throw error
+}
+
+// Fix the pick-up odometer reading for a car that's already handed over.
+export async function updateDepartureKm(periodId, km) {
+  const { error } = await supabase
+    .from('unavailable_periods')
+    .update({ departure_km: km != null && km !== '' ? Number(km) : null })
+    .eq('id', periodId)
+  if (error) throw error
+}
+
 export async function deletePeriod(periodId) {
   const { error } = await supabase.from('unavailable_periods').delete().eq('id', periodId)
   if (error) throw error
+}
+
+// Hand the car over to the client: reservee → en_cours, recording the
+// odometer reading at pick-up.
+export async function confirmPickup(periodId, departureKm) {
+  const { error } = await supabase
+    .from('unavailable_periods')
+    .update({ status: 'en_cours', departure_km: departureKm != null && departureKm !== '' ? Number(departureKm) : null })
+    .eq('id', periodId)
+  if (error) throw error
+}
+
+// Take the car back: en_cours → terminee, recording the odometer reading at
+// return and whether the car came back damaged.
+export async function confirmReturn(periodId, returnKm, damaged = false) {
+  const { error } = await supabase
+    .from('unavailable_periods')
+    .update({
+      status: 'terminee',
+      return_km: returnKm != null && returnKm !== '' ? Number(returnKm) : null,
+      damaged: !!damaged,
+    })
+    .eq('id', periodId)
+  if (error) throw error
+}
+
+// Has this CIN ever returned a car damaged? Indexed lookup on cin → light.
+export async function findCinDamage(cin) {
+  const c = (cin || '').trim()
+  if (!c || !isSupabaseConfigured) return false
+  const { data, error } = await supabase
+    .from('unavailable_periods')
+    .select('id')
+    .eq('cin', c)
+    .eq('damaged', true)
+    .limit(1)
+  if (error) throw error
+  return data.length > 0
 }
 
 // ── Admin: car services (maintenance log) ───────────────────────────────────
