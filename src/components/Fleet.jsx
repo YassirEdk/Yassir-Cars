@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { fetchCars } from '../lib/cars'
+import { fetchCars, mergeByModel } from '../lib/cars'
 import CarCard from './CarCard'
 
 export default function Fleet() {
@@ -12,8 +12,8 @@ export default function Fleet() {
     return () => { alive = false }
   }, [])
 
-  // Home teaser: the 6 most recently added cars (newest first).
-  const latest = [...cars]
+  // Home teaser: merge units into models, then show the 6 newest models.
+  const latest = mergeByModel(cars)
     .sort((a, b) => new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0))
     .slice(0, 6)
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { carInCategory } from '../data'
-import { fetchCars, isCarAvailable, effectiveBadge } from '../lib/cars'
+import { carInCategory, colorName } from '../data'
+import { fetchCars, mergeByModel, isModelAvailable, effectiveBadge } from '../lib/cars'
 import Logo from '../components/Logo'
 
 function daysBetween(d1, d2) {
@@ -130,45 +130,58 @@ function PhoneModal({ car, onClose }) {
 function ResultCard({ car, days, available, onCall }) {
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
-  const gallery = car.photos?.length ? car.photos : (car.photo ? [car.photo] : [])
-  const [activePhoto, setActivePhoto] = useState(gallery[0] || car.photo)
-  const curIdx = Math.max(0, gallery.indexOf(activePhoto))
+  // Pick a colour → switch to that unit (photos, price, specs follow it).
+  const units = car.units ?? [car]
+  const colors = car.colors ?? (car.color ? [car.color] : [])
+  const [selColor, setSelColor] = useState(colors[0] ?? null)
+  const active = units.find(u => u.color === selColor) ?? car
+
+  const gallery = active.photos?.length ? active.photos : (active.photo ? [active.photo] : [])
+  const [activePhoto, setActivePhoto] = useState(gallery[0] || active.photo)
+  const shownPhoto = gallery.includes(activePhoto) ? activePhoto : (gallery[0] || active.photo)
+  const curIdx = Math.max(0, gallery.indexOf(shownPhoto))
   const goPhoto = (dir) => (e) => {
     e.preventDefault(); e.stopPropagation()
     const next = Math.min(gallery.length - 1, Math.max(0, curIdx + dir))
     setActivePhoto(gallery[next])
     setPhotoFailed(false)
   }
-  const promoPrice = Math.round(car.price * 0.7) // -30%
+  const pickColor = (hex) => (e) => {
+    e.preventDefault(); e.stopPropagation()
+    const unit = units.find(u => u.color === hex) ?? car
+    const g = unit.photos?.length ? unit.photos : (unit.photo ? [unit.photo] : [])
+    setSelColor(hex); setActivePhoto(g[0] || unit.photo); setPhotoFailed(false)
+  }
+  const promoPrice = Math.round(active.price * 0.7) // -30%
   const total = promoPrice * days
-  const oldTotal = car.price * days
+  const oldTotal = active.price * days
 
   return (
     <div className={`result-card ${available ? '' : 'result-card--unavailable'}`}>
-      <div className="result-card__img" style={{ background: activePhoto && !photoFailed ? '#fff' : car.brandColor }}>
-        {activePhoto && !photoFailed ? (
+      <div className="result-card__img" style={{ background: shownPhoto && !photoFailed ? '#fff' : active.brandColor }}>
+        {shownPhoto && !photoFailed ? (
           <img
-            key={activePhoto}
-            src={activePhoto}
+            key={shownPhoto}
+            src={shownPhoto}
             alt={car.name}
             className="result-photo"
             loading="lazy"
             onError={() => setPhotoFailed(true)}
           />
-        ) : car.brandLogo && !logoFailed ? (
+        ) : active.brandLogo && !logoFailed ? (
           <img
-            src={car.brandLogo}
+            src={active.brandLogo}
             alt={car.name}
             className="result-brand-logo"
-            style={car.whiteFilter ? { filter: 'brightness(0) invert(1)' } : {}}
+            style={active.whiteFilter ? { filter: 'brightness(0) invert(1)' } : {}}
             loading="lazy"
             onError={() => setLogoFailed(true)}
           />
         ) : (
           <span className="result-brand-initial">{car.name.split(' ')[0]}</span>
         )}
-        {effectiveBadge(car) && (
-          <span className={`result-badge result-badge--${car.badgeColor}`}>{effectiveBadge(car)}</span>
+        {effectiveBadge(active) && (
+          <span className={`result-badge result-badge--${active.badgeColor}`}>{effectiveBadge(active)}</span>
         )}
         <span className={`avail-tag ${available ? 'avail-tag--ok' : 'avail-tag--no'}`}>
           {available ? '✅ Disponible' : '❌ Non disponible'}
@@ -191,7 +204,7 @@ function ResultCard({ car, days, available, onCall }) {
               <button
                 key={url}
                 type="button"
-                className={`result-thumb ${url === activePhoto ? 'active' : ''}`}
+                className={`result-thumb ${url === shownPhoto ? 'active' : ''}`}
                 onMouseEnter={() => { setActivePhoto(url); setPhotoFailed(false) }}
                 onClick={() => { setActivePhoto(url); setPhotoFailed(false) }}
               >
@@ -207,10 +220,26 @@ function ResultCard({ car, days, available, onCall }) {
           <div>
             <h3 className="result-card__name">{car.name}</h3>
             <span className="result-card__cat">{car.category}</span>
+            {colors.length > 0 && (
+              <div className="car-colors">
+                {colors.map(hex => (
+                  <button
+                    type="button"
+                    key={hex}
+                    className={`car-color-dot ${hex === selColor ? 'active' : ''}`}
+                    style={{ background: hex }}
+                    title={colorName(hex)}
+                    onClick={pickColor(hex)}
+                    aria-label={`Couleur ${colorName(hex)}`}
+                  />
+                ))}
+                {selColor && <span className="car-colors__label">{colorName(selColor)}</span>}
+              </div>
+            )}
           </div>
           <div className="result-card__pricing">
             <div className="result-price-old-row">
-              <span className="result-price-old">{car.price.toLocaleString('fr-FR')} MAD</span>
+              <span className="result-price-old">{active.price.toLocaleString('fr-FR')} MAD</span>
               <span className="result-discount">-30%</span>
             </div>
             <div className="result-card__day">
@@ -229,10 +258,10 @@ function ResultCard({ car, days, available, onCall }) {
         </div>
 
         <div className="result-card__specs">
-          <span>⛽ {car.fuel}</span>
-          <span>⚙️ {car.transmission}</span>
-          <span>👥 {car.seats} places</span>
-          <span>❄️ {car.extra}</span>
+          <span>⛽ {active.fuel}</span>
+          <span>⚙️ {active.transmission}</span>
+          <span>👥 {active.seats} places</span>
+          <span>❄️ {active.extra}</span>
         </div>
 
         <div className="result-card__features">
@@ -296,11 +325,15 @@ export default function SearchResults() {
     return () => { alive = false }
   }, [])
 
-  // Base list: cars with real availability (date-range based) — no category filter yet.
-  // When a ?car=<id> is present, narrow to just that one car.
+  // Merge units into models, then compute availability per model (free if any
+  // unit is free). When ?car=<id> is present, narrow to the model that unit
+  // belongs to.
   const baseList = useMemo(() => {
-    const source = carId ? cars.filter(c => String(c.id) === String(carId)) : cars
-    return source.map(car => ({ ...car, available: isCarAvailable(car, depart, retour) }))
+    const models = mergeByModel(cars)
+    const source = carId
+      ? models.filter(m => String(m.id) === String(carId) || (m.units ?? []).some(u => String(u.id) === String(carId)))
+      : models
+    return source.map(model => ({ ...model, available: isModelAvailable(model, depart, retour) }))
   }, [cars, carId, depart, retour])
 
   const ALL_TABS = [

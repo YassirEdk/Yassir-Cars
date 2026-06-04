@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { filterOptions, carInCategory } from '../data'
-import { fetchCars } from '../lib/cars'
+import { fetchCars, mergeByModel } from '../lib/cars'
 import CarCard from '../components/CarCard'
 import Logo from '../components/Logo'
 
@@ -14,7 +14,7 @@ export default function AllCars() {
 
   useEffect(() => {
     let alive = true
-    fetchCars().then(list => { if (alive) { setCars(list); setLoading(false) } })
+    fetchCars().then(list => { if (alive) { setCars(mergeByModel(list)); setLoading(false) } })
     return () => { alive = false }
   }, [])
 

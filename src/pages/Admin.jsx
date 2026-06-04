@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
+import { carColors, colorName } from '../data'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
   fetchCars, createCar, updateCar, deleteCar,
-  uploadCarPhotos, addUnavailablePeriod, deletePeriod,
+  uploadCarPhotos, addReservation, deletePeriod,
 } from '../lib/cars'
 import './admin.css'
 
@@ -21,6 +22,7 @@ const EMPTY_CAR = {
   brandLogo: '', brandColor: '#1a1a1a', whiteFilter: false,
   price: 250, currency: 'MAD', fuel: 'Diesel', transmission: 'Manuel',
   seats: 5, extra: 'Clim', badge: '', sortOrder: 0,
+  color: '', immatriculation: '',
 }
 
 /* ── Login screen ─────────────────────────────────────────────────────────── */
@@ -60,52 +62,99 @@ function Login({ onAuthed }) {
   )
 }
 
-/* ── Date-range blocking panel for one car ────────────────────────────────── */
-function PeriodsManager({ car, onChange }) {
-  const [start, setStart] = useState('')
-  const [end, setEnd] = useState('')
-  const [note, setNote] = useState('')
-  const [busy, setBusy] = useState(false)
+/* ── Reservations panel for one car ───────────────────────────────────────── */
+const EMPTY_RESA = { clientName: '', cin: '', tel: '', matriculation: '', start: '', end: '' }
 
-  const add = async () => {
-    if (!start || !end) return alert('Choisissez une date de début et de fin.')
-    if (end < start) return alert('La date de fin doit être après le début.')
+function ReservationManager({ car, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState(EMPTY_RESA)
+  const [busy, setBusy] = useState(false)
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
+  const today = new Date().toISOString().split('T')[0]
+
+  const save = async () => {
+    if (!form.clientName.trim()) return alert('Le nom du client est obligatoire.')
+    if (!form.start || !form.end) return alert('Choisissez les dates de début et de fin.')
+    if (form.end < form.start) return alert('La date de fin doit être après le début.')
     setBusy(true)
     try {
-      await addUnavailablePeriod(car.id, start, end, note || null)
-      setStart(''); setEnd(''); setNote('')
+      await addReservation(car.id, form)
+      setForm(EMPTY_RESA); setOpen(false)
       onChange()
     } catch (e) { alert('Erreur : ' + e.message) }
     setBusy(false)
   }
 
   const remove = async (id) => {
-    if (!confirm('Supprimer cette période ?')) return
+    if (!confirm('Annuler cette réservation ?')) return
     try { await deletePeriod(id); onChange() }
     catch (e) { alert('Erreur : ' + e.message) }
   }
 
+  const resas = car.unavailable ?? []
+
   return (
-    <div className="admin-periods">
-      <h4>🚫 Périodes indisponibles</h4>
-      {(car.unavailable ?? []).length === 0 && (
-        <p className="admin-muted">Toujours disponible — aucune période bloquée.</p>
-      )}
-      <ul className="admin-period-list">
-        {(car.unavailable ?? []).map(p => (
-          <li key={p.id}>
-            <span>📅 {p.start} → {p.end}{p.note ? ` · ${p.note}` : ''}</span>
-            <button onClick={() => remove(p.id)} className="admin-link-del">Supprimer</button>
-          </li>
-        ))}
-      </ul>
-      <div className="admin-period-add">
-        <input type="date" value={start} onChange={e => setStart(e.target.value)} />
-        <span>→</span>
-        <input type="date" value={end} onChange={e => setEnd(e.target.value)} />
-        <input type="text" placeholder="Note (ex: client X)" value={note} onChange={e => setNote(e.target.value)} />
-        <button className="admin-btn admin-btn--sm" onClick={add} disabled={busy}>+ Bloquer</button>
+    <div className="admin-resa">
+      <div className="admin-resa__head">
+        <h4>📋 Réservations</h4>
+        {!open && (
+          <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => setOpen(true)}>
+            ➕ Faire une réservation
+          </button>
+        )}
       </div>
+
+      {resas.length === 0 && !open && (
+        <p className="admin-muted">Aucune réservation — voiture toujours disponible.</p>
+      )}
+
+      {resas.length > 0 && (
+        <ul className="admin-resa-list">
+          {resas.map(r => (
+            <li key={r.id}>
+              <div className="admin-resa-item">
+                <strong>{r.clientName || 'Client'}</strong>
+                <span>📅 {r.start} → {r.end}</span>
+                {r.matriculation && <span>🚗 {r.matriculation}</span>}
+                {r.tel && <span>📞 {r.tel}</span>}
+                {r.cin && <span>🪪 {r.cin}</span>}
+              </div>
+              <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {open && (
+        <div className="admin-resa-form">
+          <div className="admin-resa-grid">
+            <label>Nom complet du client *
+              <input type="text" value={form.clientName} onChange={set('clientName')} autoFocus />
+            </label>
+            <label>CIN
+              <input type="text" value={form.cin} onChange={set('cin')} />
+            </label>
+            <label>Téléphone
+              <input type="tel" value={form.tel} onChange={set('tel')} />
+            </label>
+            <label>Matricule de la voiture
+              <input type="text" value={form.matriculation} onChange={set('matriculation')} />
+            </label>
+            <label>Date de début *
+              <input type="date" min={today} value={form.start} onChange={set('start')} />
+            </label>
+            <label>Date de fin *
+              <input type="date" min={form.start || today} value={form.end} onChange={set('end')} />
+            </label>
+          </div>
+          <div className="admin-resa-actions">
+            <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_RESA) }}>Annuler</button>
+            <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
+              {busy ? 'Enregistrement…' : 'Enregistrer la réservation'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -256,9 +305,29 @@ function CarForm({ initial, onSaved, onCancel }) {
       </div>
 
       <div className="admin-grid">
-        <label>Nom *
+        <label>Nom du modèle *
           <input type="text" value={car.name} onChange={e => set('name', e.target.value)} required />
+          <small className="admin-hint">Même nom = fusionné en une seule carte sur le site</small>
         </label>
+        <label>Immatriculation
+          <input type="text" value={car.immatriculation || ''} onChange={e => set('immatriculation', e.target.value)} placeholder="ex: 12345-A-6" />
+        </label>
+        <div className="admin-color-field">
+          <span>Couleur</span>
+          <div className="admin-colors">
+            {carColors.map(c => (
+              <button
+                type="button"
+                key={c.hex}
+                className={`admin-color-dot ${car.color === c.hex ? 'active' : ''}`}
+                style={{ background: c.hex }}
+                title={c.name}
+                onClick={() => set('color', car.color === c.hex ? '' : c.hex)}
+              />
+            ))}
+            {car.color && <span className="admin-color-name">{colorName(car.color)}</span>}
+          </div>
+        </div>
         <div className="admin-cats-field">
           <span>Catégories <small className="admin-hint">(cochez une ou plusieurs)</small></span>
           <div className="admin-cats-pick">
@@ -328,6 +397,13 @@ function Dashboard({ onLogout }) {
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(null) // car object or 'new' or null
+  const [query, setQuery] = useState('')        // search by name / immatriculation
+
+  const q = query.trim().toLowerCase()
+  const visible = cars
+    .filter(c => !q || c.name?.toLowerCase().includes(q) || c.immatriculation?.toLowerCase().includes(q))
+    .sort((a, b) => a.name.localeCompare(b.name)) // cluster units of the same model
+  const modelCount = new Set(cars.map(c => c.name.trim().toLowerCase())).size
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -352,7 +428,7 @@ function Dashboard({ onLogout }) {
           <Logo size={42} animated={false} />
           <div>
             <h1>Gestion de la flotte</h1>
-            <p className="admin-muted">{cars.length} véhicule{cars.length > 1 ? 's' : ''}</p>
+            <p className="admin-muted">{modelCount} modèle{modelCount > 1 ? 's' : ''} · {cars.length} unité{cars.length > 1 ? 's' : ''}</p>
           </div>
         </div>
         <div className="admin-header__actions">
@@ -374,13 +450,26 @@ function Dashboard({ onLogout }) {
         </div>
       )}
 
+      {!loading && cars.length > 0 && (
+        <div className="admin-toolbar">
+          <input
+            type="search" className="admin-search"
+            placeholder="🔎 Rechercher par modèle ou immatriculation…"
+            value={query} onChange={e => setQuery(e.target.value)}
+          />
+          {q && <span className="admin-muted">{visible.length} résultat{visible.length > 1 ? 's' : ''}</span>}
+        </div>
+      )}
+
       {loading ? (
         <p className="admin-muted admin-pad">Chargement…</p>
       ) : cars.length === 0 ? (
         <p className="admin-muted admin-pad">Aucune voiture. Cliquez sur « Ajouter ».</p>
+      ) : visible.length === 0 ? (
+        <p className="admin-muted admin-pad">Aucun véhicule ne correspond à « {query} ».</p>
       ) : (
         <div className="admin-cars">
-          {cars.map(car => (
+          {visible.map(car => (
             <div key={car.id} className="admin-car">
               <div className="admin-car__photo">
                 {car.photo ? <img src={car.photo} alt={car.name} /> : <span>—</span>}
@@ -389,15 +478,19 @@ function Dashboard({ onLogout }) {
                 <div className="admin-car__top">
                   <div>
                     <h3>{car.name}</h3>
-                    <span className="admin-tag">{car.category}</span>
-                    <span className="admin-price">{car.price} {car.currency}/j</span>
+                    <div className="admin-car__meta">
+                      <span className="admin-tag">{car.category}</span>
+                      {car.color && <span className="admin-dot" style={{ background: car.color }} title={colorName(car.color)} />}
+                      {car.immatriculation && <span className="admin-plate">{car.immatriculation}</span>}
+                      <span className="admin-price">{car.price} {car.currency}/j</span>
+                    </div>
                   </div>
                   <div className="admin-car__btns">
                     <button className="admin-btn admin-btn--sm" onClick={() => setEditing(car)}>Modifier</button>
                     <button className="admin-btn admin-btn--sm admin-btn--danger" onClick={() => remove(car)}>Supprimer</button>
                   </div>
                 </div>
-                <PeriodsManager car={car} onChange={load} />
+                <ReservationManager car={car} onChange={load} />
               </div>
             </div>
           ))}

@@ -194,6 +194,24 @@ export const moroccanCities = [
   'Youssoufia', 'Zagora',
 ]
 
+// Palette for the per-unit colour swatch picker (admin) and the
+// colour icons shown on the merged public cards.
+export const carColors = [
+  { name: 'Blanc',  hex: '#f3f4f6' },
+  { name: 'Noir',   hex: '#1a1a1a' },
+  { name: 'Gris',   hex: '#9ca3af' },
+  { name: 'Argent', hex: '#cbd5e1' },
+  { name: 'Rouge',  hex: '#dc2626' },
+  { name: 'Bleu',   hex: '#2563eb' },
+  { name: 'Vert',   hex: '#16a34a' },
+  { name: 'Jaune',  hex: '#eab308' },
+  { name: 'Orange', hex: '#ea580c' },
+  { name: 'Marron', hex: '#78350f' },
+  { name: 'Beige',  hex: '#e7d8b1' },
+]
+
+export const colorName = (hex) => carColors.find(c => c.hex === hex)?.name ?? hex
+
 export const filterOptions = [
   { value: 'all', label: 'Tous' },
   { value: 'economique', label: 'Économique' },

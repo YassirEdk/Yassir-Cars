@@ -27,12 +27,18 @@ function fromRow(row) {
     badgeColor: row.badge_color,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
-    // Date ranges this car is blocked, e.g. [{ start: '2026-06-10', end: '2026-06-15' }]
+    color: row.color,
+    immatriculation: row.immatriculation,
+    // Reservations that block this car (date range + client details).
     unavailable: (row.unavailable_periods ?? []).map(p => ({
       id: p.id,
       start: p.start_date,
       end: p.end_date,
       note: p.note,
+      clientName: p.client_name,
+      cin: p.cin,
+      tel: p.tel,
+      matriculation: p.matriculation,
     })),
   }
 }
@@ -92,7 +98,34 @@ function toRow(car) {
     badge: car.badge || null,
     badge_color: badgeColorFor(car.badge),
     sort_order: Number(car.sortOrder) || 0,
+    color: car.color || null,
+    immatriculation: car.immatriculation || null,
   }
+}
+
+// The public site treats each row as a physical unit. Merge units that share
+// the same model name into a single card. The merged card keeps the first
+// unit's display info, plus `units` (all rows) and `colors` (distinct colours).
+export function mergeByModel(cars) {
+  const map = new Map()
+  for (const car of cars) {
+    const key = car.name.trim().toLowerCase()
+    if (!map.has(key)) {
+      map.set(key, { ...car, units: [car], colors: car.color ? [car.color] : [] })
+    } else {
+      const m = map.get(key)
+      m.units.push(car)
+      if (car.color && !m.colors.includes(car.color)) m.colors.push(car.color)
+      if (car.price < m.price) m.price = car.price // show the lowest price
+    }
+  }
+  return [...map.values()]
+}
+
+// A merged model is available for the dates if ANY of its units is free.
+export function isModelAvailable(model, depart, retour) {
+  const units = model.units ?? [model]
+  return units.some(u => isCarAvailable(u, depart, retour))
 }
 
 // ── Public read ─────────────────────────────────────────────────────────────
@@ -166,14 +199,26 @@ export async function deleteCar(id) {
 }
 
 // ── Admin: blocked date ranges ──────────────────────────────────────────────
-export async function addUnavailablePeriod(carId, start, end, note = null) {
+// Creates a reservation: blocks the car for [start, end] and records the client.
+export async function addReservation(carId, r) {
   const { data, error } = await supabase
     .from('unavailable_periods')
-    .insert({ car_id: carId, start_date: start, end_date: end, note })
+    .insert({
+      car_id: carId,
+      start_date: r.start,
+      end_date: r.end,
+      client_name: r.clientName || null,
+      cin: r.cin || null,
+      tel: r.tel || null,
+      matriculation: r.matriculation || null,
+    })
     .select()
     .single()
   if (error) throw error
-  return { id: data.id, start: data.start_date, end: data.end_date, note: data.note }
+  return {
+    id: data.id, start: data.start_date, end: data.end_date,
+    clientName: data.client_name, cin: data.cin, tel: data.tel, matriculation: data.matriculation,
+  }
 }
 
 export async function deletePeriod(periodId) {

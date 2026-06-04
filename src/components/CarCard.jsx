@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { effectiveBadge } from '../lib/cars'
+import { colorName } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import AvailabilityModal from './AvailabilityModal'
 
@@ -11,8 +12,15 @@ export default function CarCard({ car, cta = 'availability' }) {
   const [photoFailed, setPhotoFailed] = useState(false)
   const [showAvail, setShowAvail] = useState(false)
 
-  // Photo gallery: cycle through all photos with the arrows.
-  const gallery = car.photos?.length ? car.photos : (car.photo ? [car.photo] : [])
+  // A merged card carries every physical unit; picking a colour selects the
+  // unit, and the whole card (photos, price, specs) follows that unit.
+  const units = car.units ?? [car]
+  const colors = car.colors ?? (car.color ? [car.color] : [])
+  const [selColor, setSelColor] = useState(colors[0] ?? null)
+  const active = units.find(u => u.color === selColor) ?? car
+
+  // Photo gallery of the selected unit.
+  const gallery = active.photos?.length ? active.photos : (active.photo ? [active.photo] : [])
   const [idx, setIdx] = useState(0)
   const activePhoto = gallery[idx]
   const go = (dir) => (e) => {
@@ -21,18 +29,23 @@ export default function CarCard({ car, cta = 'availability' }) {
     setIdx(i => Math.min(gallery.length - 1, Math.max(0, i + dir)))
   }
 
-  const badge = effectiveBadge(car)
+  const pickColor = (hex) => (e) => {
+    e.preventDefault(); e.stopPropagation()
+    setSelColor(hex); setIdx(0); setPhotoFailed(false)
+  }
+
+  const badge = effectiveBadge(active)
   const badgeClass = {
     red: 'car-badge',
     blue: 'car-badge badge-blue',
     gold: 'car-badge badge-gold',
-  }[car.badgeColor] ?? 'car-badge'
+  }[active.badgeColor] ?? 'car-badge'
 
   return (
     <div className="car-card" ref={ref}>
       {badge && <span className={badgeClass}>{badge}</span>}
 
-      <div className="car-img-wrap" style={{ background: activePhoto && !photoFailed ? '#f4f5f7' : car.brandColor }}>
+      <div className="car-img-wrap" style={{ background: activePhoto && !photoFailed ? '#f4f5f7' : active.brandColor }}>
         {activePhoto && !photoFailed ? (
           <img
             key={activePhoto}
@@ -42,12 +55,12 @@ export default function CarCard({ car, cta = 'availability' }) {
             loading="lazy"
             onError={() => setPhotoFailed(true)}
           />
-        ) : car.brandLogo && !logoFailed ? (
+        ) : active.brandLogo && !logoFailed ? (
           <img
-            src={car.brandLogo}
+            src={active.brandLogo}
             alt={car.name}
             className="car-brand-logo"
-            style={car.whiteFilter ? { filter: 'brightness(0) invert(1)' } : {}}
+            style={active.whiteFilter ? { filter: 'brightness(0) invert(1)' } : {}}
             loading="lazy"
             onError={() => setLogoFailed(true)}
           />
@@ -75,19 +88,37 @@ export default function CarCard({ car, cta = 'availability' }) {
           <h3>{car.name}</h3>
           <span className="car-category">{car.category.charAt(0).toUpperCase() + car.category.slice(1)}</span>
         </div>
+
+        {colors.length > 0 && (
+          <div className="car-colors">
+            {colors.map(hex => (
+              <button
+                type="button"
+                key={hex}
+                className={`car-color-dot ${hex === selColor ? 'active' : ''}`}
+                style={{ background: hex }}
+                title={colorName(hex)}
+                onClick={pickColor(hex)}
+                aria-label={`Couleur ${colorName(hex)}`}
+              />
+            ))}
+            {selColor && <span className="car-colors__label">{colorName(selColor)}</span>}
+          </div>
+        )}
+
         <div className="car-specs">
-          <span>⛽ {car.fuel}</span>
-          <span>⚙️ {car.transmission}</span>
-          <span>👥 {car.seats} places</span>
-          <span>❄️ {car.extra}</span>
+          <span>⛽ {active.fuel}</span>
+          <span>⚙️ {active.transmission}</span>
+          <span>👥 {active.seats} places</span>
+          <span>❄️ {active.extra}</span>
         </div>
         <div className="car-footer">
           <div className="car-price">
             <span className="price-old-row">
-              <s className="price-old">{car.price.toLocaleString('fr-FR')} {car.currency}</s>
+              <s className="price-old">{active.price.toLocaleString('fr-FR')} {active.currency}</s>
               <span className="price-discount">-30%</span>
             </span>
-            <span className="price">{Math.round(car.price * 0.7).toLocaleString('fr-FR')} <small>{car.currency}</small></span>
+            <span className="price">{Math.round(active.price * 0.7).toLocaleString('fr-FR')} <small>{active.currency}</small></span>
             <span className="price-period">/ jour</span>
           </div>
           {cta === 'reserve' ? (
@@ -100,7 +131,7 @@ export default function CarCard({ car, cta = 'availability' }) {
         </div>
       </div>
 
-      {cta !== 'reserve' && showAvail && <AvailabilityModal car={car} onClose={() => setShowAvail(false)} />}
+      {cta !== 'reserve' && showAvail && <AvailabilityModal car={active} onClose={() => setShowAvail(false)} />}
     </div>
   )
 }
