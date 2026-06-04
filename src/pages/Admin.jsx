@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
   fetchCars, createCar, updateCar, deleteCar,
-  uploadCarPhoto, addUnavailablePeriod, deletePeriod,
+  uploadCarPhotos, addUnavailablePeriod, deletePeriod,
 } from '../lib/cars'
 import './admin.css'
 
@@ -17,7 +17,7 @@ const CATEGORIES = [
   { value: 'utilitaire', label: 'Utilitaire' },
 ]
 const EMPTY_CAR = {
-  name: '', category: 'economique', categories: ['economique'], photo: '',
+  name: '', category: 'economique', categories: ['economique'], photo: '', photos: [],
   brandLogo: '', brandColor: '#1a1a1a', whiteFilter: false,
   price: 250, currency: 'MAD', fuel: 'Diesel', transmission: 'Manuel',
   seats: 5, extra: 'Clim', badge: '', sortOrder: 0,
@@ -115,6 +115,8 @@ function CarForm({ initial, onSaved, onCancel }) {
   const [car, setCar] = useState(initial)
   const [uploading, setUploading] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [dragOver, setDragOver] = useState(false)   // file drop highlight
+  const dragIndex = useRef(null)                     // thumbnail being reordered
   const set = (k, v) => setCar(c => ({ ...c, [k]: v }))
 
   // Toggle a category on/off. `category` (main label) stays in sync with the
@@ -127,14 +129,59 @@ function CarForm({ initial, onSaved, onCancel }) {
     return { ...c, categories: next, category: next[0] ?? '' }
   })
 
-  const handlePhoto = async (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  // Upload one or more files → append their URLs to the gallery.
+  const uploadFiles = async (files) => {
+    const imgs = files.filter(f => f.type.startsWith('image/'))
+    if (!imgs.length) return
     setUploading(true)
-    try { set('photo', await uploadCarPhoto(file)) }
-    catch (err) { alert('Échec de l’upload : ' + err.message) }
+    try {
+      const urls = await uploadCarPhotos(imgs)
+      setCar(c => {
+        const photos = [...(c.photos ?? []), ...urls]
+        return { ...c, photos, photo: photos[0] }
+      })
+    } catch (err) { alert('Échec de l’upload : ' + err.message) }
     setUploading(false)
   }
+
+  const handlePhotos = (e) => {
+    uploadFiles(Array.from(e.target.files ?? []))
+    e.target.value = '' // allow re-selecting the same file(s)
+  }
+
+  // Drop image files from the computer onto the photos area.
+  const handleDrop = (e) => {
+    if (!e.dataTransfer.files?.length) return
+    e.preventDefault()
+    setDragOver(false)
+    uploadFiles(Array.from(e.dataTransfer.files))
+  }
+
+  // Reorder thumbnails by dragging one onto another (index 0 = cover).
+  const reorder = (from, to) => setCar(c => {
+    const photos = [...(c.photos ?? [])]
+    const [moved] = photos.splice(from, 1)
+    photos.splice(to, 0, moved)
+    return { ...c, photos, photo: photos[0] }
+  })
+
+  const removePhoto = (i) => setCar(c => {
+    const photos = (c.photos ?? []).filter((_, idx) => idx !== i)
+    return { ...c, photos, photo: photos[0] || '' }
+  })
+
+  // Promote a photo to first position (= the cover shown on cards).
+  const makeCover = (i) => setCar(c => {
+    const photos = [...(c.photos ?? [])]
+    const [pic] = photos.splice(i, 1)
+    photos.unshift(pic)
+    return { ...c, photos, photo: photos[0] }
+  })
+
+  const addPhotoUrl = (url) => setCar(c => {
+    const photos = [...(c.photos ?? []), url]
+    return { ...c, photos, photo: photos[0] }
+  })
 
   const save = async (e) => {
     e.preventDefault()
@@ -151,24 +198,61 @@ function CarForm({ initial, onSaved, onCancel }) {
 
   return (
     <form className="admin-form" onSubmit={save}>
-      <h3>{car.id ? '✏️ Modifier' : '➕ Nouvelle voiture'}</h3>
+      <div className="admin-form__head">
+        <h3>{car.id ? '✏️ Modifier la voiture' : '➕ Nouvelle voiture'}</h3>
+        <p className="admin-muted">Renseignez les informations et ajoutez des photos.</p>
+      </div>
 
-      <div className="admin-photo-row">
-        <div className="admin-photo-preview">
-          {car.photo
-            ? <img src={car.photo} alt="" />
-            : <span>Pas de photo</span>}
-        </div>
-        <div>
-          <label className="admin-upload-btn">
-            {uploading ? 'Envoi…' : '📷 Choisir une photo'}
-            <input type="file" accept="image/*" onChange={handlePhoto} hidden disabled={uploading} />
+      <div className="admin-section">
+        <span className="admin-section__label">
+          Photos <small className="admin-hint">(glissez-déposez des images · 1ʳᵉ = couverture · réorganisez en glissant)</small>
+        </span>
+        <div
+          className={`admin-photos ${dragOver ? 'drag-over' : ''}`}
+          onDragOver={e => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragOver(true) } }}
+          onDragLeave={e => { if (e.currentTarget === e.target) setDragOver(false) }}
+          onDrop={handleDrop}
+        >
+          {(car.photos ?? []).map((url, i) => (
+            <div
+              className={`admin-thumb ${i === 0 ? 'admin-thumb--cover' : ''}`}
+              key={url + i}
+              draggable
+              onDragStart={() => { dragIndex.current = i }}
+              onDragOver={e => e.preventDefault()}
+              onDrop={(e) => {
+                e.stopPropagation()
+                const from = dragIndex.current
+                if (from !== null && from !== i) reorder(from, i)
+                dragIndex.current = null
+              }}
+            >
+              <img src={url} alt="" />
+              {i === 0 && <span className="admin-thumb__badge">Couverture</span>}
+              <div className="admin-thumb__actions">
+                {i !== 0 && (
+                  <button type="button" title="Définir comme couverture" onClick={() => makeCover(i)}>★</button>
+                )}
+                <button type="button" title="Supprimer" onClick={() => removePhoto(i)}>✕</button>
+              </div>
+            </div>
+          ))}
+          <label className="admin-thumb admin-thumb--add">
+            <span>{uploading ? '⏳ Envoi…' : '＋ Ajouter'}</span>
+            <input type="file" accept="image/*" multiple hidden onChange={handlePhotos} disabled={uploading} />
           </label>
-          <input
-            type="text" placeholder="…ou collez une URL d’image" value={car.photo || ''}
-            onChange={e => set('photo', e.target.value)} className="admin-photo-url"
-          />
         </div>
+        <input
+          type="text" className="admin-photo-url"
+          placeholder="…ou collez une URL d’image puis Entrée"
+          onKeyDown={e => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              const v = e.target.value.trim()
+              if (v) { addPhotoUrl(v); e.target.value = '' }
+            }
+          }}
+        />
       </div>
 
       <div className="admin-grid">

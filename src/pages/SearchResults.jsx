@@ -130,16 +130,26 @@ function PhoneModal({ car, onClose }) {
 function ResultCard({ car, days, available, onCall }) {
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
+  const gallery = car.photos?.length ? car.photos : (car.photo ? [car.photo] : [])
+  const [activePhoto, setActivePhoto] = useState(gallery[0] || car.photo)
+  const curIdx = Math.max(0, gallery.indexOf(activePhoto))
+  const goPhoto = (dir) => (e) => {
+    e.preventDefault(); e.stopPropagation()
+    const next = Math.min(gallery.length - 1, Math.max(0, curIdx + dir))
+    setActivePhoto(gallery[next])
+    setPhotoFailed(false)
+  }
   const promoPrice = Math.round(car.price * 0.7) // -30%
   const total = promoPrice * days
   const oldTotal = car.price * days
 
   return (
     <div className={`result-card ${available ? '' : 'result-card--unavailable'}`}>
-      <div className="result-card__img" style={{ background: car.photo && !photoFailed ? '#fff' : car.brandColor }}>
-        {car.photo && !photoFailed ? (
+      <div className="result-card__img" style={{ background: activePhoto && !photoFailed ? '#fff' : car.brandColor }}>
+        {activePhoto && !photoFailed ? (
           <img
-            src={car.photo}
+            key={activePhoto}
+            src={activePhoto}
             alt={car.name}
             className="result-photo"
             loading="lazy"
@@ -163,6 +173,33 @@ function ResultCard({ car, days, available, onCall }) {
         <span className={`avail-tag ${available ? 'avail-tag--ok' : 'avail-tag--no'}`}>
           {available ? '✅ Disponible' : '❌ Non disponible'}
         </span>
+
+        {gallery.length > 1 && (
+          <>
+            {curIdx > 0 && (
+              <button type="button" className="gallery-nav gallery-nav--prev" onClick={goPhoto(-1)} aria-label="Photo précédente">‹</button>
+            )}
+            {curIdx < gallery.length - 1 && (
+              <button type="button" className="gallery-nav gallery-nav--next" onClick={goPhoto(1)} aria-label="Photo suivante">›</button>
+            )}
+          </>
+        )}
+
+        {gallery.length > 1 && (
+          <div className="result-thumbs">
+            {gallery.slice(0, 5).map((url) => (
+              <button
+                key={url}
+                type="button"
+                className={`result-thumb ${url === activePhoto ? 'active' : ''}`}
+                onMouseEnter={() => { setActivePhoto(url); setPhotoFailed(false) }}
+                onClick={() => { setActivePhoto(url); setPhotoFailed(false) }}
+              >
+                <img src={url} alt="" loading="lazy" />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="result-card__body">

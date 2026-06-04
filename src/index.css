@@ -377,10 +377,41 @@ ul { list-style: none; }
   width: 100%; height: 100%;
   object-fit: cover;
   object-position: center;
+  /* Resting zoom so the image always overflows the box edges a touch —
+     hides the thin background sliver that showed when scaling back to 1. */
+  transform: scale(1.04);
   transition: transform .5s cubic-bezier(.34,1.56,.64,1);
   display: block;
+  animation: carPhotoIn .4s ease;
 }
-.car-card:hover .car-photo { transform: scale(1.06); }
+.car-card:hover .car-photo { transform: scale(1.09); }
+@keyframes carPhotoIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ===== Photo gallery arrows + dots (cards & results) ===== */
+.gallery-nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 34px; height: 34px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(0,0,0,.45); color: #fff; font-size: 22px; line-height: 1; font-weight: 700;
+  display: grid; place-items: center; z-index: 4;
+  transition: background .2s, opacity .2s;
+}
+.gallery-nav:hover { background: rgba(0,0,0,.78); }
+.gallery-nav--prev { left: 8px; }
+.gallery-nav--next { right: 8px; }
+.gallery-dots {
+  position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 5px; z-index: 4;
+}
+.gallery-dots span { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.5); transition: background .2s; }
+.gallery-dots span.active { background: #fff; }
+
+/* On the flotte/home cards: reveal arrows on hover (always visible on touch) */
+.car-img-wrap .gallery-nav { opacity: 0; }
+.car-img-wrap:hover .gallery-nav { opacity: 1; }
+@media (hover: none) { .car-img-wrap .gallery-nav { opacity: .9; } }
 .car-brand-initial {
   font-size: 72px; font-weight: 900; color: rgba(255,255,255,.6);
   font-family: 'Playfair Display', serif;
@@ -552,6 +583,19 @@ ul { list-style: none; }
   transition: filter .3s ease;
 }
 .result-card:hover .result-card__img { filter: brightness(1.1); }
+
+/* Photo gallery thumbnails on a result card */
+.result-thumbs {
+  position: absolute; bottom: 12px; right: 12px; display: flex; gap: 6px; z-index: 3;
+}
+.result-thumb {
+  width: 44px; height: 34px; padding: 0; border: 2px solid rgba(255,255,255,.7);
+  border-radius: 7px; overflow: hidden; cursor: pointer; background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25); transition: border-color .15s, transform .15s;
+}
+.result-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.result-thumb:hover { transform: translateY(-2px); }
+.result-thumb.active { border-color: var(--red); }
 .result-brand-logo {
   max-width: 55%; max-height: 50%;
   object-fit: contain;
@@ -566,8 +610,13 @@ ul { list-style: none; }
   object-position: center;
   transition: transform .5s cubic-bezier(.34,1.56,.64,1);
   display: block;
+  animation: resultPhotoIn .4s ease;
 }
 .result-card:hover .result-photo { transform: scale(1.05); }
+@keyframes resultPhotoIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 .result-brand-initial {
   font-size: 80px; font-weight: 900;
   color: rgba(255,255,255,.5);

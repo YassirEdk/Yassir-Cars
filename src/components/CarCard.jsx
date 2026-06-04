@@ -11,6 +11,16 @@ export default function CarCard({ car, cta = 'availability' }) {
   const [photoFailed, setPhotoFailed] = useState(false)
   const [showAvail, setShowAvail] = useState(false)
 
+  // Photo gallery: cycle through all photos with the arrows.
+  const gallery = car.photos?.length ? car.photos : (car.photo ? [car.photo] : [])
+  const [idx, setIdx] = useState(0)
+  const activePhoto = gallery[idx]
+  const go = (dir) => (e) => {
+    e.preventDefault(); e.stopPropagation()
+    setPhotoFailed(false)
+    setIdx(i => Math.min(gallery.length - 1, Math.max(0, i + dir)))
+  }
+
   const badge = effectiveBadge(car)
   const badgeClass = {
     red: 'car-badge',
@@ -22,10 +32,11 @@ export default function CarCard({ car, cta = 'availability' }) {
     <div className="car-card" ref={ref}>
       {badge && <span className={badgeClass}>{badge}</span>}
 
-      <div className="car-img-wrap" style={{ background: car.photo && !photoFailed ? '#f4f5f7' : car.brandColor }}>
-        {car.photo && !photoFailed ? (
+      <div className="car-img-wrap" style={{ background: activePhoto && !photoFailed ? '#f4f5f7' : car.brandColor }}>
+        {activePhoto && !photoFailed ? (
           <img
-            src={car.photo}
+            key={activePhoto}
+            src={activePhoto}
             alt={car.name}
             className="car-photo"
             loading="lazy"
@@ -42,6 +53,20 @@ export default function CarCard({ car, cta = 'availability' }) {
           />
         ) : (
           <span className="car-brand-initial">{car.name.split(' ')[0]}</span>
+        )}
+
+        {gallery.length > 1 && (
+          <>
+            {idx > 0 && (
+              <button type="button" className="gallery-nav gallery-nav--prev" onClick={go(-1)} aria-label="Photo précédente">‹</button>
+            )}
+            {idx < gallery.length - 1 && (
+              <button type="button" className="gallery-nav gallery-nav--next" onClick={go(1)} aria-label="Photo suivante">›</button>
+            )}
+            <div className="gallery-dots">
+              {gallery.map((_, i) => <span key={i} className={i === idx ? 'active' : ''} />)}
+            </div>
+          </>
         )}
       </div>
 

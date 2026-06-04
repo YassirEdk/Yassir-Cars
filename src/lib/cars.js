@@ -12,6 +12,8 @@ function fromRow(row) {
     // admin checkboxes and carInCategory both have a consistent shape.
     categories: row.categories ?? [row.category],
     photo: row.photo,
+    // Gallery: full list of photos (falls back to the single cover photo).
+    photos: row.photos?.length ? row.photos : (row.photo ? [row.photo] : []),
     brandLogo: row.brand_logo,
     brandColor: row.brand_color,
     whiteFilter: row.white_filter,
@@ -69,11 +71,15 @@ function toRow(car) {
   // when there's more than one.
   const cats = (car.categories ?? []).filter(Boolean)
   const finalCats = cats.length ? cats : ['economique']
+  // First photo in the gallery is the cover used on the cards.
+  const photos = (car.photos ?? []).filter(Boolean)
+  const cover = photos[0] || car.photo || null
   return {
     name: car.name,
     category: finalCats[0],
     categories: finalCats.length > 1 ? finalCats : null,
-    photo: car.photo || null,
+    photo: cover,
+    photos: photos.length ? photos : (cover ? [cover] : null),
     brand_logo: car.brandLogo || null,
     brand_color: car.brandColor || '#1a1a1a',
     white_filter: !!car.whiteFilter,
@@ -132,6 +138,13 @@ export async function uploadCarPhoto(file) {
   if (error) throw error
   const { data } = supabase.storage.from('car-photos').getPublicUrl(path)
   return data.publicUrl
+}
+
+// Uploads several files and returns their public URLs (in order).
+export async function uploadCarPhotos(files) {
+  const urls = []
+  for (const file of files) urls.push(await uploadCarPhoto(file))
+  return urls
 }
 
 // ── Admin: CRUD ─────────────────────────────────────────────────────────────
