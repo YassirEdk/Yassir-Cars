@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import Icon from './Icon'
 import './citywheel.css'
 
 const ITEM_H = 46          // px height of each row
@@ -80,7 +81,7 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
         >
           <div className="citywheel-sheet">
             <div className="citywheel-sheet__head">
-              <h3>📍 Choisissez une ville</h3>
+              <h3><Icon name="pin" /> Choisissez une ville</h3>
               <button type="button" className="citywheel-sheet__close" onClick={() => setOpen(false)} aria-label="Fermer">✕</button>
             </div>
 

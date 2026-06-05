@@ -1,12 +1,13 @@
 import { useState } from 'react'
+import Icon from './Icon'
 
 const subjects = ['Demande de réservation', 'Renseignement sur la flotte', 'Tarifs entreprise', 'Réclamation', 'Autre']
 
 const contactItems = [
-  { icon: '📍', title: 'Siège social', lines: ['123 Boulevard Mohammed V', 'Casablanca 20000, Maroc'] },
-  { icon: '📞', title: 'Téléphone', lines: ['+212 522 000 000', '+212 661 000 000 (WhatsApp)'] },
-  { icon: '✉️', title: 'Email', lines: ['contact@yassir-cars.ma', 'reservation@yassir-cars.ma'] },
-  { icon: '⏰', title: "Horaires d'ouverture", lines: ['Lun – Sam : 8h00 – 20h00', 'Dimanche : 9h00 – 18h00'] },
+  { icon: 'pin', title: 'Siège social', lines: ['123 Boulevard Mohammed V', 'Casablanca 20000, Maroc'] },
+  { icon: 'phone', title: 'Téléphone', lines: ['+212 522 000 000', '+212 661 000 000 (WhatsApp)'] },
+  { icon: 'mail', title: 'Email', lines: ['contact@yassir-cars.ma', 'reservation@yassir-cars.ma'] },
+  { icon: 'clock', title: "Horaires d'ouverture", lines: ['Lun – Sam : 8h00 – 20h00', 'Dimanche : 9h00 – 18h00'] },
 ]
 
 export default function Contact({ onSubmit }) {
@@ -16,7 +17,7 @@ export default function Contact({ onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    onSubmit('Message envoyé ! Nous vous répondrons dans les 24h. ✅')
+    onSubmit('Message envoyé ! Nous vous répondrons dans les 24h.')
     setForm({ prenom: '', nom: '', email: '', tel: '', sujet: subjects[0], message: '' })
   }
 
@@ -33,7 +34,7 @@ export default function Contact({ onSubmit }) {
           <div className="contact-info">
             {contactItems.map(item => (
               <div className="contact-item" key={item.title}>
-                <div className="contact-icon">{item.icon}</div>
+                <div className="contact-icon"><Icon name={item.icon} /></div>
                 <div>
                   <strong>{item.title}</strong>
                   {item.lines.map(l => <p key={l}>{l}</p>)}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DatePicker from './DatePicker'
 import CityWheel from './CityWheel'
+import Icon from './Icon'
 import { moroccanCities, MIN_RENTAL_DAYS, addDays } from '../data'
 
 const HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1800&q=80'
@@ -129,7 +130,7 @@ export default function Hero() {
             <div className="form-row">
 
               <div className="form-group">
-                <label>📍 Lieu de prise en charge</label>
+                <label><Icon name="pin" /> Lieu de prise en charge</label>
                 <CityWheel
                   value={form.lieu}
                   onChange={(city) => {
@@ -139,11 +140,11 @@ export default function Hero() {
                   cities={moroccanCities}
                   error={!!errors.lieu}
                 />
-                {errors.lieu && <span className="field-error">⚠ {errors.lieu}</span>}
+                {errors.lieu && <span className="field-error">Attention: {errors.lieu}</span>}
               </div>
 
               <div className="form-group">
-                <label>📅 Date de début</label>
+                <label><Icon name="calendar" /> Date de début</label>
                 <DatePicker
                   value={form.depart}
                   onChange={(iso) => {
@@ -154,11 +155,11 @@ export default function Hero() {
                   placeholder="Choisir une date"
                   className={errors.depart ? 'input-error' : ''}
                 />
-                {errors.depart && <span className="field-error">⚠ {errors.depart}</span>}
+                {errors.depart && <span className="field-error">Attention: {errors.depart}</span>}
               </div>
 
               <div className="form-group">
-                <label>📅 Date de retour</label>
+                <label><Icon name="calendar" /> Date de retour</label>
                 <DatePicker
                   value={form.retour}
                   onChange={(iso) => {
@@ -169,11 +170,11 @@ export default function Hero() {
                   placeholder="Choisir une date"
                   className={errors.retour ? 'input-error' : ''}
                 />
-                {errors.retour && <span className="field-error">⚠ {errors.retour}</span>}
+                {errors.retour && <span className="field-error">Attention: {errors.retour}</span>}
               </div>
 
               <div className="form-group">
-                <label>🚘 Catégorie</label>
+                <label><Icon name="car" /> Catégorie</label>
                 <select
                   value={form.categorie}
                   onChange={set('categorie')}

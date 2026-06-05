@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import Icon from './Icon'
 
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -73,7 +74,7 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
         onClick={openCalendar}
         className={`datepicker__input ${className || ''}`}
       />
-      <span className="datepicker__icon" onClick={openCalendar}>📅</span>
+      <span className="datepicker__icon" onClick={openCalendar}><Icon name="calendar" /></span>
 
       {open && (
         <div className="datepicker__pop">

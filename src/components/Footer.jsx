@@ -1,4 +1,5 @@
 import Logo from './Logo'
+import Icon from './Icon'
 
 const cols = [
   {
@@ -42,7 +43,7 @@ export default function Footer() {
 
         <div className="footer-bottom">
           <p>© 2026 YASSIR CARS. Tous droits réservés.</p>
-          <p>Conçu avec ❤️ au Maroc</p>
+          <p className="footer-made">Conçu avec <Icon name="heart" /> au Maroc</p>
         </div>
       </div>
     </footer>

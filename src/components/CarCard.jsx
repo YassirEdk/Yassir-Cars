@@ -3,6 +3,7 @@ import { effectiveBadge } from '../lib/cars'
 import { colorName } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import AvailabilityModal from './AvailabilityModal'
+import Icon from './Icon'
 
 // cta: 'availability' (default) shows "Vérifier la disponibilité" + popup,
 //      'reserve' shows the simple "Réserver" link to the booking form.
@@ -107,10 +108,10 @@ export default function CarCard({ car, cta = 'availability' }) {
         )}
 
         <div className="car-specs">
-          <span>⛽ {active.fuel}</span>
-          <span>⚙️ {active.transmission}</span>
-          <span>👥 {active.seats} places</span>
-          <span>❄️ {active.extra}</span>
+          <span><Icon name="fuel" /> {active.fuel}</span>
+          <span><Icon name="gear" /> {active.transmission}</span>
+          <span><Icon name="users" /> {active.seats} places</span>
+          <span><Icon name="snow" /> {active.extra}</span>
         </div>
         <div className="car-footer">
           <div className="car-price">

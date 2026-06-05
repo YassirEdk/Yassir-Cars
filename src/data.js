@@ -121,28 +121,28 @@ export const services = [
     featured: false,
   },
   {
-    icon: '✈️',
+    icon: 'plane',
     title: 'Navette Aéroport',
     description: 'Service de navette depuis et vers les principaux aéroports du Maroc, disponible 24h/24.',
     features: ['Accueil personnalisé', 'Suivi des vols', 'Ponctualité garantie'],
     featured: false,
   },
   {
-    icon: '💼',
+    icon: 'briefcase',
     title: 'Voyage d\'Affaires',
     description: 'Solutions dédiées aux entreprises avec facturation centralisée et flotte premium.',
     features: ['Compte entreprise', 'Facturation mensuelle', 'Véhicules prestige'],
     featured: false,
   },
   {
-    icon: '🚐',
+    icon: 'van',
     title: 'Location de Minibus',
     description: 'Pour vos événements de groupe, séminaires ou excursions touristiques.',
     features: ['Jusqu\'à 20 passagers', 'Avec ou sans chauffeur', 'Climatisation'],
     featured: false,
   },
   {
-    icon: '🛡️',
+    icon: 'shield',
     title: 'Chauffeur Privé',
     description: 'Voyagez en toute sérénité avec nos chauffeurs expérimentés et discrets.',
     features: ['Chauffeurs certifiés', 'Service VIP', 'Disponibilité immédiate'],
@@ -151,10 +151,10 @@ export const services = [
 ]
 
 export const steps = [
-  { number: '01', icon: '🔍', title: 'Choisissez votre véhicule', description: 'Parcourez notre catalogue et sélectionnez le véhicule qui correspond à vos besoins et votre budget.' },
-  { number: '02', icon: '📋', title: 'Faites votre réservation', description: 'Remplissez le formulaire de réservation en ligne ou appelez-nous directement. Confirmation immédiate.' },
-  { number: '03', icon: '🔑', title: 'Récupérez les clés', description: 'Présentez-vous à notre agence avec vos documents. Notre équipe vous remet le véhicule prêt à partir.' },
-  { number: '04', icon: '🛣️', title: 'Profitez de la route', description: 'Partez l\'esprit tranquille. Notre assistance 24h/24 est disponible tout au long de votre trajet.' },
+  { number: '01', icon: 'search', title: 'Choisissez votre véhicule', description: 'Parcourez notre catalogue et sélectionnez le véhicule qui correspond à vos besoins et votre budget.' },
+  { number: '02', icon: 'clipboard', title: 'Faites votre réservation', description: 'Remplissez le formulaire de réservation en ligne ou appelez-nous directement. Confirmation immédiate.' },
+  { number: '03', icon: 'key', title: 'Récupérez les clés', description: 'Présentez-vous à notre agence avec vos documents. Notre équipe vous remet le véhicule prêt à partir.' },
+  { number: '04', icon: 'road', title: 'Profitez de la route', description: 'Partez l\'esprit tranquille. Notre assistance 24h/24 est disponible tout au long de votre trajet.' },
 ]
 
 export const testimonials = [

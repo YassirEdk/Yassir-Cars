@@ -1,7 +1,10 @@
 import { services } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import Icon from './Icon'
 
-function ServiceCard({ service }) {
+const serviceIcons = ['car', 'calendar', 'plane', 'briefcase', 'van', 'shield']
+
+function ServiceCard({ service, index }) {
   const ref = useScrollReveal()
   const cls = service.featured
     ? 'service-card card-featured'
@@ -12,13 +15,13 @@ function ServiceCard({ service }) {
   return (
     <div className={cls} ref={ref}>
       {service.recommended && (
-        <span className="recommended-badge">⭐ Recommandé</span>
+        <span className="recommended-badge"><Icon name="star" /> Recommandé</span>
       )}
-      <span className="service-icon">{service.icon}</span>
+      <span className="service-icon"><Icon name={serviceIcons[index] ?? 'car'} /></span>
       <h3>{service.title}</h3>
       <p>{service.description}</p>
       <ul className="service-list">
-        {service.features.map(f => <li key={f}>✓ {f}</li>)}
+        {service.features.map(f => <li key={f}><Icon name="check" /> {f}</li>)}
       </ul>
       <a href="#reserver" className="service-link">En savoir plus →</a>
     </div>
@@ -37,7 +40,7 @@ export default function Services() {
           </p>
         </div>
         <div className="services-grid">
-          {services.map(s => <ServiceCard key={s.title} service={s} />)}
+          {services.map((s, i) => <ServiceCard key={s.title} service={s} index={i} />)}
         </div>
       </div>
     </section>

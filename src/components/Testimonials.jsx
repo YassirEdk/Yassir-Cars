@@ -1,8 +1,15 @@
 import { testimonials } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import Icon from './Icon'
 
 function Stars({ count }) {
-  return <div className="testimonial-stars">{'★'.repeat(count)}{'☆'.repeat(5 - count)}</div>
+  return (
+    <div className="testimonial-stars">
+      {Array.from({ length: 5 }, (_, i) => (
+        <Icon key={i} name="star" className={i < count ? '' : 'is-empty'} />
+      ))}
+    </div>
+  )
 }
 
 function TestimonialCard({ t }) {

@@ -1,12 +1,13 @@
 import { steps } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import Icon from './Icon'
 
 function StepCard({ step, isLast }) {
   const ref = useScrollReveal()
   return (
     <div className="step-card" ref={ref}>
       <div className="step-number">{step.number}</div>
-      <span className="step-icon">{step.icon}</span>
+      <span className="step-icon"><Icon name={step.icon} /></span>
       <h3>{step.title}</h3>
       <p>{step.description}</p>
       {!isLast && <div className="step-connector" />}

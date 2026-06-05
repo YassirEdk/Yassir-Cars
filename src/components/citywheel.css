@@ -47,7 +47,9 @@
 }
 .citywheel-sheet__head h3 {
   margin: 0; font-size: 1.02rem; font-weight: 700; color: #fff;
+  display: flex; align-items: center; gap: .45rem;
 }
+.citywheel-sheet__head h3 svg { width: 18px; height: 18px; color: #ff8080; flex-shrink: 0; }
 .citywheel-sheet__close {
   width: 32px; height: 32px; flex-shrink: 0;
   display: grid; place-items: center;

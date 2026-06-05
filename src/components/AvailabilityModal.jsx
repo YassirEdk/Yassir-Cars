@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { moroccanCities } from '../data'
+import Icon from './Icon'
 
 /*
   Popup opened from a car card's "Vérifier la disponibilité" button.
@@ -63,24 +64,24 @@ export default function AvailabilityModal({ car, onClose }) {
 
         <form className="avail-modal__form" onSubmit={submit}>
           <div className="form-group">
-            <label>📍 Lieu de prise en charge</label>
+            <label><Icon name="pin" /> Lieu de prise en charge</label>
             <select value={form.lieu} onChange={set('lieu')} className={errors.lieu ? 'avail-err' : ''}>
               <option value="" disabled>Choisissez une ville…</option>
               {moroccanCities.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
-            {errors.lieu && <span className="field-error">⚠ {errors.lieu}</span>}
+            {errors.lieu && <span className="field-error">Attention: {errors.lieu}</span>}
           </div>
 
           <div className="avail-modal__dates">
             <div className="form-group">
-              <label>📅 Date de début</label>
+              <label><Icon name="calendar" /> Date de début</label>
               <input type="date" min={today} value={form.depart} onChange={set('depart')} className={errors.depart ? 'avail-err' : ''} />
-              {errors.depart && <span className="field-error">⚠ {errors.depart}</span>}
+              {errors.depart && <span className="field-error">Attention: {errors.depart}</span>}
             </div>
             <div className="form-group">
-              <label>📅 Date de finr</label>
+              <label><Icon name="calendar" /> Date de fin</label>
               <input type="date" min={form.depart || today} value={form.retour} onChange={set('retour')} className={errors.retour ? 'avail-err' : ''} />
-              {errors.retour && <span className="field-error">⚠ {errors.retour}</span>}
+              {errors.retour && <span className="field-error">Attention: {errors.retour}</span>}
             </div>
           </div>
 
