@@ -230,7 +230,7 @@ function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel
           ) : history ? (
             /* Finished rentals → Excel-style table, one row per rental. */
             <div className="admin-hist-table-wrap">
-              <table className="admin-hist-table">
+              <table className="admin-hist-table admin-hist-table--history">
                 <thead>
                   <tr>
                     <th>Client</th>
@@ -246,7 +246,10 @@ function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel
                 <tbody>
                   {filtered.map(r => (
                     <tr key={r.id} className={r.damaged ? 'admin-hist-table__row--damaged' : ''}>
-                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}</td>
+                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
+                        {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                      </td>
                       <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
@@ -274,7 +277,10 @@ function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel
                 <tbody>
                   {filtered.map(r => (
                     <tr key={r.id}>
-                      <td><strong>{r.clientName || '—'}</strong></td>
+                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
+                        {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                      </td>
                       <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
@@ -613,51 +619,6 @@ function EditDepartureKm({ r, onSaved, onCancel }) {
   )
 }
 
-/* ── Inline edit form for an existing reservation ────────────────────────── */
-function EditResaForm({ r, onSaved, onCancel }) {
-  const [form, setForm] = useState({ clientName: r.clientName || '', cin: r.cin || '', tel: r.tel || '', start: r.start || '', end: r.end || '' })
-  const [busy, setBusy] = useState(false)
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
-
-  const save = async () => {
-    if (!form.clientName.trim()) return showError('Le nom du client est obligatoire.')
-    if (!form.start || !form.end) return showError('Choisissez les dates.')
-    if (form.end < form.start) return showError('La date de fin doit être après le début.')
-    setBusy(true)
-    try { await updateReservation(r.id, form); onSaved() }
-    catch (e) { showError('Erreur : ' + e.message) }
-    setBusy(false)
-  }
-
-  return (
-    <div className="admin-resa-form admin-resa-edit-form">
-      <div className="admin-resa-grid">
-        <label>Nom complet *
-          <input type="text" value={form.clientName} onChange={set('clientName')} autoFocus />
-        </label>
-        <label>CIN
-          <input type="text" value={form.cin} onChange={set('cin')} />
-        </label>
-        <label>Téléphone
-          <input type="tel" value={form.tel} onChange={set('tel')} />
-        </label>
-        <div aria-hidden />
-        <label>Date de début *
-          <input type="date" value={form.start} onChange={set('start')} />
-        </label>
-        <label>Date de fin *
-          <input type="date" min={form.start} value={form.end} onChange={set('end')} />
-        </label>
-      </div>
-      <div className="admin-resa-actions">
-        <button className="admin-btn admin-btn--sm" onClick={onCancel}>Annuler</button>
-        <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
-          {busy ? 'Enregistrement…' : 'Enregistrer'}
-        </button>
-      </div>
-    </div>
-  )
-}
 
 /* ── Reservations panel for one car ───────────────────────────────────────── */
 const EMPTY_RESA = {
@@ -671,23 +632,43 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
   const [open, setOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
-  const [confirming, setConfirming] = useState(null)    // id of the row whose km field is open
-  const [editingId, setEditingId] = useState(null)      // id of the row being edited
+  const [confirming, setConfirming] = useState(null)     // id of the row whose km field is open
+  const [editingR, setEditingR] = useState(null)         // reservation being edited in popup, or null
+  const [editingKmId, setEditingKmId] = useState(null)  // id of ongoing row with km edit open
   const [ongoingError, setOngoingError] = useState(null) // id of the row that triggered the block
-  const [detailR, setDetailR] = useState(null)          // reservation being viewed in detail popup
+  const [detailR, setDetailR] = useState(null)           // reservation being viewed in detail popup
   const [form, setForm] = useState(EMPTY_RESA)
   const [formError, setFormError] = useState(null) // { message, conflict } | null
   const [cinConflict, setCinConflict] = useState(null) // existing name under same CIN, or null
   const [cinChecking, setCinChecking] = useState(false)
   const [damageWarn, setDamageWarn] = useState(false)  // CIN has a past damage record
   const [busy, setBusy] = useState(false)
-  // Editing the CIN or name invalidates any prior CIN check.
+
   const set = (k) => (e) => {
     setFormError(null)
     if (k === 'cin' || k === 'clientName') setCinConflict(null)
     setForm(f => ({ ...f, [k]: e.target.value }))
   }
   const today = new Date().toISOString().split('T')[0]
+
+  const closePopup = () => {
+    setOpen(false); setEditingR(null); setForm(EMPTY_RESA)
+    setFormError(null); setCinConflict(null); setDamageWarn(false)
+  }
+
+  const openEdit = (r) => {
+    setEditingR(r)
+    setForm({
+      clientName: r.clientName || '', cin: r.cin || '', tel: r.tel || '',
+      licenceNumber: r.licenceNumber || '',
+      hasSecondDriver: !!(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence),
+      secondDriverName: r.secondDriverName || '', secondDriverCin: r.secondDriverCin || '',
+      secondDriverLicence: r.secondDriverLicence || '',
+      start: r.start || '', end: r.end || '',
+    })
+    setCinConflict(null); setFormError(null); setDamageWarn(false)
+    setOpen(true)
+  }
 
   // One CIN = one identity. Checked when the admin leaves the CIN field.
   const checkCin = async () => {
@@ -709,25 +690,28 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
       setCinConflict(cinOwner)
       return setFormError({ message: `Ce CIN est déjà enregistré sous le nom de « ${cinOwner} ». Un même CIN ne peut pas avoir deux noms différents.` })
     }
-    // Check overlap with every active reservation (reservee or en_cours).
-    const active = all.filter(r => r.status !== 'terminee')
+    // Overlap check — exclude the reservation being edited so its own dates don't block itself.
+    const active = all.filter(r => r.status !== 'terminee' && (!editingR || r.id !== editingR.id))
     const conflict = active.find(r => r.start < form.end && r.end > form.start)
     if (conflict) return setFormError({ message: null, conflict })
-    // Damage history: warn (but allow override) if this CIN damaged a car before.
-    try {
-      if (await findCinDamage(form.cin)) { setDamageWarn(true); return }
-    } catch { /* network hiccup — don't block on it */ }
+    // Damage warning only for new reservations (client already accepted for edits).
+    if (!editingR) {
+      try {
+        if (await findCinDamage(form.cin)) { setDamageWarn(true); return }
+      } catch { /* network hiccup — don't block on it */ }
+    }
     doSave()
   }
 
-  // The actual insert — called directly, or after the admin overrides the damage warning.
   const doSave = async () => {
     setBusy(true)
     try {
-      // The plate comes from the car itself — no need to type it.
-      await addReservation(car.id, { ...form, matriculation: car.immatriculation || null })
-      setForm(EMPTY_RESA); setOpen(false); setDamageWarn(false)
-      onChange()
+      if (editingR) {
+        await updateReservation(editingR.id, form)
+      } else {
+        await addReservation(car.id, { ...form, matriculation: car.immatriculation || null })
+      }
+      closePopup(); onChange()
     } catch (e) { showError('Erreur : ' + e.message) }
     setBusy(false)
   }
@@ -763,7 +747,7 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
   // Rule: strictly interior dates of every active reservation are blocked.
   // Additionally, if an end date of one reservation equals the start of another, block it too.
   const blockedDates = useMemo(() => {
-    const active = all.filter(r => r.status !== 'terminee')
+    const active = all.filter(r => r.status !== 'terminee' && (!editingR || r.id !== editingR.id))
     const startSet = new Set(active.map(r => r.start))
     const set = new Set()
     for (const r of active) {
@@ -777,7 +761,7 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
       if (startSet.has(r.end)) set.add(r.end)
     }
     return set
-  }, [all])
+  }, [all, editingR])
 
   const reserved = all.filter(r => (r.status ?? 'reservee') === 'reservee').sort(byNearest)
   const ongoing  = all.filter(r => r.status === 'en_cours').sort(byNearest)
@@ -788,7 +772,7 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
       <div className="admin-resa__head">
         <h4>📋 Réservations</h4>
         {!open && (
-          <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => setOpen(true)}>
+          <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => { setEditingR(null); setForm(EMPTY_RESA); setOpen(true) }}>
             ➕ Faire une réservation
           </button>
         )}
@@ -814,7 +798,10 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
               {reserved.slice(0, 3).map(r => (
                 <React.Fragment key={r.id}>
                   <tr className="admin-hist-table__row--clickable">
-                    <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}</td>
+                    <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
+                      {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
+                      {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                    </td>
                     <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                     <td>{r.tel || '—'}</td>
                     <td>{r.cin || '—'}</td>
@@ -840,19 +827,12 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
                           >
                             ✓ Confirmer la réception
                           </button>
-                          <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingId(editingId === r.id ? null : r.id)}>✏ Modifier</button>
+                          <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => openEdit(r)}>✏ Modifier</button>
                           <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
                         </div>
                       )}
                     </td>
                   </tr>
-                  {editingId === r.id && (
-                    <tr key={r.id + '-edit'} className="admin-edit-row">
-                      <td colSpan={5}>
-                        <EditResaForm r={r} onSaved={() => { setEditingId(null); onChange() }} onCancel={() => setEditingId(null)} />
-                      </td>
-                    </tr>
-                  )}
                 </React.Fragment>
               ))}
             </tbody>
@@ -888,11 +868,14 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
                 {ongoing.map(r => (
                   <React.Fragment key={r.id}>
                     <tr className="admin-hist-table__row--clickable">
-                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}</td>
+                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
+                        {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                      </td>
                       <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
-                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
+                      <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
                       <td>
                         {confirming === r.id ? (
                           <KmConfirm
@@ -911,16 +894,16 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
                               <button className="admin-btn admin-btn--sm admin-btn--confirm" onClick={() => setConfirming(r.id)}>
                               ↩ Confirmer le retour
                             </button>
-                            <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingId(editingId === r.id ? null : r.id)}>✏ Modifier</button>
+                            <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingKmId(editingKmId === r.id ? null : r.id)}>✏ Modifier km</button>
                             <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
                           </div>
                         )}
                       </td>
                     </tr>
-                    {editingId === r.id && (
+                    {editingKmId === r.id && (
                       <tr key={r.id + '-edit'} className="admin-edit-row">
                         <td colSpan={6}>
-                          <EditDepartureKm r={r} onSaved={() => { setEditingId(null); onChange() }} onCancel={() => setEditingId(null)} />
+                          <EditDepartureKm r={r} onSaved={() => { setEditingKmId(null); onChange() }} onCancel={() => setEditingKmId(null)} />
                         </td>
                       </tr>
                     )}
@@ -960,11 +943,11 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
       )}
 
       {open && (
-        <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) { setOpen(false); setForm(EMPTY_RESA); setFormError(null); setCinConflict(null); setDamageWarn(false) } }}>
+        <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) closePopup() }}>
           <div className="admin-resa-popup">
             <div className="admin-resa-popup__head">
-              <h3>➕ Nouvelle réservation — {car.name}</h3>
-              <button className="phone-modal__close" onClick={() => { setOpen(false); setForm(EMPTY_RESA); setFormError(null); setCinConflict(null); setDamageWarn(false) }} aria-label="Fermer">✕</button>
+              <h3>{editingR ? `✏️ Modifier la réservation — ${car.name}` : `➕ Nouvelle réservation — ${car.name}`}</h3>
+              <button className="phone-modal__close" onClick={closePopup} aria-label="Fermer">✕</button>
             </div>
             {formError?.message && (
               <div className="admin-resa-popup__error"><p>{formError.message}</p></div>
@@ -1017,9 +1000,9 @@ function ReservationManager({ car, onChange, onKmUpdate }) {
               </label>
             </div>
             <div className="admin-resa-actions">
-              <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_RESA); setFormError(null); setCinConflict(null) }}>Annuler</button>
+              <button className="admin-btn admin-btn--sm" onClick={closePopup}>Annuler</button>
               <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy || cinChecking || !!cinConflict}>
-                {busy ? 'Enregistrement…' : 'Enregistrer la réservation'}
+                {busy ? 'Enregistrement…' : editingR ? 'Enregistrer les modifications' : 'Enregistrer la réservation'}
               </button>
             </div>
           </div>

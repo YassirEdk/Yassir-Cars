@@ -187,7 +187,7 @@
   width: 100%; box-sizing: border-box;
   padding: .5rem 2rem .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .85rem;
 }
-.admin-list-modal__body { overflow-y: auto; }
+.admin-list-modal__body { overflow-y: auto; overscroll-behavior: contain; }
 .admin-list-modal--wide { max-width: 960px; }
 
 /* Rental-history table (Excel-style, one row per rental) */
@@ -235,6 +235,13 @@
   border-radius: 6px; font-size: .75rem; font-weight: 700; color: #0d5fab;
 }
 .admin-hist-table td strong { color: #1e40af; font-weight: 700; }
+.admin-2nd-badge {
+  display: inline-flex; align-items: center; gap: .2rem;
+  margin-left: .45rem; padding: .18rem .5rem;
+  background: #fdf4ff; color: #a21caf; border: 1px solid #f0abfc;
+  border-radius: 999px; font-size: .68rem; font-weight: 700;
+  white-space: nowrap; vertical-align: middle; line-height: 1.3;
+}
 .admin-hist-table__dates { color: #1d4ed8; font-weight: 600; }
 .admin-hist-table__dist  { color: #047857; font-weight: 700; }
 /* Last column holds buttons / KmConfirm — don't compress it */
@@ -509,7 +516,7 @@
 /* Modal + form */
 .admin-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,.5); display: grid; place-items: center;
-  padding: 1.5rem; z-index: 1000; overflow-y: auto;
+  padding: 1.5rem; z-index: 1000; overflow-y: auto; overscroll-behavior: contain;
 }
 .admin-modal__inner { width: 100%; max-width: 640px; }
 .admin-form { background: #fff; border-radius: 18px; padding: 1.8rem; box-shadow: 0 24px 70px rgba(0,0,0,.3); }
@@ -597,4 +604,237 @@
   .admin-car { flex-direction: column; }
   .admin-car__photo { width: 100%; height: 140px; }
   .admin-photos { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+}
+
+/* ── Mobile (≤ 768px) ──────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Header */
+  .admin-header {
+    padding: .85rem 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .75rem;
+  }
+  .admin-header__actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: .45rem;
+  }
+  .admin-header__actions .admin-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: .8rem;
+    padding: .5rem .6rem;
+  }
+
+  /* Toolbar / search bar */
+  .admin-toolbar { padding: 1rem 1rem 0; }
+  .admin-search { max-width: 100%; }
+
+  /* Car list */
+  .admin-cars { padding: .9rem 1rem; gap: .75rem; }
+  .admin-car { flex-direction: column; gap: .75rem; padding: .9rem; }
+  .admin-car__photo { width: 100%; height: 160px; }
+  .admin-car__top { flex-direction: column; gap: .6rem; }
+  .admin-car__btns {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: .4rem;
+  }
+  .admin-car__btns .admin-btn { flex: 1 1 auto; justify-content: center; font-size: .8rem; }
+  .admin-car__damaged-toggle { flex: 1 1 auto; justify-content: center; }
+
+  /* Reservation action buttons inside table cells */
+  .admin-resa-actions-inline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .4rem;
+  }
+  .admin-resa-actions-inline .admin-btn,
+  .admin-resa-actions-inline .admin-link-del {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  /* Table last column (action column) — let it breathe */
+  .admin-hist-table td:last-child { min-width: 180px; }
+
+  /* Modals */
+  .admin-modal { padding: .75rem; }
+  .admin-list-modal { padding: 1rem; border-radius: 12px; max-height: 92vh; }
+  .admin-list-modal--wide { max-width: 100%; }
+  .admin-resa-popup { padding: 1.1rem; border-radius: 12px; }
+  .admin-resa-detail { padding: 1.1rem; border-radius: 12px; }
+  .admin-conflict-popup { padding: 1.1rem; border-radius: 12px; }
+  .admin-form { padding: 1.1rem; border-radius: 12px; }
+  .admin-modal__inner { max-width: 100%; }
+
+  /* Filters in list modals */
+  .admin-list-modal__filters { flex-direction: column; align-items: stretch; gap: .5rem; }
+  .admin-list-modal__filters .admin-search {
+    border-radius: 10px;
+    padding: .6rem .8rem .6rem 2.4rem;
+    background-position: 10px center;
+    font-size: .88rem;
+  }
+  .admin-list-modal__filters label { justify-content: space-between; }
+  .admin-list-modal__filters .datepicker { width: 100%; flex: 1; }
+  .admin-list-modal__filters .datepicker__input { width: 100%; }
+
+  /* Services section */
+  .admin-services__head { flex-wrap: wrap; gap: .5rem; }
+  .admin-services__head .admin-btn { flex: 1 1 auto; justify-content: center; }
+
+  /* KmConfirm widget */
+  .admin-km-confirm { padding: .6rem 0; }
+  .admin-km-confirm__actions { flex-direction: column; gap: .4rem; }
+  .admin-km-confirm__actions .admin-btn { width: 100%; justify-content: center; }
+
+  /* Resa form actions */
+  .admin-resa-actions { flex-direction: column; gap: .45rem; }
+  .admin-resa-actions .admin-btn { width: 100%; justify-content: center; }
+
+  /* Conflict popup actions */
+  .admin-conflict-popup__actions { flex-direction: column; gap: .45rem; }
+  .admin-conflict-popup__actions .admin-btn { width: 100%; justify-content: center; }
+
+  /* Form actions */
+  .admin-form-actions { flex-direction: column; gap: .45rem; }
+  .admin-form-actions .admin-btn { width: 100%; justify-content: center; }
+
+  /* Misc */
+  .admin-pad { padding: 1rem; }
+  .admin-resa-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Phone (≤ 480px) — reservation tables → stacked cards ─────────────────── */
+@media (max-width: 480px) {
+  /* Convert every reservation / history / services table to card rows */
+  .admin-hist-table-wrap { overflow-x: visible; }
+  .admin-hist-table,
+  .admin-hist-table tbody,
+  .admin-hist-table tr { display: block; width: 100%; }
+
+  /* Hide column headers — replaced by inline labels via ::before */
+  .admin-hist-table thead { display: none; }
+
+  /* Each row becomes a rounded card */
+  .admin-hist-table tbody tr {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    margin-bottom: .6rem;
+    padding: .55rem .75rem;
+  }
+  .admin-hist-table tbody tr:last-child { margin-bottom: 0; }
+  .admin-hist-table--ongoing tbody tr { background: #fffdf5; border-color: #fde68a; }
+  .admin-hist-table__row--damaged { background: #fff7f7 !important; border-color: #fca5a5 !important; }
+
+  /* Each cell: label left, value right */
+  .admin-hist-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .32rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: .82rem;
+    white-space: normal;
+    min-width: unset;
+  }
+  .admin-hist-table td:last-child { border-bottom: none; }
+
+  /* Shared ::before label style */
+  .admin-hist-table td::before {
+    font-size: .7rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    flex-shrink: 0;
+    margin-right: .5rem;
+  }
+
+  /* ── Reservations list (5 cols): Client · Période · Tel · CIN · [actions] ── */
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(1)::before { content: "Client"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(2)::before { content: "Période"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(3)::before { content: "Téléphone"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(4)::before { content: "CIN"; }
+  /* last column = actions: no label, stack buttons vertically */
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .4rem;
+    padding-top: .5rem;
+    border-top: 1px dashed #e5e7eb;
+  }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:last-child::before { content: none; }
+
+  /* ── Ongoing table (6 cols): Client · Période · Tel · CIN · Départ km · [actions] ── */
+  .admin-hist-table--ongoing td:nth-child(1)::before { content: "Client"; }
+  .admin-hist-table--ongoing td:nth-child(2)::before { content: "Période"; }
+  .admin-hist-table--ongoing td:nth-child(3)::before { content: "Téléphone"; }
+  .admin-hist-table--ongoing td:nth-child(4)::before { content: "CIN"; }
+  .admin-hist-table--ongoing td:nth-child(5)::before { content: "Départ km"; }
+  .admin-hist-table--ongoing td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .4rem;
+    padding-top: .5rem;
+    border-top: 1px dashed #e5e7eb;
+  }
+  .admin-hist-table--ongoing td:last-child::before { content: none; }
+
+  /* ── Location historique (8 cols) — all data, no action column ───────────── */
+  .admin-hist-table--history td:nth-child(1)::before { content: "Client"; }
+  .admin-hist-table--history td:nth-child(2)::before { content: "Période"; }
+  .admin-hist-table--history td:nth-child(3)::before { content: "Téléphone"; }
+  .admin-hist-table--history td:nth-child(4)::before { content: "CIN"; }
+  .admin-hist-table--history td:nth-child(5)::before { content: "Départ km"; }
+  .admin-hist-table--history td:nth-child(6)::before { content: "Retour km"; }
+  .admin-hist-table--history td:nth-child(7)::before { content: "Parcourus"; }
+  .admin-hist-table--history td:nth-child(8)::before { content: "État"; }
+  /* État cell: keep normal row layout (label + badge side by side) */
+  .admin-hist-table--history td:last-child {
+    border-bottom: none;
+    flex-direction: row;
+    align-items: center;
+    padding-top: .32rem;
+    border-top: none;
+    gap: 0;
+  }
+  /* Tap a history row to see details — full-row highlight */
+  .admin-hist-table--history tbody tr { cursor: pointer; }
+  .admin-hist-table--history tbody tr:active { background: #eff6ff; border-color: #bfdbfe; }
+
+  /* Edit rows span full width */
+  .admin-edit-row td {
+    display: block;
+    border-radius: 0 0 10px 10px;
+    padding: .6rem;
+  }
+
+  /* ── Detail popup ───────────────────────────────────────────────────────── */
+  .admin-resa-detail { max-width: 100%; }
+  .admin-resa-detail__section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .15rem;
+  }
+  .admin-resa-detail__value { text-align: left; font-weight: 600; }
+
+  /* ── Modals: bottom-sheet style on phone ────────────────────────────────── */
+  .admin-resa-popup { max-width: 100%; }
+  .admin-modal { padding: .5rem; align-items: flex-end; }
+  .admin-modal .admin-list-modal,
+  .admin-modal .admin-resa-popup,
+  .admin-modal .admin-resa-detail,
+  .admin-modal .admin-conflict-popup {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    margin-bottom: 0;
+    max-height: 92vh;
+  }
+  /* History modal: needs more vertical space for 8-field cards */
+  .admin-modal .admin-list-modal--wide { max-height: 94vh; }
 }
