@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import SearchResults from './pages/SearchResults'
 import AllCars from './pages/AllCars'
 import Admin from './pages/Admin'
+import Reserver from './pages/Reserver'
 
 export default function App() {
   // Intercept all hash-anchor clicks so the URL never shows #section
@@ -29,6 +30,7 @@ export default function App() {
       <Route path="/resultats" element={<SearchResults key={location.search} />} />
       <Route path="/flotte" element={<AllCars />} />
       <Route path="/admin" element={<Admin />} />
+      <Route path="/reserver" element={<Reserver />} />
     </Routes>
   )
 }

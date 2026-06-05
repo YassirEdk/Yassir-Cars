@@ -106,7 +106,7 @@ export const cars = [
 
 export const services = [
   {
-    icon: '🚗',
+    icon: 'car',
     title: 'Location Courte Durée',
     description: 'À partir d\'une journée, bénéficiez de tarifs compétitifs avec kilométrage illimité et assurance incluse.',
     features: ['Kilométrage illimité', 'Assurance tous risques', 'Assistance 24h/24'],
@@ -114,7 +114,7 @@ export const services = [
     recommended: true,
   },
   {
-    icon: '📅',
+    icon: 'calendar',
     title: 'Location Longue Durée',
     description: 'Profitez de tarifs dégressifs pour les locations de plus d\'un mois avec entretien inclus.',
     features: ['Entretien inclus', 'Remplacement en cas de panne', 'Tarifs négociés'],
@@ -193,6 +193,17 @@ export const moroccanCities = [
   'Taourirt', 'Taroudant', 'Taza', 'Témara', 'Tétouan', 'Tinghir', 'Tiznit',
   'Youssoufia', 'Zagora',
 ]
+
+// Minimum rental length, in days, for all public (non-admin) date pickers.
+export const MIN_RENTAL_DAYS = 3
+
+// Add `n` days to an ISO date (YYYY-MM-DD) and return a new ISO date string.
+export const addDays = (iso, n) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  d.setDate(d.getDate() + n)
+  return d.toISOString().split('T')[0]
+}
 
 // Palette for the per-unit colour swatch picker (admin) and the
 // colour icons shown on the merged public cards.

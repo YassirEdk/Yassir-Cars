@@ -1,8 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { carInCategory, colorName } from '../data'
+import { carInCategory, colorName, moroccanCities, MIN_RENTAL_DAYS, addDays } from '../data'
 import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge } from '../lib/cars'
 import Logo from '../components/Logo'
+import CityWheel from '../components/CityWheel'
+import DatePicker from '../components/DatePicker'
 
 function daysBetween(d1, d2) {
   if (!d1) return 1
@@ -46,15 +48,30 @@ function MiniSearch({ params, onSearch }) {
         <form className="mini-search-form" onSubmit={handleSubmit}>
           <div className="mini-field">
             <label>📍 Lieu</label>
-            <input type="text" placeholder="Casablanca..." value={form.lieu} onChange={set('lieu')} />
+            <CityWheel
+              value={form.lieu}
+              onChange={(city) => setForm(f => ({ ...f, lieu: city }))}
+              cities={moroccanCities}
+            />
           </div>
           <div className="mini-field">
             <label>📅 Départ</label>
-            <input type="date" value={form.depart} onChange={set('depart')} />
+            <DatePicker
+              value={form.depart}
+              onChange={(iso) => setForm(f => ({ ...f, depart: iso }))}
+              placeholder="Choisir une date"
+              className="mini-datepicker"
+            />
           </div>
           <div className="mini-field">
             <label>📅 Retour</label>
-            <input type="date" value={form.retour} onChange={set('retour')} />
+            <DatePicker
+              value={form.retour}
+              onChange={(iso) => setForm(f => ({ ...f, retour: iso }))}
+              min={form.depart ? addDays(form.depart, MIN_RENTAL_DAYS) : undefined}
+              placeholder="Choisir une date"
+              className="mini-datepicker"
+            />
           </div>
           <div className="mini-field">
             <label>🚘 Catégorie</label>
@@ -127,7 +144,7 @@ function PhoneModal({ car, onClose }) {
 }
 
 /* ── Individual result card ── */
-function ResultCard({ car, days, available, depart, retour, availableOnly, onCall }) {
+function ResultCard({ car, days, available, depart, retour, lieu, availableOnly, onCall }) {
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
   // Pick a colour → switch to that unit (photos, price, specs follow it).
@@ -287,9 +304,13 @@ function ResultCard({ car, days, available, depart, retour, availableOnly, onCal
 
         <div className="result-card__footer">
           {available ? (
-            <span className="result-reserve">
+            <Link
+              className="result-reserve result-reserve--btn"
+              to={`/reserver?nom=${encodeURIComponent(car.name)}&photo=${encodeURIComponent(shownPhoto || '')}&prix=${active.price}&depart=${depart || ''}&retour=${retour || ''}&lieu=${encodeURIComponent(lieu)}`}
+              state={{ photos: gallery }}
+            >
               Réserver maintenant <span className="result-reserve__arrow">→</span>
-            </span>
+            </Link>
           ) : (
             <span className="result-unavailable-label">❌ Indisponible pour ces dates</span>
           )}
@@ -534,7 +555,7 @@ export default function SearchResults() {
           ) : (
             <div className="result-list">
               {results.map(car => (
-                <ResultCard key={car.id} car={car} days={days} available={car.available} depart={depart} retour={retour} availableOnly={filterDispo} onCall={setCallingCar} />
+                <ResultCard key={car.id} car={car} days={days} available={car.available} depart={depart} retour={retour} lieu={lieu} availableOnly={filterDispo} onCall={setCallingCar} />
               ))}
             </div>
           )}

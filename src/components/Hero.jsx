@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DatePicker from './DatePicker'
-import { moroccanCities } from '../data'
+import CityWheel from './CityWheel'
+import { moroccanCities, MIN_RENTAL_DAYS, addDays } from '../data'
 
 const HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1800&q=80'
 
@@ -62,8 +63,8 @@ export default function Hero() {
       newErrors.retour = 'Veuillez choisir une date de retour'
     else if (form.retour && form.retour < today)
       newErrors.retour = 'La date de retour ne peut pas être dans le passé'
-    else if (form.depart && form.retour && form.retour < form.depart)
-      newErrors.retour = 'La date de retour doit être après le départ'
+    else if (form.depart && form.retour && form.retour < addDays(form.depart, MIN_RENTAL_DAYS))
+      newErrors.retour = `La location doit durer au moins ${MIN_RENTAL_DAYS} jours`
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -129,14 +130,15 @@ export default function Hero() {
 
               <div className="form-group">
                 <label>📍 Lieu de prise en charge</label>
-                <select
+                <CityWheel
                   value={form.lieu}
-                  onChange={set('lieu')}
-                  className={`lieu-select ${errors.lieu ? 'input-error' : ''} ${form.lieu ? '' : 'is-placeholder'}`}
-                >
-                  <option value="" disabled>Choisissez une ville…</option>
-                  {moroccanCities.map(city => <option key={city} value={city}>{city}</option>)}
-                </select>
+                  onChange={(city) => {
+                    setForm(f => ({ ...f, lieu: city }))
+                    if (errors.lieu) setErrors(prev => ({ ...prev, lieu: '' }))
+                  }}
+                  cities={moroccanCities}
+                  error={!!errors.lieu}
+                />
                 {errors.lieu && <span className="field-error">⚠ {errors.lieu}</span>}
               </div>
 
@@ -163,7 +165,7 @@ export default function Hero() {
                     setForm(f => ({ ...f, retour: iso }))
                     if (errors.retour) setErrors(prev => ({ ...prev, retour: '' }))
                   }}
-                  min={form.depart || today}
+                  min={form.depart ? addDays(form.depart, MIN_RENTAL_DAYS) : today}
                   placeholder="Choisir une date"
                   className={errors.retour ? 'input-error' : ''}
                 />

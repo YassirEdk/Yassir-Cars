@@ -1,0 +1,118 @@
+/* ── City wheel field (matches the dark booking form input) ───────────────── */
+.citywheel-field {
+  width: 100%;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  color: #fff; font-size: 14px; font-family: inherit; text-align: left;
+  cursor: pointer; outline: none;
+  transition: border-color .3s, background .3s;
+}
+.citywheel-field:hover { background: rgba(255,255,255,.12); }
+.citywheel-field:focus-visible { border-color: #E63946; }
+.citywheel-field.is-placeholder .citywheel-field__txt { color: rgba(255,255,255,.4); }
+.citywheel-field__txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.citywheel-field__chev { flex-shrink: 0; opacity: .65; }
+.citywheel-field.input-error { border-color: #ff6b6b; background: rgba(255,80,80,.1); }
+
+/* ── Overlay + sheet ──────────────────────────────────────────────────────── */
+.citywheel-overlay {
+  position: fixed; inset: 0; z-index: 3000;
+  background: rgba(8,8,12,.6);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  display: grid; place-items: center;
+  padding: 1.2rem;
+  animation: cw-fade .2s ease;
+}
+@keyframes cw-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.citywheel-sheet {
+  width: 100%; max-width: 360px;
+  background: linear-gradient(180deg, #1c1f2e, #14161f);
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 22px;
+  padding: 1.3rem 1.3rem 1.4rem;
+  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  animation: cw-pop .28s cubic-bezier(.16,1,.3,1);
+}
+@keyframes cw-pop {
+  from { opacity: 0; transform: translateY(24px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.citywheel-sheet__head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.citywheel-sheet__head h3 {
+  margin: 0; font-size: 1.02rem; font-weight: 700; color: #fff;
+}
+.citywheel-sheet__close {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: grid; place-items: center;
+  background: rgba(255,255,255,.08); border: none; border-radius: 50%;
+  color: rgba(255,255,255,.7); font-size: 15px; cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.citywheel-sheet__close:hover { background: rgba(255,255,255,.16); color: #fff; }
+
+/* ── The wheel ────────────────────────────────────────────────────────────── */
+.citywheel {
+  position: relative;
+  height: 230px;   /* 5 × 46px */
+}
+/* Center selection band */
+.citywheel__band {
+  position: absolute; top: 50%; left: 0; right: 0;
+  height: 46px; transform: translateY(-50%);
+  border-top: 1px solid rgba(230,57,70,.55);
+  border-bottom: 1px solid rgba(230,57,70,.55);
+  background: rgba(230,57,70,.1);
+  border-radius: 10px;
+  pointer-events: none; z-index: 1;
+}
+.citywheel__scroll {
+  position: relative; z-index: 2;
+  height: 100%; overflow-y: auto;
+  scrollbar-width: none;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  /* Fade top & bottom for the rounded-wheel illusion */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  cursor: grab;
+}
+.citywheel__scroll:active { cursor: grabbing; }
+.citywheel__scroll::-webkit-scrollbar { display: none; }
+.citywheel__pad { height: 92px; flex-shrink: 0; }  /* 2 × 46px */
+
+.citywheel__item {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 46px; flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  font-family: inherit;
+  font-size: 16px; font-weight: 500;
+  color: rgba(255,255,255,calc(.85 - var(--d, 0) * .2));
+  transform: scale(calc(1 - var(--d, 0) * .07));
+  transition: color .15s, transform .15s, font-weight .15s;
+  scroll-snap-align: center;
+}
+.citywheel__item.active {
+  color: #fff; font-weight: 800; font-size: 17px;
+  transform: scale(1);
+  text-shadow: 0 1px 10px rgba(230,57,70,.5);
+}
+
+/* ── Confirm button ───────────────────────────────────────────────────────── */
+.citywheel-confirm {
+  width: 100%; margin-top: 1.2rem;
+  padding: .9rem; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #E63946, #c1121f);
+  color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
+  letter-spacing: .01em;
+  box-shadow: 0 6px 20px rgba(230,57,70,.4);
+  transition: transform .15s, box-shadow .15s, filter .15s;
+}
+.citywheel-confirm:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(230,57,70,.5); filter: brightness(1.05); }
+.citywheel-confirm:active { transform: translateY(0); }
