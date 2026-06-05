@@ -8,7 +8,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import {
   fetchCars, createCar, updateCar, deleteCar,
   uploadCarPhotos, addReservation, updateReservation, deletePeriod,
-  confirmPickup, confirmReturn, updateDepartureKm, findCinConflict, findCinDamage,
+  confirmPickup, confirmReturn, setCarDamaged, updateDepartureKm, findCinConflict, findCinDamage,
   fetchCarServices, addCarService, deleteCarService,
 } from '../lib/cars'
 import './admin.css'
@@ -206,6 +206,7 @@ function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel
   const [q, setQ] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [detailR, setDetailR] = useState(null)
 
   const filtered = reservations.filter(r => {
     const text = `${r.clientName || ''} ${r.cin || ''} ${r.tel || ''}`.toLowerCase()
@@ -244,8 +245,8 @@ function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel
                 </thead>
                 <tbody>
                   {filtered.map(r => (
-                    <tr key={r.id}>
-                      <td><strong>{r.clientName || '—'}</strong></td>
+                    <tr key={r.id} className={r.damaged ? 'admin-hist-table__row--damaged' : ''}>
+                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}</td>
                       <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
@@ -286,6 +287,79 @@ function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel
           )}
         </div>
       </div>
+      {detailR && (
+        <div className="admin-modal" style={{ zIndex: 1200 }} onClick={() => setDetailR(null)}>
+          <div className="admin-resa-detail" onClick={e => e.stopPropagation()}>
+            <div className="admin-resa-detail__head">
+              <h3>📋 Détails de la réservation</h3>
+              <button className="phone-modal__close" onClick={() => setDetailR(null)} aria-label="Fermer">✕</button>
+            </div>
+            <div className="admin-resa-detail__body">
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">Client</span>
+                <span className="admin-resa-detail__value">{detailR.clientName || '—'}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">CIN</span>
+                <span className="admin-resa-detail__value">{detailR.cin || '—'}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">Téléphone</span>
+                <span className="admin-resa-detail__value">{detailR.tel || '—'}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">Période</span>
+                <span className="admin-resa-detail__value">{formatDate(detailR.start)} → {formatDate(detailR.end)}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">N° permis</span>
+                <span className="admin-resa-detail__value">{detailR.licenceNumber || '—'}</span>
+              </div>
+              {detailR.matriculation && (
+                <div className="admin-resa-detail__section">
+                  <span className="admin-resa-detail__label">Immatriculation</span>
+                  <span className="admin-resa-detail__value">{detailR.matriculation}</span>
+                </div>
+              )}
+              {detailR.departureKm != null && (
+                <div className="admin-resa-detail__section">
+                  <span className="admin-resa-detail__label">Départ km</span>
+                  <span className="admin-resa-detail__value">{formatKm(detailR.departureKm)} km</span>
+                </div>
+              )}
+              {detailR.returnKm != null && (
+                <div className="admin-resa-detail__section">
+                  <span className="admin-resa-detail__label">Retour km</span>
+                  <span className="admin-resa-detail__value">{formatKm(detailR.returnKm)} km</span>
+                </div>
+              )}
+              {(detailR.secondDriverName || detailR.secondDriverCin || detailR.secondDriverLicence) && (
+                <>
+                  <div className="admin-resa-detail__divider">2ème conducteur</div>
+                  {detailR.secondDriverName && (
+                    <div className="admin-resa-detail__section">
+                      <span className="admin-resa-detail__label">Nom</span>
+                      <span className="admin-resa-detail__value">{detailR.secondDriverName}</span>
+                    </div>
+                  )}
+                  {detailR.secondDriverCin && (
+                    <div className="admin-resa-detail__section">
+                      <span className="admin-resa-detail__label">CIN</span>
+                      <span className="admin-resa-detail__value">{detailR.secondDriverCin}</span>
+                    </div>
+                  )}
+                  {detailR.secondDriverLicence && (
+                    <div className="admin-resa-detail__section">
+                      <span className="admin-resa-detail__label">N° permis</span>
+                      <span className="admin-resa-detail__value">{detailR.secondDriverLicence}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -349,7 +423,7 @@ function ServicesModal({ services, onClose, onRemove }) {
   )
 }
 
-function ServicesManager({ car }) {
+function ServicesManager({ car, onKmUpdate }) {
   const [expanded, setExpanded] = useState(false)
   const [services, setServices] = useState(null)  // null = not loaded yet
   const [open, setOpen] = useState(false)          // add form open
@@ -372,6 +446,7 @@ function ServicesManager({ car }) {
     setBusy(true)
     try {
       await addCarService(car.id, form)
+      if (form.mileage) onKmUpdate(car.id, Number(form.mileage))
       setForm(EMPTY_SERVICE); setOpen(false); load()
     } catch (e) { showError('Erreur : ' + e.message) }
     setBusy(false)
@@ -394,9 +469,16 @@ function ServicesManager({ car }) {
 
   return (
     <div className="admin-services">
-      <button className="admin-services__toggle" onClick={toggle}>
-        <Ico name="wrench" /> Services voiture{services ? ` (${count})` : ''} <span className="admin-services__chev">{expanded ? '▲' : '▼'}</span>
-      </button>
+      <div className="admin-services__head">
+        <button className="admin-services__toggle" onClick={toggle}>
+          <Ico name="wrench" /> Services voiture{services ? ` (${count})` : ''} <span className="admin-services__chev">{expanded ? '▲' : '▼'}</span>
+        </button>
+        {expanded && (
+          <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => setOpen(true)}>
+            ➕ Ajouter un service
+          </button>
+        )}
+      </div>
 
       {expanded && (
         <div className="admin-services__body">
@@ -404,7 +486,7 @@ function ServicesManager({ car }) {
             <p className="admin-muted">Chargement…</p>
           ) : (
             <>
-              {count === 0 && !open && <p className="admin-muted">Aucun service enregistré.</p>}
+              {count === 0 && <p className="admin-muted">Aucun service enregistré.</p>}
 
               {count > 0 && (
                 <div className="admin-hist-table-wrap">
@@ -435,7 +517,7 @@ function ServicesManager({ car }) {
                 </div>
               )}
 
-              {count > 0 && (
+              {count >= 4 && (
                 <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setModalOpen(true)}>
                   🔧 Voir tous les services ({count})
                 </button>
@@ -449,41 +531,43 @@ function ServicesManager({ car }) {
                 />
               )}
 
-              {!open ? (
-                <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => setOpen(true)}>
-                  ➕ Ajouter un service
-                </button>
-              ) : (
-                <div className="admin-resa-form">
-                  <div className="admin-resa-grid">
-                    <label>Type de service *
-                      <input list={`svc-${car.id}`} value={form.service} onChange={set('service')} placeholder="Vidange, Freins…" autoFocus />
-                      <datalist id={`svc-${car.id}`}>
-                        {COMMON_SERVICES.map(s => <option key={s} value={s} />)}
-                      </datalist>
-                    </label>
-                    <label>Date
-                      <input type="date" value={form.date} onChange={set('date')} />
-                    </label>
-                    <label>Kilométrage (km)
-                      <input
-                        type="text" inputMode="numeric"
-                        value={formatKm(form.mileage)}
-                        onChange={e => setForm(f => ({ ...f, mileage: e.target.value.replace(/\D/g, '') }))}
-                      />
-                    </label>
-                    <label>Coût (MAD)
-                      <input type="number" min="0" value={form.cost} onChange={set('cost')} />
-                    </label>
-                    <label className="resa-full">Note
-                      <input type="text" value={form.note} onChange={set('note')} placeholder="Garage, pièces changées…" />
-                    </label>
-                  </div>
-                  <div className="admin-resa-actions">
-                    <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_SERVICE) }}>Annuler</button>
-                    <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
-                      {busy ? 'Enregistrement…' : 'Enregistrer le service'}
-                    </button>
+              {open && (
+                <div className="admin-modal" style={{ zIndex: 1200 }} onClick={e => { if (e.target.classList.contains('admin-modal')) { setOpen(false); setForm(EMPTY_SERVICE) } }}>
+                  <div className="admin-resa-popup">
+                    <div className="admin-resa-popup__head">
+                      <h3>🔧 Nouveau service — {car.name}</h3>
+                      <button className="phone-modal__close" onClick={() => { setOpen(false); setForm(EMPTY_SERVICE) }} aria-label="Fermer">✕</button>
+                    </div>
+                    <div className="admin-resa-grid">
+                      <label className="resa-full">Type de service *
+                        <input list={`svc-${car.id}`} value={form.service} onChange={set('service')} placeholder="Vidange, Freins…" autoFocus />
+                        <datalist id={`svc-${car.id}`}>
+                          {COMMON_SERVICES.map(s => <option key={s} value={s} />)}
+                        </datalist>
+                      </label>
+                      <label>Date
+                        <input type="date" value={form.date} onChange={set('date')} />
+                      </label>
+                      <label>Kilométrage (km)
+                        <input
+                          type="text" inputMode="numeric"
+                          value={formatKm(form.mileage)}
+                          onChange={e => setForm(f => ({ ...f, mileage: e.target.value.replace(/\D/g, '') }))}
+                        />
+                      </label>
+                      <label>Coût (MAD)
+                        <input type="number" min="0" value={form.cost} onChange={set('cost')} />
+                      </label>
+                      <label className="resa-full">Note
+                        <input type="text" value={form.note} onChange={set('note')} placeholder="Garage, pièces changées…" />
+                      </label>
+                    </div>
+                    <div className="admin-resa-actions">
+                      <button className="admin-btn admin-btn--sm" onClick={() => { setOpen(false); setForm(EMPTY_SERVICE) }}>Annuler</button>
+                      <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={save} disabled={busy}>
+                        {busy ? 'Enregistrement…' : 'Enregistrer le service'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -576,15 +660,21 @@ function EditResaForm({ r, onSaved, onCancel }) {
 }
 
 /* ── Reservations panel for one car ───────────────────────────────────────── */
-const EMPTY_RESA = { clientName: '', cin: '', tel: '', start: '', end: '' }
+const EMPTY_RESA = {
+  clientName: '', cin: '', tel: '', licenceNumber: '',
+  hasSecondDriver: false,
+  secondDriverName: '', secondDriverCin: '', secondDriverLicence: '',
+  start: '', end: '',
+}
 
-function ReservationManager({ car, onChange }) {
+function ReservationManager({ car, onChange, onKmUpdate }) {
   const [open, setOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
   const [confirming, setConfirming] = useState(null)    // id of the row whose km field is open
   const [editingId, setEditingId] = useState(null)      // id of the row being edited
   const [ongoingError, setOngoingError] = useState(null) // id of the row that triggered the block
+  const [detailR, setDetailR] = useState(null)          // reservation being viewed in detail popup
   const [form, setForm] = useState(EMPTY_RESA)
   const [formError, setFormError] = useState(null) // { message, conflict } | null
   const [cinConflict, setCinConflict] = useState(null) // existing name under same CIN, or null
@@ -651,7 +741,12 @@ function ReservationManager({ car, onChange }) {
   // reservee → en_cours: client picks up the car (record departure odometer).
   const pickup = async (id, km) => { await confirmPickup(id, km); setConfirming(null); onChange() }
   // en_cours → terminee: client returns the car (record return odometer + damage).
-  const giveBack = async (id, km, damaged) => { await confirmReturn(id, km, damaged); setConfirming(null); onChange() }
+  const giveBack = async (id, km, damaged) => {
+    await confirmReturn(id, km, damaged, car.id)
+    if (km != null && km !== '') onKmUpdate(car.id, Number(km))
+    setConfirming(null)
+    onChange()
+  }
 
   // Split every period of this car by its workflow stage.
   const todayMs = Date.now()
@@ -718,8 +813,8 @@ function ReservationManager({ car, onChange }) {
             <tbody>
               {reserved.slice(0, 3).map(r => (
                 <React.Fragment key={r.id}>
-                  <tr>
-                    <td><strong>{r.clientName || '—'}</strong></td>
+                  <tr className="admin-hist-table__row--clickable">
+                    <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}</td>
                     <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                     <td>{r.tel || '—'}</td>
                     <td>{r.cin || '—'}</td>
@@ -792,12 +887,12 @@ function ReservationManager({ car, onChange }) {
               <tbody>
                 {ongoing.map(r => (
                   <React.Fragment key={r.id}>
-                    <tr>
-                      <td><strong>{r.clientName || '—'}</strong></td>
+                    <tr className="admin-hist-table__row--clickable">
+                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}</td>
                       <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
-                      <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
+                      <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
                       <td>
                         {confirming === r.id ? (
                           <KmConfirm
@@ -890,7 +985,30 @@ function ReservationManager({ car, onChange }) {
               <label>Téléphone
                 <input type="tel" value={form.tel} onChange={set('tel')} />
               </label>
-              <div aria-hidden />
+              <label>N° permis de conduire
+                <input type="text" value={form.licenceNumber} onChange={set('licenceNumber')} />
+              </label>
+              <div className="admin-resa-grid__separator" />
+              <label className="admin-resa-2nd-toggle resa-full">
+                <input
+                  type="checkbox"
+                  checked={form.hasSecondDriver}
+                  onChange={e => setForm(f => ({ ...f, hasSecondDriver: e.target.checked }))}
+                />
+                2ème conducteur
+              </label>
+              {form.hasSecondDriver && (<>
+                <label>Nom du 2ème conducteur
+                  <input type="text" value={form.secondDriverName} onChange={set('secondDriverName')} />
+                </label>
+                <label>CIN du 2ème conducteur
+                  <input type="text" value={form.secondDriverCin} onChange={set('secondDriverCin')} />
+                </label>
+                <label className="resa-full">N° permis du 2ème conducteur
+                  <input type="text" value={form.secondDriverLicence} onChange={set('secondDriverLicence')} />
+                </label>
+              </>)}
+              <div className="admin-resa-grid__separator" />
               <label>Date de début *
                 <DatePicker value={form.start} onChange={v => { setFormError(null); setForm(f => ({ ...f, start: v })) }} min={today} placeholder="JJ-MMM-AAAA" blockedDates={blockedDates} />
               </label>
@@ -924,6 +1042,74 @@ function ReservationManager({ car, onChange }) {
               {formError.conflict.cin && <span className="conflict-chip conflict-chip--cin"><Ico name="id" /> {formError.conflict.cin}</span>}
             </div>
             <button className="admin-btn admin-btn--sm admin-conflict-popup__close" onClick={() => setFormError(null)}>Fermer</button>
+          </div>
+        </div>
+      )}
+
+      {detailR && (
+        <div className="admin-modal" style={{ zIndex: 1200 }} onClick={() => setDetailR(null)}>
+          <div className="admin-resa-detail" onClick={e => e.stopPropagation()}>
+            <div className="admin-resa-detail__head">
+              <h3>📋 Détails de la réservation</h3>
+              <button className="phone-modal__close" onClick={() => setDetailR(null)} aria-label="Fermer">✕</button>
+            </div>
+            <div className="admin-resa-detail__body">
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">Client</span>
+                <span className="admin-resa-detail__value">{detailR.clientName || '—'}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">CIN</span>
+                <span className="admin-resa-detail__value">{detailR.cin || '—'}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">Téléphone</span>
+                <span className="admin-resa-detail__value">{detailR.tel || '—'}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">Période</span>
+                <span className="admin-resa-detail__value">{formatDate(detailR.start)} → {formatDate(detailR.end)}</span>
+              </div>
+              <div className="admin-resa-detail__section">
+                <span className="admin-resa-detail__label">N° permis</span>
+                <span className="admin-resa-detail__value">{detailR.licenceNumber || '—'}</span>
+              </div>
+              {detailR.matriculation && (
+                <div className="admin-resa-detail__section">
+                  <span className="admin-resa-detail__label">Immatriculation</span>
+                  <span className="admin-resa-detail__value">{detailR.matriculation}</span>
+                </div>
+              )}
+              {detailR.departureKm != null && (
+                <div className="admin-resa-detail__section">
+                  <span className="admin-resa-detail__label">Départ km</span>
+                  <span className="admin-resa-detail__value">{formatKm(detailR.departureKm)} km</span>
+                </div>
+              )}
+              {(detailR.secondDriverName || detailR.secondDriverCin || detailR.secondDriverLicence) && (
+                <>
+                  <div className="admin-resa-detail__divider">2ème conducteur</div>
+                  {detailR.secondDriverName && (
+                    <div className="admin-resa-detail__section">
+                      <span className="admin-resa-detail__label">Nom</span>
+                      <span className="admin-resa-detail__value">{detailR.secondDriverName}</span>
+                    </div>
+                  )}
+                  {detailR.secondDriverCin && (
+                    <div className="admin-resa-detail__section">
+                      <span className="admin-resa-detail__label">CIN</span>
+                      <span className="admin-resa-detail__value">{detailR.secondDriverCin}</span>
+                    </div>
+                  )}
+                  {detailR.secondDriverLicence && (
+                    <div className="admin-resa-detail__section">
+                      <span className="admin-resa-detail__label">N° permis</span>
+                      <span className="admin-resa-detail__value">{detailR.secondDriverLicence}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1176,11 +1362,6 @@ function CarForm({ initial, onSaved, onCancel }) {
         </label>
       </div>
 
-      <label className={`admin-damaged-toggle ${car.damaged ? 'is-on' : ''}`}>
-        <input type="checkbox" checked={!!car.damaged} onChange={e => set('damaged', e.target.checked)} />
-        <span><Ico name="wrench" /> Voiture endommagée — la rendre indisponible</span>
-      </label>
-
       <div className="admin-form-actions">
         <button type="button" className="admin-btn" onClick={onCancel}>Annuler</button>
         <button className="admin-btn admin-btn--primary" disabled={busy || uploading}>
@@ -1211,6 +1392,17 @@ function Dashboard({ onLogout }) {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const updateCarKm = useCallback((carId, km) => {
+    setCars(prev => prev.map(c => c.id === carId ? { ...c, lastKm: km } : c))
+  }, [])
+
+  const [expandedCars, setExpandedCars] = useState(new Set())
+  const toggleCar = (id) => setExpandedCars(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   const remove = async (car) => {
     if (!await confirmAsync(`Supprimer « ${car.name} » ? Cette action est définitive.`, { confirmLabel: 'Supprimer', danger: true })) return
@@ -1269,32 +1461,59 @@ function Dashboard({ onLogout }) {
         <p className="admin-muted admin-pad">Aucun véhicule ne correspond à « {query} ».</p>
       ) : (
         <div className="admin-cars">
-          {visible.map(car => (
-            <div key={car.id} className="admin-car">
-              <div className="admin-car__photo">
-                {car.photo ? <img src={car.photo} alt={car.name} /> : <span>—</span>}
-              </div>
-              <div className="admin-car__main">
-                <div className="admin-car__top">
-                  <div>
-                    <h3>{car.name}</h3>
-                    <div className="admin-car__meta">
-                      <span className="admin-tag">{car.category}</span>
-                      {car.color && <span className="admin-dot" style={{ background: car.color }} title={colorName(car.color)} />}
-                      {car.immatriculation && <span className="admin-plate">{car.immatriculation}</span>}
-                      <span className="admin-price">{car.price} {car.currency}/j</span>
+          {visible.map(car => {
+            const isExpanded = expandedCars.has(car.id)
+            return (
+              <div key={car.id} className={`admin-car${car.damaged ? ' admin-car--damaged' : ''}`}>
+                <div className="admin-car__photo" onClick={() => toggleCar(car.id)} style={{ cursor: 'pointer' }}>
+                  {car.photo ? <img src={car.photo} alt={car.name} /> : <span>—</span>}
+                </div>
+                <div className="admin-car__main">
+                  <div className="admin-car__top">
+                    <div className="admin-car__title-row" onClick={() => toggleCar(car.id)} style={{ cursor: 'pointer', flex: 1 }}>
+                      <h3>{car.name} <span className="admin-car__chev">{isExpanded ? '▲' : '▼'}</span></h3>
+                      <div className="admin-car__meta">
+                        <span className="admin-tag">{car.category}</span>
+                        {car.color && <span className="admin-dot" style={{ background: car.color }} title={colorName(car.color)} />}
+                        {car.lastKm != null && <span className="admin-last-km" title="Dernier km déclaré"><Ico name="gauge" /> {formatKm(car.lastKm)} km</span>}
+                        {car.immatriculation && <span className="admin-plate">{car.immatriculation}</span>}
+                        <span className="admin-price">{car.price} {car.currency}/j</span>
+                      </div>
+                    </div>
+                    <div className="admin-car__btns">
+                      <label className={`admin-car__damaged-toggle${car.damaged ? ' is-on' : ''}`} title={car.damaged ? 'Marquer comme disponible' : 'Marquer comme endommagée'}>
+                        <input
+                          type="checkbox"
+                          checked={!!car.damaged}
+                          onChange={async e => {
+                            const next = e.target.checked
+                            const ok = await confirmAsync(
+                              next
+                                ? `Marquer « ${car.name} » comme endommagée ? Elle ne sera plus disponible à la réservation.`
+                                : `Marquer « ${car.name} » comme disponible ? Elle redeviendra réservable.`,
+                              { confirmLabel: next ? 'Endommagée' : 'Disponible', danger: next }
+                            )
+                            if (!ok) return
+                            await setCarDamaged(car.id, next)
+                            load()
+                          }}
+                        />
+                        🛠 Endommagée
+                      </label>
+                      <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditing(car)}>✏ Modifier</button>
+                      <button className="admin-btn admin-btn--sm admin-btn--delcar" onClick={() => remove(car)}>🗑 Supprimer</button>
                     </div>
                   </div>
-                  <div className="admin-car__btns">
-                    <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditing(car)}>✏ Modifier</button>
-                    <button className="admin-btn admin-btn--sm admin-btn--delcar" onClick={() => remove(car)}>🗑 Supprimer</button>
-                  </div>
+                  {isExpanded && (
+                    <>
+                      <ServicesManager car={car} onKmUpdate={updateCarKm} />
+                      <ReservationManager car={car} onChange={load} onKmUpdate={updateCarKm} />
+                    </>
+                  )}
                 </div>
-                <ServicesManager car={car} />
-                <ReservationManager car={car} onChange={load} />
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>

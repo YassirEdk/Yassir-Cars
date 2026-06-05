@@ -138,12 +138,38 @@
 .admin-car__main { flex: 1; min-width: 0; }
 .admin-car__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
 .admin-car__top h3 { margin: 0 0 .35rem; font-size: 1.05rem; }
-.admin-car__btns { display: flex; gap: .5rem; flex-shrink: 0; }
+.admin-car__title-row:hover h3 { color: #0d5fab; }
+.admin-car__chev { font-size: .7rem; color: #94a3b8; margin-left: .3rem; }
+.admin-car__btns { display: flex; gap: .5rem; flex-shrink: 0; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+/* Greyed-out card when car is damaged — filter/opacity only on visual children,
+   never on the card itself (filter creates a stacking context that traps fixed modals). */
+.admin-car--damaged { background: #fafafa; border-color: #fca5a5; }
+.admin-car--damaged .admin-car__photo { opacity: .5; filter: grayscale(1); }
+.admin-car--damaged .admin-car__top { opacity: .55; }
+
+/* Inline damaged toggle per car card */
+.admin-car__damaged-toggle {
+  display: inline-flex; align-items: center; gap: .35rem; cursor: pointer;
+  font-size: .78rem; font-weight: 600; color: #6b7280;
+  background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 7px;
+  padding: .28rem .6rem; user-select: none; transition: background .15s, border-color .15s, color .15s;
+}
+.admin-car__damaged-toggle input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; accent-color: #dc2626; }
+.admin-car__damaged-toggle.is-on {
+  background: #fef2f2; border-color: #fca5a5; color: #b91c1c;
+}
 .admin-tag {
   display: inline-block; background: #eef2ff; color: #4338ca; padding: .15rem .5rem;
   border-radius: 6px; font-size: .75rem; margin-right: .5rem; text-transform: capitalize;
 }
 .admin-price { font-weight: 700; color: #0d5fab; font-size: .9rem; }
+.admin-last-km {
+  display: inline-flex; align-items: center; gap: .25rem;
+  font-size: .78rem; font-weight: 600; color: #374151;
+  background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px;
+  padding: .15rem .45rem;
+}
 
 /* List pop-up (all reservations / all services) */
 .admin-list-modal {
@@ -180,6 +206,34 @@
 }
 .admin-hist-table tbody tr:last-child td { border-bottom: none; }
 .admin-hist-table tbody tr:hover td { background: #f8fafc; }
+.admin-hist-table__row--damaged td { background: #fff7f7; }
+.admin-hist-table__row--damaged:hover td { background: #fef2f2; }
+.admin-hist-table__row--damaged td strong { color: #b91c1c; }
+.admin-hist-table__td--click { cursor: pointer; }
+.admin-hist-table__td--click:hover { background: #eff6ff !important; }
+.admin-resa-name-link { color: #1e40af; text-decoration: underline; text-underline-offset: 2px; text-decoration-style: dotted; }
+
+/* Reservation detail popup */
+.admin-resa-detail {
+  width: 100%; max-width: 400px; background: #fff; border-radius: 16px;
+  padding: 1.5rem; box-shadow: 0 24px 70px rgba(0,0,0,.3);
+}
+.admin-resa-detail__head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1.2rem; padding-bottom: .9rem; border-bottom: 1px solid #eef0f3;
+}
+.admin-resa-detail__head h3 { margin: 0; font-size: 1rem; }
+.admin-resa-detail__body { display: flex; flex-direction: column; gap: .55rem; }
+.admin-resa-detail__section {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; font-size: .85rem;
+}
+.admin-resa-detail__label { color: #6b7280; font-weight: 600; flex-shrink: 0; }
+.admin-resa-detail__value { color: #111827; font-weight: 500; text-align: right; }
+.admin-resa-detail__divider {
+  margin: .4rem 0 .2rem; padding: .3rem .6rem; background: #f1f5f9;
+  border-radius: 6px; font-size: .75rem; font-weight: 700; color: #0d5fab;
+}
 .admin-hist-table td strong { color: #1e40af; font-weight: 700; }
 .admin-hist-table__dates { color: #1d4ed8; font-weight: 600; }
 .admin-hist-table__dist  { color: #047857; font-weight: 700; }
@@ -194,6 +248,7 @@
 
 /* Car services (maintenance log) */
 .admin-services { margin-top: 1rem; border-top: 1px dashed #e5e7eb; padding-top: .9rem; }
+.admin-services__head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .admin-services__toggle {
   display: inline-flex; align-items: center; gap: .5rem; background: #f1f5f9; border: 1px solid #e2e8f0;
   color: #0f172a; font-size: .85rem; font-weight: 700; padding: .5rem .9rem; border-radius: 9px; cursor: pointer;
@@ -380,7 +435,7 @@
 .admin-resa-popup__hint { color: #b45309; font-size: .8rem; margin-top: .35rem !important; }
 
 /* Conflict error popup (layered above the reservation popup) */
-.admin-modal--conflict { z-index: 1100; }
+.admin-modal--conflict { z-index: 9999; }
 .admin-conflict-popup {
   width: 100%; max-width: 700px;
   background: #fff; border-radius: 16px; padding: 1.5rem;
@@ -441,6 +496,12 @@
   padding: .5rem .6rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .85rem; font-weight: 400;
 }
 .admin-resa-grid input:focus { outline: none; border-color: #0d5fab; box-shadow: 0 0 0 3px rgba(13,95,171,.12); }
+.admin-resa-grid__separator { grid-column: 1 / -1; border-top: 1px solid #eef0f3; margin: .1rem 0; }
+.admin-resa-2nd-toggle {
+  display: flex !important; flex-direction: row !important; align-items: center; gap: .45rem;
+  font-size: .82rem !important; font-weight: 700 !important; color: #0d5fab !important; cursor: pointer;
+}
+.admin-resa-2nd-toggle input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #0d5fab; }
 .admin-resa-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .9rem; }
 
 @media (max-width: 560px) { .admin-resa-grid { grid-template-columns: 1fr; } }

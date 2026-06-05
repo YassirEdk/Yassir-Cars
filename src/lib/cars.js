@@ -30,6 +30,7 @@ function fromRow(row) {
     color: row.color,
     immatriculation: row.immatriculation,
     damaged: row.damaged ?? false,
+    lastKm: row.last_km ?? null,
     // Reservations that block this car (date range + client details).
     // `status` walks through reservee → en_cours → terminee (see migration-rentals.sql).
     unavailable: (row.unavailable_periods ?? []).map(p => ({
@@ -41,6 +42,10 @@ function fromRow(row) {
       cin: p.cin,
       tel: p.tel,
       matriculation: p.matriculation,
+      licenceNumber: p.licence_number ?? null,
+      secondDriverName: p.second_driver_name ?? null,
+      secondDriverCin: p.second_driver_cin ?? null,
+      secondDriverLicence: p.second_driver_licence ?? null,
       status: p.status ?? 'reservee',
       departureKm: p.departure_km,
       returnKm: p.return_km,
@@ -220,6 +225,10 @@ export async function addReservation(carId, r) {
       cin: r.cin || null,
       tel: r.tel || null,
       matriculation: r.matriculation || null,
+      licence_number: r.licenceNumber || null,
+      second_driver_name: r.secondDriverName || null,
+      second_driver_cin: r.secondDriverCin || null,
+      second_driver_licence: r.secondDriverLicence || null,
     })
     .select()
     .single()
@@ -260,6 +269,10 @@ export async function updateReservation(periodId, r) {
       client_name: r.clientName || null,
       cin: r.cin || null,
       tel: r.tel || null,
+      licence_number: r.licenceNumber || null,
+      second_driver_name: r.secondDriverName || null,
+      second_driver_cin: r.secondDriverCin || null,
+      second_driver_licence: r.secondDriverLicence || null,
     })
     .eq('id', periodId)
   if (error) throw error
@@ -291,15 +304,22 @@ export async function confirmPickup(periodId, departureKm) {
 
 // Take the car back: en_cours → terminee, recording the odometer reading at
 // return and whether the car came back damaged.
-export async function confirmReturn(periodId, returnKm, damaged = false) {
+export async function confirmReturn(periodId, returnKm, damaged = false, carId = null) {
+  const km = returnKm != null && returnKm !== '' ? Number(returnKm) : null
   const { error } = await supabase
     .from('unavailable_periods')
-    .update({
-      status: 'terminee',
-      return_km: returnKm != null && returnKm !== '' ? Number(returnKm) : null,
-      damaged: !!damaged,
-    })
+    .update({ status: 'terminee', return_km: km, damaged: !!damaged })
     .eq('id', periodId)
+  if (error) throw error
+  if (carId && km != null) {
+    const { error: e2 } = await supabase.from('cars').update({ last_km: km }).eq('id', carId)
+    if (e2) throw e2
+  }
+}
+
+// Mark a car as damaged (out-of-service) or clear that flag.
+export async function setCarDamaged(carId, damaged) {
+  const { error } = await supabase.from('cars').update({ damaged: !!damaged }).eq('id', carId)
   if (error) throw error
 }
 
@@ -333,15 +353,20 @@ export async function fetchCarServices(carId) {
 }
 
 export async function addCarService(carId, s) {
+  const km = s.mileage ? Number(s.mileage) : null
   const { error } = await supabase.from('car_services').insert({
     car_id: carId,
     service: s.service,
     service_date: s.date || null,
-    mileage: s.mileage ? Number(s.mileage) : null,
+    mileage: km,
     cost: s.cost ? Number(s.cost) : null,
     note: s.note || null,
   })
   if (error) throw error
+  if (km != null) {
+    const { error: e2 } = await supabase.from('cars').update({ last_km: km }).eq('id', carId)
+    if (e2) throw e2
+  }
 }
 
 export async function deleteCarService(id) {
