@@ -34,10 +34,10 @@ export default function AvailabilityModal({ car, onClose }) {
     e.preventDefault()
     const errs = {}
     if (!form.lieu) errs.lieu = 'Choisissez une ville'
-    if (!form.depart) errs.depart = 'Choisissez une date de départ'
+    if (!form.depart) errs.depart = 'Choisissez une date de début'
     else if (form.depart < today) errs.depart = 'Date dans le passé'
-    if (!form.retour) errs.retour = 'Choisissez une date de retour'
-    else if (form.retour < form.depart) errs.retour = 'La date de retour doit être après le départ'
+    if (!form.retour) errs.retour = 'Choisissez une date de fin'
+    else if (form.retour < form.depart) errs.retour = 'La date de fin doit être après le départ'
 
     if (Object.keys(errs).length) { setErrors(errs); return }
 
@@ -73,12 +73,12 @@ export default function AvailabilityModal({ car, onClose }) {
 
           <div className="avail-modal__dates">
             <div className="form-group">
-              <label>📅 Date de départ</label>
+              <label>📅 Date de début</label>
               <input type="date" min={today} value={form.depart} onChange={set('depart')} className={errors.depart ? 'avail-err' : ''} />
               {errors.depart && <span className="field-error">⚠ {errors.depart}</span>}
             </div>
             <div className="form-group">
-              <label>📅 Date de retour</label>
+              <label>📅 Date de finr</label>
               <input type="date" min={form.depart || today} value={form.retour} onChange={set('retour')} className={errors.retour ? 'avail-err' : ''} />
               {errors.retour && <span className="field-error">⚠ {errors.retour}</span>}
             </div>
