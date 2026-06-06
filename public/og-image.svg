@@ -1,0 +1,43 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e1e2e"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="0" y1="0" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e1e2e"/>
+      <stop offset="100%" stop-color="#0a0a0a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#E63946" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#E63946" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Accent bar bottom -->
+  <rect x="0" y="618" width="1200" height="12" fill="#E63946"/>
+
+  <!-- Logo mark -->
+  <g transform="translate(120, 195) scale(4.0)">
+    <polygon points="28,1 52,15 52,41 28,55 4,41 4,15" fill="url(#mark)"/>
+    <polygon points="28,1 52,15 52,41 28,55 4,41 4,15" fill="none" stroke="#E63946" stroke-width="1.5"/>
+    <polygon points="28,6 47,17 47,39 28,50 9,39 9,17" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.75"/>
+    <rect x="4" y="27" width="48" height="4" fill="#E63946" opacity="0.9"/>
+    <line x1="12" y1="9" x2="28" y2="27" stroke="white" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="44" y1="9" x2="28" y2="27" stroke="white" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="28" y1="27" x2="28" y2="44" stroke="white" stroke-width="4.5" stroke-linecap="round"/>
+    <circle cx="28" cy="27" r="3" fill="white"/>
+    <circle cx="44" cy="37" r="1.5" fill="#E63946" opacity="0.8"/>
+    <circle cx="39" cy="37" r="1.5" fill="#E63946" opacity="0.5"/>
+    <circle cx="34" cy="37" r="1.5" fill="#E63946" opacity="0.25"/>
+  </g>
+
+  <!-- Text -->
+  <text x="450" y="300" font-family="'Playfair Display', Georgia, serif" font-weight="800" font-size="96" fill="#ffffff" letter-spacing="2">YASSIR CARS</text>
+  <text x="452" y="365" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-weight="500" font-size="38" fill="#E63946" letter-spacing="6">LOCATION DE VOITURES</text>
+  <text x="452" y="425" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-weight="400" font-size="28" fill="rgba(255,255,255,0.65)">Voitures premium en location, partout au Maroc</text>
+</svg>
