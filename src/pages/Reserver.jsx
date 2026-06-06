@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import DatePicker from '../components/DatePicker'
-import { moroccanCities, MIN_RENTAL_DAYS, addDays } from '../data'
+import { moroccanCities, addDays } from '../data'
+import { useSettings } from '../lib/SettingsContext'
+import { useCurrency } from '../lib/CurrencyContext'
+import { formatMoney } from '../lib/currency'
 import './reserver.css'
-
-const WA_NUMBER = '212661000000'
 
 function fmt(iso) {
   if (!iso) return ''
@@ -126,16 +127,44 @@ const IcoWhatsApp = () => (
 export default function Reserver() {
   const [params] = useSearchParams()
   const location = useLocation()
+  const { settings } = useSettings()
+  const minDays = settings.minRentalDays
+  const { currency } = useCurrency()
 
-  const carName    = params.get('nom')    || 'Véhicule'
-  const photo      = params.get('photo')  || ''
-  const prix       = params.get('prix')   || ''
-  const initDepart = params.get('depart') || ''
-  const initRetour = params.get('retour') || ''
-  const initLieu   = params.get('lieu')   || ''
+  // Reservation details travel via router state, so the URL stays clean
+  // (/reserver). We mirror them into sessionStorage so a page refresh keeps
+  // them, and still accept legacy ?query= params for any old/shared links.
+  const data = useMemo(() => {
+    const s = location.state
+    if (s && (s.nom || s.photos)) {
+      try { sessionStorage.setItem('yc_resa', JSON.stringify(s)) } catch { /* storage blocked */ }
+      return s
+    }
+    try {
+      const saved = sessionStorage.getItem('yc_resa')
+      if (saved) return JSON.parse(saved)
+    } catch { /* storage blocked / bad JSON */ }
+    return {
+      nom: params.get('nom') || '',
+      couleur: params.get('couleur') || '',
+      photo: params.get('photo') || '',
+      prix: params.get('prix') || '',
+      depart: params.get('depart') || '',
+      retour: params.get('retour') || '',
+      lieu: params.get('lieu') || '',
+    }
+  }, [location.state, params])
 
-  // Full gallery comes via router state; fall back to the single ?photo= param.
-  const statePhotos = location.state?.photos
+  const carName    = data.nom     || 'Véhicule'
+  const carColor   = data.couleur || ''
+  const photo      = data.photo   || ''
+  const prix       = data.prix    || ''
+  const initDepart = data.depart  || ''
+  const initRetour = data.retour  || ''
+  const initLieu   = data.lieu    || ''
+
+  // Full gallery comes via router state; fall back to the single photo.
+  const statePhotos = data.photos
   const gallery = (Array.isArray(statePhotos) && statePhotos.length)
     ? statePhotos
     : (photo ? [photo] : [])
@@ -162,26 +191,28 @@ export default function Reserver() {
 
   const handleWhatsApp = () => {
     if (!form.fullName.trim()) return setError('Veuillez entrer votre nom complet.')
-    if (form.depart && form.retour && form.retour < addDays(form.depart, MIN_RENTAL_DAYS))
-      return setError(`La location doit durer au moins ${MIN_RENTAL_DAYS} jours.`)
+    if (form.depart && form.retour && form.retour < addDays(form.depart, minDays))
+      return setError(`La location doit durer au moins ${minDays} jours.`)
     setError('')
     const durée = days === 1 ? '1 jour' : `${days} jours`
     const msg = [
       `Bonjour YASSIR CARS`,
       ``,
       `Je souhaite réserver le véhicule suivant :`,
-      `Voiture : *${carName}*`,
+      `Voiture : *${carName}*${carColor ? ` — ${carColor}` : ''}`,
       ``,
       `Nom complet : ${form.fullName}`,
       `Lieu : ${form.lieu}`,
       `Date de début : ${fmt(form.depart)}`,
       `Date de fin : ${fmt(form.retour)}`,
       `Durée : ${durée}`,
-      promoPrice ? `Prix estimé : ${(promoPrice * (days || 1)).toLocaleString('fr-FR')} MAD` : '',
+      promoPrice
+        ? `Prix estimé : ${formatMoney(promoPrice * (days || 1), currency)}${currency !== 'MAD' ? ` (≈ ${(promoPrice * (days || 1)).toLocaleString('fr-FR')} MAD)` : ''}`
+        : '',
       ``,
       `Merci !`,
     ].filter(Boolean).join('\n')
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank')
+    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 
   return (
@@ -246,9 +277,9 @@ export default function Reserver() {
             <h1 className="rv-left__name">{carName}</h1>
             {promoPrice && (
               <div className="rv-left__pricing">
-                <span className="rv-left__promo">{promoPrice.toLocaleString('fr-FR')} MAD</span>
+                <span className="rv-left__promo">{formatMoney(promoPrice, currency)}</span>
                 <span className="rv-left__per">/ jour</span>
-                <s className="rv-left__old">{Number(prix).toLocaleString('fr-FR')} MAD</s>
+                <s className="rv-left__old">{formatMoney(Number(prix), currency)}</s>
                 <span className="rv-left__discount">-30%</span>
               </div>
             )}
@@ -320,7 +351,7 @@ export default function Reserver() {
                 <DatePicker
                   value={form.retour}
                   onChange={v => setForm(f => ({ ...f, retour: v }))}
-                  min={form.depart ? addDays(form.depart, MIN_RENTAL_DAYS) : undefined}
+                  min={form.depart ? addDays(form.depart, minDays) : undefined}
                   placeholder="JJ-MMM-AAAA"
                   className="rv-datepicker"
                 />
@@ -337,14 +368,14 @@ export default function Reserver() {
                 {promoPrice && (
                   <>
                     <div className="rv-summary__row">
-                      <span className="rv-summary__label"><IcoTag /> {promoPrice.toLocaleString('fr-FR')} MAD × {days}</span>
+                      <span className="rv-summary__label"><IcoTag /> {formatMoney(promoPrice, currency)} × {days}</span>
                       <span className="rv-summary__val rv-summary__val--muted">
-                        <s>{(Number(prix) * days).toLocaleString('fr-FR')} MAD</s>
+                        <s>{formatMoney(Number(prix) * days, currency)}</s>
                       </span>
                     </div>
                     <div className="rv-summary__total">
                       <span>Total estimé</span>
-                      <strong>{(promoPrice * days).toLocaleString('fr-FR')} MAD</strong>
+                      <strong>{formatMoney(promoPrice * days, currency)}</strong>
                     </div>
                   </>
                 )}

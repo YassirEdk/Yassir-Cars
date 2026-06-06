@@ -141,9 +141,45 @@ export function isModelAvailable(model, depart, retour) {
 }
 
 // ── Public read ─────────────────────────────────────────────────────────────
-// Returns all cars (with their blocked date ranges). Falls back to the
-// static data.js list when Supabase isn't configured yet.
+// Returns all cars with their blocked date ranges, for the PUBLIC site.
+// Privacy: never reads client PII (name/CIN/phone/licence). It reads only the
+// `car_availability` view (date ranges) — see migration-privacy.sql.
+// Falls back to the static data.js list when Supabase isn't configured yet.
 export async function fetchCars() {
+  if (!isSupabaseConfigured) {
+    return staticCars.map(c => ({ ...c, unavailable: [] }))
+  }
+  const [carsRes, availRes] = await Promise.all([
+    supabase
+      .from('cars')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .order('created_at', { ascending: true }),
+    supabase.from('car_availability').select('*'),
+  ])
+
+  if (carsRes.error) {
+    console.error('fetchCars failed, falling back to static data:', carsRes.error.message)
+    return staticCars.map(c => ({ ...c, unavailable: [] }))
+  }
+  // The view may be missing during initial setup — degrade to "no blocks"
+  // rather than breaking the public listing.
+  if (availRes.error) {
+    console.error('car_availability read failed, showing cars without date blocks:', availRes.error.message)
+  }
+  const byCar = new Map()
+  for (const p of availRes.data ?? []) {
+    if (!byCar.has(p.car_id)) byCar.set(p.car_id, [])
+    byCar.get(p.car_id).push({ start_date: p.start_date, end_date: p.end_date })
+  }
+  return carsRes.data.map(row => fromRow({ ...row, unavailable_periods: byCar.get(row.id) ?? [] }))
+}
+
+// ── Admin read ──────────────────────────────────────────────────────────────
+// Like fetchCars but reads the FULL reservation rows (incl. client PII) — only
+// works for authenticated admins (RLS). Throws on error so the dashboard can
+// surface it instead of silently showing stale/static data.
+export async function fetchCarsAdmin() {
   if (!isSupabaseConfigured) {
     return staticCars.map(c => ({ ...c, unavailable: [] }))
   }
@@ -152,11 +188,7 @@ export async function fetchCars() {
     .select('*, unavailable_periods(*)')
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
-
-  if (error) {
-    console.error('fetchCars failed, falling back to static data:', error.message)
-    return staticCars.map(c => ({ ...c, unavailable: [] }))
-  }
+  if (error) throw error
   return data.map(fromRow)
 }
 

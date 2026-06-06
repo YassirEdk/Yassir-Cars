@@ -1,6 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { carInCategory, colorName, moroccanCities, MIN_RENTAL_DAYS, addDays } from '../data'
+import { carInCategory, colorName, moroccanCities, addDays } from '../data'
+import { useSettings } from '../lib/SettingsContext'
+import { useCurrency } from '../lib/CurrencyContext'
+import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currency'
+import SelectMenu from '../components/SelectMenu'
 import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge } from '../lib/cars'
 import Logo from '../components/Logo'
 import CityWheel from '../components/CityWheel'
@@ -20,6 +24,15 @@ function fmt(dateStr) {
   })
 }
 
+// International digits → readable phone: "212661234567" → "+212 661 234 567".
+function formatPhone(digits) {
+  const s = String(digits || '').replace(/\D/g, '')
+  if (!s) return ''
+  const cc = s.slice(0, 3)
+  const rest = s.slice(3).replace(/(\d{3})(?=\d)/g, '$1 ')
+  return `+${cc} ${rest}`.trim()
+}
+
 const CATEGORIES = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
 const SORT_OPTIONS = [
   { value: 'prix-asc',  label: 'Prix croissant' },
@@ -29,6 +42,7 @@ const SORT_OPTIONS = [
 
 /* ── Mini search bar at the top of results ── */
 function MiniSearch({ params, onSearch }) {
+  const { settings } = useSettings()
   const [form, setForm] = useState({
     lieu:      params.get('lieu')      || '',
     depart:    params.get('depart')    || '',
@@ -68,7 +82,7 @@ function MiniSearch({ params, onSearch }) {
             <DatePicker
               value={form.retour}
               onChange={(iso) => setForm(f => ({ ...f, retour: iso }))}
-              min={form.depart ? addDays(form.depart, MIN_RENTAL_DAYS) : undefined}
+              min={form.depart ? addDays(form.depart, settings.minRentalDays) : undefined}
               placeholder="Choisir une date"
               className="mini-datepicker"
             />
@@ -89,6 +103,7 @@ function MiniSearch({ params, onSearch }) {
 /* ── Phone modal ── */
 function PhoneModal({ car, onClose }) {
   const overlayRef = useRef(null)
+  const { settings } = useSettings()
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -123,7 +138,7 @@ function PhoneModal({ car, onClose }) {
           </span>
 
           <a
-            href="https://wa.me/212661000000"
+            href={`https://wa.me/${settings.whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             className="phone-modal__btn phone-modal__btn--whatsapp"
@@ -131,7 +146,7 @@ function PhoneModal({ car, onClose }) {
             <span className="phone-modal__btn-icon">💬</span>
             <div>
               <span className="phone-modal__btn-label">WhatsApp</span>
-              <span className="phone-modal__btn-num">+212 661 000 000</span>
+              <span className="phone-modal__btn-num">{formatPhone(settings.whatsapp)}</span>
             </div>
           </a>
         </div>
@@ -145,6 +160,7 @@ function PhoneModal({ car, onClose }) {
 
 /* ── Individual result card ── */
 function ResultCard({ car, days, available, depart, retour, lieu, availableOnly, onCall }) {
+  const { currency } = useCurrency()
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
   // Pick a colour → switch to that unit (photos, price, specs follow it).
@@ -271,18 +287,18 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
           </div>
           <div className="result-card__pricing">
             <div className="result-price-old-row">
-              <span className="result-price-old">{active.price.toLocaleString('fr-FR')} MAD</span>
+              <span className="result-price-old">{formatMoney(active.price, currency)}</span>
               <span className="result-discount">-30%</span>
             </div>
             <div className="result-card__day">
-              <span className="result-price">{promoPrice.toLocaleString('fr-FR')}</span>
-              <span className="result-currency"> MAD</span>
+              <span className="result-price">{convert(promoPrice, currency).toLocaleString('fr-FR')}</span>
+              <span className="result-currency"> {CURRENCIES[currency].symbol}</span>
               <span className="result-per"> / jour</span>
             </div>
             {days > 1 && (
               <div className="result-total">
-                Total : <strong>{total.toLocaleString('fr-FR')} MAD</strong>
-                <s className="result-total-old">{oldTotal.toLocaleString('fr-FR')} MAD</s>
+                Total : <strong>{formatMoney(total, currency)}</strong>
+                <s className="result-total-old">{formatMoney(oldTotal, currency)}</s>
                 <small> ({days} jours)</small>
               </div>
             )}
@@ -306,8 +322,17 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
           {available ? (
             <Link
               className="result-reserve result-reserve--btn"
-              to={`/reserver?nom=${encodeURIComponent(car.name)}&photo=${encodeURIComponent(shownPhoto || '')}&prix=${active.price}&depart=${depart || ''}&retour=${retour || ''}&lieu=${encodeURIComponent(lieu)}`}
-              state={{ photos: gallery }}
+              to="/reserver"
+              state={{
+                nom: car.name,
+                couleur: effColor ? colorName(effColor) : '',
+                photo: shownPhoto || '',
+                photos: gallery,
+                prix: active.price,
+                depart: depart || '',
+                retour: retour || '',
+                lieu,
+              }}
             >
               Réserver maintenant <span className="result-reserve__arrow">→</span>
             </Link>
@@ -340,6 +365,8 @@ function urlCatToKey(cat) {
 export default function SearchResults() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { currency, setCurrency } = useCurrency()
+  const currencyOptions = CURRENCY_CODES.map(code => ({ value: code, label: CURRENCIES[code].label }))
 
   const lieu    = searchParams.get('lieu')      || ''
   const depart  = searchParams.get('depart')    || ''
@@ -528,15 +555,13 @@ export default function SearchResults() {
             {/* Sort */}
             <div className="sort-wrap">
               <span className="sort-label">Trier par</span>
-              <select
-                className="sort-select"
-                value={sort}
-                onChange={e => setSort(e.target.value)}
-              >
-                {SORT_OPTIONS.map(o => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+              <SelectMenu value={sort} onChange={setSort} options={SORT_OPTIONS} ariaLabel="Trier par" />
+            </div>
+
+            {/* Currency */}
+            <div className="sort-wrap">
+              <span className="sort-label">Devise</span>
+              <SelectMenu value={currency} onChange={setCurrency} options={currencyOptions} ariaLabel="Devise" />
             </div>
           </div>
         </div>

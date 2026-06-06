@@ -1,0 +1,42 @@
+/* ── Styled dropdown menu (replaces native <select>) ─────────────────────── */
+.smenu { position: relative; }
+
+.smenu__btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; min-width: 92px;
+  border: 1px solid var(--gray-200); border-radius: 50px;
+  background: #fff; font-family: inherit; font-size: 13px; font-weight: 600;
+  color: var(--dark); cursor: pointer; transition: all .15s;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06); white-space: nowrap;
+}
+.smenu__btn:hover { border-color: var(--gray-300); }
+.smenu__btn.open { border-color: var(--red); box-shadow: 0 0 0 3px rgba(225,29,42,.12); }
+
+.smenu__value { flex: 1; text-align: left; }
+.smenu__chev { color: var(--gray-500); transition: transform .2s; flex-shrink: 0; }
+.smenu__btn.open .smenu__chev { transform: rotate(180deg); }
+
+/* Dropdown list — aligned to the button's left edge, at least its width */
+.smenu__list {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 50;
+  min-width: 100%; margin: 0; padding: 6px; list-style: none;
+  background: #fff; border: 1px solid var(--gray-200); border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.14);
+  animation: smenu-in .14s ease;
+}
+@keyframes smenu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.smenu__item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 8px 12px; border: none; border-radius: 9px;
+  background: none; font-family: inherit; font-size: 13px; font-weight: 600;
+  color: var(--gray-700); cursor: pointer; transition: background .12s, color .12s;
+  white-space: nowrap;
+}
+.smenu__item:hover { background: var(--gray-100); }
+.smenu__item.active { color: var(--red); }
+.smenu__name { flex: 1; text-align: left; }
+.smenu__check { color: var(--red); flex-shrink: 0; }

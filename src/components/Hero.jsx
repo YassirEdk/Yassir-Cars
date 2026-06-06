@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import DatePicker from './DatePicker'
 import CityWheel from './CityWheel'
 import Icon from './Icon'
-import { moroccanCities, MIN_RENTAL_DAYS, addDays } from '../data'
+import { moroccanCities, addDays } from '../data'
+import { useSettings } from '../lib/SettingsContext'
 
 const HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1800&q=80'
 
@@ -40,6 +41,8 @@ export default function Hero() {
   const [errors, setErrors] = useState({})
   const [shake,  setShake]  = useState(false)
   const navigate = useNavigate()
+  const { settings } = useSettings()
+  const minDays = settings.minRentalDays
 
   const set = (key) => (e) => {
     setForm(f => ({ ...f, [key]: e.target.value }))
@@ -64,8 +67,8 @@ export default function Hero() {
       newErrors.retour = 'Veuillez choisir une date de retour'
     else if (form.retour && form.retour < today)
       newErrors.retour = 'La date de retour ne peut pas être dans le passé'
-    else if (form.depart && form.retour && form.retour < addDays(form.depart, MIN_RENTAL_DAYS))
-      newErrors.retour = `La location doit durer au moins ${MIN_RENTAL_DAYS} jours`
+    else if (form.depart && form.retour && form.retour < addDays(form.depart, minDays))
+      newErrors.retour = `La location doit durer au moins ${minDays} jours`
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -166,7 +169,7 @@ export default function Hero() {
                     setForm(f => ({ ...f, retour: iso }))
                     if (errors.retour) setErrors(prev => ({ ...prev, retour: '' }))
                   }}
-                  min={form.depart ? addDays(form.depart, MIN_RENTAL_DAYS) : today}
+                  min={form.depart ? addDays(form.depart, minDays) : today}
                   placeholder="Choisir une date"
                   className={errors.retour ? 'input-error' : ''}
                 />

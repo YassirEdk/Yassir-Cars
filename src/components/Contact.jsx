@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Icon from './Icon'
+import { useSettings } from '../lib/SettingsContext'
 
 const subjects = ['Demande de réservation', 'Renseignement sur la flotte', 'Tarifs entreprise', 'Réclamation', 'Autre']
 
@@ -11,6 +12,12 @@ const contactItems = [
 ]
 
 export default function Contact({ onSubmit }) {
+  const { settings } = useSettings()
+  const socialLinks = [
+    { label: 'Facebook',  url: settings.facebookUrl },
+    { label: 'Instagram', url: settings.instagramUrl },
+    { label: 'WhatsApp',  url: settings.whatsapp ? `https://wa.me/${settings.whatsapp}` : '' },
+  ].filter(s => s.url)
   const [form, setForm] = useState({ prenom: '', nom: '', email: '', tel: '', sujet: subjects[0], message: '' })
 
   const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
@@ -42,8 +49,8 @@ export default function Contact({ onSubmit }) {
               </div>
             ))}
             <div className="social-links">
-              {['Facebook', 'Instagram', 'WhatsApp'].map(s => (
-                <a href="#" key={s} className="social-btn">{s}</a>
+              {socialLinks.map(s => (
+                <a href={s.url} key={s.label} className="social-btn" target="_blank" rel="noopener noreferrer">{s.label}</a>
               ))}
             </div>
           </div>

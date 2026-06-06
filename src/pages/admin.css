@@ -8,6 +8,11 @@
 .admin-pad { padding: 2rem; }
 .admin-muted { color: #6b7280; font-size: .9rem; }
 .admin-error { background: #fee2e2; color: #b91c1c; padding: .6rem .8rem; border-radius: 8px; font-size: .85rem; }
+.admin-load-error {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+  border-radius: 10px; margin: 1rem 2rem; padding: .8rem 1rem; font-size: .9rem;
+}
 
 /* Buttons */
 .admin-btn {
@@ -756,19 +761,34 @@
   }
 
   /* ── Reservations list (5 cols): Client · Période · Tel · CIN · [actions] ── */
-  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(1)::before { content: "Client"; }
-  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(2)::before { content: "Période"; }
-  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(3)::before { content: "Téléphone"; }
-  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:nth-child(4)::before { content: "CIN"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing):not(.admin-hist-table--service) td:nth-child(1)::before { content: "Client"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing):not(.admin-hist-table--service) td:nth-child(2)::before { content: "Période"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing):not(.admin-hist-table--service) td:nth-child(3)::before { content: "Téléphone"; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing):not(.admin-hist-table--service) td:nth-child(4)::before { content: "CIN"; }
   /* last column = actions: no label, stack buttons vertically */
-  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:last-child {
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing):not(.admin-hist-table--service) td:last-child {
     flex-direction: column;
     align-items: stretch;
     gap: .4rem;
     padding-top: .5rem;
     border-top: 1px dashed #e5e7eb;
   }
-  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing) td:last-child::before { content: none; }
+  .admin-hist-table:not(.admin-hist-table--history):not(.admin-hist-table--ongoing):not(.admin-hist-table--service) td:last-child::before { content: none; }
+
+  /* ── Services list (6 cols): Service · Date · Kilométrage · Coût · Note · [del] ── */
+  .admin-hist-table--service td:nth-child(1)::before { content: "Service"; }
+  .admin-hist-table--service td:nth-child(2)::before { content: "Date"; }
+  .admin-hist-table--service td:nth-child(3)::before { content: "Kilométrage"; }
+  .admin-hist-table--service td:nth-child(4)::before { content: "Coût"; }
+  .admin-hist-table--service td:nth-child(5)::before { content: "Note"; }
+  .admin-hist-table--service td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+    gap: .4rem;
+    padding-top: .5rem;
+    border-top: 1px dashed #e5e7eb;
+  }
+  .admin-hist-table--service td:last-child::before { content: none; }
 
   /* ── Ongoing table (6 cols): Client · Période · Tel · CIN · Départ km · [actions] ── */
   .admin-hist-table--ongoing td:nth-child(1)::before { content: "Client"; }
@@ -823,18 +843,15 @@
   }
   .admin-resa-detail__value { text-align: left; font-weight: 600; }
 
-  /* ── Modals: bottom-sheet style on phone ────────────────────────────────── */
+  /* ── Modals: centred on phone ───────────────────────────────────────────── */
   .admin-resa-popup { max-width: 100%; }
-  .admin-modal { padding: .5rem; align-items: flex-end; }
+  .admin-modal { padding: .75rem; align-items: center; }
   .admin-modal .admin-list-modal,
   .admin-modal .admin-resa-popup,
   .admin-modal .admin-resa-detail,
   .admin-modal .admin-conflict-popup {
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-    margin-bottom: 0;
-    max-height: 92vh;
+    max-height: 90vh;
   }
   /* History modal: needs more vertical space for 8-field cards */
-  .admin-modal .admin-list-modal--wide { max-height: 94vh; }
+  .admin-modal .admin-list-modal--wide { max-height: 92vh; }
 }

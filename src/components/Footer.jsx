@@ -1,5 +1,6 @@
 import Logo from './Logo'
 import Icon from './Icon'
+import { useSettings } from '../lib/SettingsContext'
 
 const cols = [
   {
@@ -17,6 +18,13 @@ const cols = [
 ]
 
 export default function Footer() {
+  const { settings } = useSettings()
+  // Only show a social link when its URL is configured in the admin settings.
+  const socials = [
+    { key: 'f',  label: 'Facebook',  url: settings.facebookUrl },
+    { key: 'ig', label: 'Instagram', url: settings.instagramUrl },
+  ].filter(s => s.url)
+
   return (
     <footer className="footer">
       <div className="container">
@@ -27,7 +35,9 @@ export default function Footer() {
             </a>
             <p>Votre partenaire de confiance pour la location de véhicules au Maroc depuis 2014. Qualité, transparence et satisfaction garanties.</p>
             <div className="footer-socials">
-              {['f', 'ig', 'yt', 'in'].map(s => <a href="#" key={s} aria-label={s}>{s}</a>)}
+              {socials.map(s => (
+                <a href={s.url} key={s.key} aria-label={s.label} target="_blank" rel="noopener noreferrer">{s.key}</a>
+              ))}
             </div>
           </div>
 
