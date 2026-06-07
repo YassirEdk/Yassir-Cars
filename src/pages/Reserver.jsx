@@ -155,6 +155,10 @@ export default function Reserver() {
     }
   }, [location.state, params])
 
+  // No car was carried in (someone opened /reserver directly): we can't build
+  // a real reservation, so we block the page with a popup back to the home page.
+  const hasCar = Boolean(data.nom)
+
   const carName    = data.nom     || 'Véhicule'
   const carColor   = data.couleur || ''
   const photo      = data.photo   || ''
@@ -213,6 +217,21 @@ export default function Reserver() {
       `Merci !`,
     ].filter(Boolean).join('\n')
     window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank')
+  }
+
+  if (!hasCar) {
+    return (
+      <div className="rv-page rv-empty">
+        <div className="rv-empty__card">
+          <div className="rv-empty__icon"><IcoCar /></div>
+          <h2 className="rv-empty__title">Aucune voiture sélectionnée</h2>
+          <p className="rv-empty__text">
+            Veuillez d’abord choisir une voiture et la durée de location avant de réserver.
+          </p>
+          <Link to="/" className="rv-empty__btn">C’est parti</Link>
+        </div>
+      </div>
+    )
   }
 
   return (

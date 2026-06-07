@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS = {
   whatsapp: '212661000000',   // international digits, no leading 0
   instagramUrl: '',
   facebookUrl: '',
+  tiktokUrl: '',
   minRentalDays: MIN_RENTAL_DAYS,
 }
 
@@ -17,6 +18,7 @@ function fromRow(row) {
     whatsapp: row.whatsapp || DEFAULT_SETTINGS.whatsapp,
     instagramUrl: row.instagram_url || '',
     facebookUrl: row.facebook_url || '',
+    tiktokUrl: row.tiktok_url || '',
     minRentalDays: row.min_rental_days ?? DEFAULT_SETTINGS.minRentalDays,
   }
 }
@@ -45,6 +47,7 @@ export async function updateSettings(s) {
       whatsapp: (s.whatsapp || '').replace(/\D/g, '') || null,
       instagram_url: s.instagramUrl?.trim() || null,
       facebook_url: s.facebookUrl?.trim() || null,
+      tiktok_url: s.tiktokUrl?.trim() || null,
       min_rental_days: Math.max(1, Number(s.minRentalDays) || DEFAULT_SETTINGS.minRentalDays),
       updated_at: new Date().toISOString(),
     })

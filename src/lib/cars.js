@@ -207,9 +207,17 @@ export function isCarAvailable(car, depart, retour) {
 
 // ── Admin: photo upload ─────────────────────────────────────────────────────
 // Uploads to the public 'car-photos' bucket and returns the public URL.
+// Only allow real image types; reject anything else before it reaches storage.
+const ALLOWED_IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'])
+
 export async function uploadCarPhoto(file) {
   if (!supabase) throw new Error('Supabase non configuré.')
-  const ext = file.name.split('.').pop()
+  if (!file.type.startsWith('image/')) throw new Error('Seules les images sont autorisées.')
+  // Derive a safe extension from the filename: strip anything that isn't a
+  // letter/digit (no path separators, no dots) so the storage key can't be
+  // manipulated, and fall back to 'jpg' for unknown/odd types.
+  const rawExt = (file.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '')
+  const ext = ALLOWED_IMAGE_EXT.has(rawExt) ? rawExt : 'jpg'
   const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
   const { error } = await supabase.storage
     .from('car-photos')

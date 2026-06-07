@@ -337,11 +337,16 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
 
   const doSave = async () => {
     setBusy(true)
+    // When "2ème conducteur" is unchecked, drop any second-driver values so they
+    // aren't silently saved (e.g. after filling them in then unticking the box).
+    const payload = form.hasSecondDriver
+      ? form
+      : { ...form, secondDriverName: '', secondDriverCin: '', secondDriverLicence: '' }
     try {
       if (editingR) {
-        await updateReservation(editingR.id, form)
+        await updateReservation(editingR.id, payload)
       } else {
-        await addReservation(car.id, { ...form, matriculation: car.immatriculation || null })
+        await addReservation(car.id, { ...payload, matriculation: car.immatriculation || null })
       }
       closePopup(); onChange()
     } catch (e) { showError('Erreur : ' + e.message) }

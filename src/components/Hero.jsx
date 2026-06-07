@@ -19,11 +19,20 @@ const stats = [
 ]
 
 const STORAGE_KEY = 'yassir_search'
+const SAVE_TTL = 60 * 60 * 1000 // saved search expires after 1 hour
 
 function loadSaved() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+    const data = JSON.parse(raw)
+    // Drop the saved search once it's older than SAVE_TTL so the fields don't
+    // stay filled forever — they clear themselves ~1h after the last search.
+    if (!data.savedAt || Date.now() - data.savedAt > SAVE_TTL) {
+      localStorage.removeItem(STORAGE_KEY)
+      return null
+    }
+    return data
   } catch {
     return null
   }
@@ -84,6 +93,7 @@ export default function Hero() {
       retour:    form.retour,
       categorie: form.categorie,
       tab:       activeTab,
+      savedAt:   Date.now(),
     }))
 
     setErrors({})

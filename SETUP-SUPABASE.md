@@ -19,9 +19,11 @@ il affiche les 6 voitures de `src/data.js` en secours.
 
 1. Dans le projet : menu de gauche → **SQL Editor** → **New query**.
 2. Ouvrir le fichier [`supabase/schema.sql`](supabase/schema.sql), copier **tout** son
-   contenu, le coller, puis **Run**.
-3. (Optionnel mais recommandé) Faire pareil avec [`supabase/seed.sql`](supabase/seed.sql)
-   pour importer vos 6 voitures actuelles → la page admin ne sera pas vide.
+   contenu, le coller, puis **Run**. Ce **fichier unique** crée toutes les tables, la
+   sécurité (RLS), le stockage des photos et les réglages. Il est ré-exécutable sans risque.
+3. (Optionnel mais recommandé) Pour importer vos 6 voitures de départ → la page admin
+   ne sera pas vide : tout en bas de `schema.sql`, dé-commentez le bloc **SEED**
+   (section 8) la **première fois seulement**, puis relancez-le.
 
 ## 3. Créer votre compte admin
 

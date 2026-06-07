@@ -10,6 +10,7 @@ export default function SettingsModal({ onClose }) {
     whatsapp: settings.whatsapp || '',
     instagramUrl: settings.instagramUrl || '',
     facebookUrl: settings.facebookUrl || '',
+    tiktokUrl: settings.tiktokUrl || '',
     minRentalDays: settings.minRentalDays || 3,
   })
   const [busy, setBusy] = useState(false)
@@ -56,6 +57,10 @@ export default function SettingsModal({ onClose }) {
 
           <label className="resa-full">Lien Facebook
             <input type="url" value={form.facebookUrl} onChange={set('facebookUrl')} placeholder="https://facebook.com/votre_page" />
+          </label>
+
+          <label className="resa-full">Lien TikTok
+            <input type="url" value={form.tiktokUrl} onChange={set('tiktokUrl')} placeholder="https://tiktok.com/@votre_compte" />
           </label>
 
           <label className="resa-full">Durée minimale de location (jours)

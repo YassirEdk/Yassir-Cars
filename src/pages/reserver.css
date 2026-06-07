@@ -8,6 +8,34 @@
   color: #1a1a1a;
 }
 
+/* ── Empty state: opened /reserver with no car selected ────────────────────── */
+.rv-empty {
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+.rv-empty__card {
+  width: 100%; max-width: 420px; text-align: center;
+  background: #1a1a1a; border: 1px solid rgba(255,255,255,.08);
+  border-radius: 20px; padding: 40px 32px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5);
+  animation: rv-card-in .4s ease both;
+}
+.rv-empty__icon {
+  width: 76px; height: 76px; margin: 0 auto 20px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: rgba(230,57,70,.12); color: #E63946;
+}
+.rv-empty__icon svg { width: 38px; height: 38px; }
+.rv-empty__title { font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 10px; }
+.rv-empty__text { font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.6); margin: 0 0 28px; }
+.rv-empty__btn {
+  display: inline-block; width: 100%; padding: 15px 24px;
+  background: #E63946; color: #fff; font-size: 15px; font-weight: 700;
+  border-radius: 12px; text-decoration: none; transition: background .2s, transform .15s;
+}
+.rv-empty__btn:hover { background: #d62f3c; transform: translateY(-1px); }
+.rv-empty__btn:active { transform: translateY(0); }
+
 /* ── Top bar (transparent — logo over dark image, button over light form) ──── */
 .rv-topbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
