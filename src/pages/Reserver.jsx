@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import DatePicker from '../components/DatePicker'
-import { moroccanCities, addDays } from '../data'
+import Icon from '../components/Icon'
+import { moroccanCities, addDays, featureLabel, featureIcon } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { formatMoney } from '../lib/currency'
@@ -172,6 +173,9 @@ export default function Reserver() {
   const gallery = (Array.isArray(statePhotos) && statePhotos.length)
     ? statePhotos
     : (photo ? [photo] : [])
+
+  // Équipements/options of the selected car (keys → label + icon via data.js).
+  const features = Array.isArray(data.features) ? data.features : []
   const [curPhoto, setCurPhoto] = useState(0)
   const goPhoto = (dir) => setCurPhoto(i => Math.min(gallery.length - 1, Math.max(0, i + dir)))
 
@@ -300,6 +304,15 @@ export default function Reserver() {
                 <span className="rv-left__per">/ jour</span>
                 <s className="rv-left__old">{formatMoney(Number(prix), currency)}</s>
                 <span className="rv-left__discount">-30%</span>
+              </div>
+            )}
+            {features.length > 0 && (
+              <div className="rv-left__equip">
+                {features.map(f => (
+                  <span className="rv-equip-pill" key={f}>
+                    <Icon name={featureIcon(f)} className="rv-equip-pill__icon" /> {featureLabel(f)}
+                  </span>
+                ))}
               </div>
             )}
           </div>

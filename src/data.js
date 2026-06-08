@@ -12,7 +12,7 @@ export const cars = [
     fuel: 'Diesel',
     transmission: 'Manuel',
     seats: 5,
-    extra: 'Clim',
+    features: ['clim_auto', 'bluetooth', 'usb'],
     badge: 'Populaire',
     badgeColor: 'red',
   },
@@ -30,7 +30,7 @@ export const cars = [
     fuel: 'Essence',
     transmission: 'Manuel',
     seats: 5,
-    extra: 'Clim',
+    features: ['clim_auto', 'bluetooth', 'carplay', 'usb', 'camera'],
     badge: null,
     badgeColor: null,
   },
@@ -47,7 +47,7 @@ export const cars = [
     fuel: 'Diesel',
     transmission: 'Auto',
     seats: 5,
-    extra: 'Clim auto',
+    features: ['clim_auto', 'cruise', 'gps', 'carplay', 'touchscreen', 'camera', 'parking_sensors', 'led', 'alloy_wheels'],
     badge: 'Nouveau',
     badgeColor: 'blue',
   },
@@ -64,7 +64,7 @@ export const cars = [
     fuel: 'Diesel',
     transmission: 'Auto',
     seats: 5,
-    extra: 'Clim auto',
+    features: ['clim_auto', 'cruise', 'gps', 'bluetooth', 'camera', 'parking_sensors', 'keyless', 'alloy_wheels'],
     badge: null,
     badgeColor: null,
   },
@@ -81,7 +81,7 @@ export const cars = [
     fuel: 'Diesel',
     transmission: 'Auto',
     seats: 7,
-    extra: 'Tout terrain',
+    features: ['clim_auto', 'cruise', 'gps', 'carplay', 'touchscreen', 'camera', 'parking_sensors', 'keyless', 'leather', 'led', 'alloy_wheels', 'premium_audio'],
     badge: 'Top choix',
     badgeColor: 'red',
   },
@@ -98,7 +98,7 @@ export const cars = [
     fuel: 'Essence',
     transmission: 'Auto',
     seats: 5,
-    extra: 'Full option',
+    features: ['clim_auto', 'adaptive_cruise', 'toit_panoramique', 'gps', 'carplay', 'touchscreen', 'camera', 'parking_sensors', 'lane_assist', 'keyless', 'leather', 'heated_seats', 'led', 'alloy_wheels', 'premium_audio'],
     badge: 'Prestige',
     badgeColor: 'gold',
   },
@@ -222,6 +222,64 @@ export const carColors = [
 ]
 
 export const colorName = (hex) => carColors.find(c => c.hex === hex)?.name ?? hex
+
+// Équipements / options a car can have. Each car stores an array of these
+// `value` keys (like `categories`); the admin picks them with chips and the
+// public cards render a vector <Icon> + label. `icon` is a name from the shared
+// Icon component (src/components/Icon.jsx). Add new options here as needed.
+export const carFeatures = [
+  { value: 'clim_auto',        label: 'Climatisation auto',           icon: 'snow' },
+  { value: 'cruise',           label: 'Régulateur de vitesse',        icon: 'gauge' },
+  { value: 'adaptive_cruise',  label: 'Régulateur adaptatif',         icon: 'broadcast' },
+  { value: 'toit_panoramique', label: 'Toit panoramique',             icon: 'sunHorizon' },
+  { value: 'toit_ouvrant',     label: 'Toit ouvrant',                 icon: 'sun' },
+  { value: 'gps',              label: 'GPS / Navigation',             icon: 'navigationArrow' },
+  { value: 'carplay',          label: 'Apple CarPlay / Android Auto', icon: 'deviceMobile' },
+  { value: 'touchscreen',      label: 'Écran tactile',                icon: 'monitor' },
+  { value: 'bluetooth',        label: 'Bluetooth',                    icon: 'bluetooth' },
+  { value: 'usb',              label: 'Ports USB',                    icon: 'usb' },
+  { value: 'camera',           label: 'Caméra de recul',              icon: 'videoCamera' },
+  { value: 'parking_sensors',  label: 'Capteurs de stationnement',    icon: 'scan' },
+  { value: 'lane_assist',      label: 'Aide au maintien de voie',     icon: 'road' },
+  { value: 'keyless',          label: 'Démarrage sans clé',           icon: 'key' },
+  { value: 'start_stop',       label: 'Start & Stop',                 icon: 'power' },
+  { value: 'leather',          label: 'Sièges cuir',                  icon: 'armchair' },
+  { value: 'heated_seats',     label: 'Sièges chauffants',            icon: 'fire' },
+  { value: 'led',              label: 'Feux LED',                     icon: 'lightbulb' },
+  { value: 'alloy_wheels',     label: 'Jantes alliage',               icon: 'steeringWheel' },
+  { value: 'premium_audio',    label: 'Système audio premium',        icon: 'speakerHigh' },
+]
+
+export const featureLabel = (v) => carFeatures.find(f => f.value === v)?.label ?? v
+export const featureIcon  = (v) => carFeatures.find(f => f.value === v)?.icon ?? 'check'
+
+const FEATURE_VALUES = new Set(carFeatures.map(f => f.value))
+
+// Normalize whatever the DB hands back into a clean array of valid feature
+// keys. Tolerates legacy/corrupt shapes from the old character(50) column:
+//   • a real array            → ['cruise']
+//   • a JSON string           → '["cruise"]'  → ['cruise']
+//   • a comma string          → 'cruise,gps'  → ['cruise','gps']
+//   • split into single chars → ['[','"','c',…] → reassemble then parse
+// Anything that isn't a known feature key is dropped, so a bad value can never
+// render as a row of broken one-character chips again.
+export const parseFeatures = (raw) => {
+  if (raw == null) return []
+  let arr = raw
+  if (typeof arr === 'string') {
+    try { arr = JSON.parse(arr) } catch { arr = arr.split(',') }
+  }
+  if (!Array.isArray(arr)) return []
+  // Got exploded into single characters (e.g. '["cruise"]' → 10 chars)? Glue
+  // them back and re-parse.
+  if (arr.length > 1 && arr.every(x => typeof x === 'string' && x.length <= 1)) {
+    try {
+      const j = JSON.parse(arr.join(''))
+      if (Array.isArray(j)) arr = j
+    } catch { /* leave as-is; the filter below will drop junk */ }
+  }
+  return arr.map(v => String(v).trim()).filter(v => FEATURE_VALUES.has(v))
+}
 
 export const filterOptions = [
   { value: 'all', label: 'Tous' },

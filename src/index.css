@@ -626,11 +626,9 @@ ul { list-style: none; }
 .results-summary { background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%); border-bottom: 1px solid var(--gray-200); padding: 26px 0; }
 .results-summary__inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
 .results-count {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 46px; height: 46px; padding: 0 11px; margin-right: 12px; vertical-align: middle;
-  background: linear-gradient(135deg, #ff5a67 0%, var(--red) 100%); color: #fff;
-  border-radius: 14px; font-size: 24px; font-weight: 800; font-family: 'Playfair Display', serif;
-  box-shadow: 0 8px 20px -6px rgba(230,57,70,.55);
+  display: inline-block; margin-right: 10px; align-self: flex-start; position: relative; top: -14px;
+  color: var(--red); font-size: 40px; font-weight: 800; line-height: 1;
+  font-family: 'Playfair Display', serif;
 }
 .results-summary__text h2 { font-size: 24px; font-weight: 800; color: var(--dark); margin-bottom: 6px; display: flex; align-items: center; letter-spacing: -.3px; }
 .results-summary__text p { font-size: 14px; color: var(--gray-600); }
@@ -792,6 +790,24 @@ ul { list-style: none; }
 .result-card__features { display: flex; gap: 8px; flex-wrap: wrap; }
 .feature-pill { font-size: 12px; color: #27ae60; background: rgba(39,174,96,.08); border: 1px solid rgba(39,174,96,.2); padding: 4px 12px; border-radius: 50px; font-weight: 600; }
 
+/* Car équipements / options (cruise control, toit panoramique, GPS…) */
+.result-card__equip { display: flex; gap: 7px; flex-wrap: wrap; }
+.equip-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600; color: var(--gray-700);
+  background: #fff; border: 1px solid var(--gray-200); padding: 4px 11px; border-radius: 50px;
+}
+.equip-pill__icon { width: 15px; height: 15px; flex-shrink: 0; color: var(--red); }
+.equip-pill--more { color: var(--red); border-color: rgba(230,57,70,.3); background: #fff5f5; }
+/* Compact version inside the dark home/all-cars CarCard */
+.car-equip { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.car-equip .equip-pill {
+  font-size: 11.5px; color: rgba(255,255,255,.78);
+  background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.12);
+}
+.car-equip .equip-pill--more { color: #fff; background: rgba(230,57,70,.25); border-color: rgba(230,57,70,.4); }
+.car-equip .equip-pill__icon { width: 14px; height: 14px; color: #ff7a85; }
+
 .result-card__footer { display: flex; align-items: center; gap: 20px; margin-top: auto; flex-wrap: wrap; }
 
 /* "Réserver maintenant" — styled link acting as a button */
@@ -936,7 +952,7 @@ ul { list-style: none; }
   .results-summary { padding: 18px 0; }
   .results-summary__inner { flex-direction: column; align-items: flex-start; gap: 14px; }
   .results-summary__text h2 { font-size: 20px; }
-  .results-count { min-width: 40px; height: 40px; font-size: 21px; margin-right: 10px; }
+  .results-count { font-size: 34px; margin-right: 9px; }
   /* Trust badges become a horizontal scroll strip instead of disappearing */
   .results-summary__meta { display: flex; gap: 8px; overflow-x: auto; width: 100%; padding-bottom: 2px; scrollbar-width: none; }
   .results-summary__meta::-webkit-scrollbar { display: none; }
@@ -946,7 +962,7 @@ ul { list-style: none; }
 @media (max-width: 480px) {
   .results-cat-btn { padding: 7px 14px; font-size: 12.5px; }
   .results-summary__text h2 { font-size: 18px; }
-  .results-count { min-width: 36px; height: 36px; font-size: 19px; border-radius: 11px; margin-right: 9px; }
+  .results-count { font-size: 30px; margin-right: 8px; }
   .results-search-wrap { height: 40px; }
   /* Let the filter row wrap instead of overflowing the pill */
   .results-toolbar__controls { flex-wrap: wrap; row-gap: 8px; border-radius: 18px; padding: 10px 14px; }

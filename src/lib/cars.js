@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
-import { cars as staticCars } from '../data'
+import { cars as staticCars, parseFeatures } from '../data'
 
 // DB rows use snake_case; the React components expect camelCase
 // (brandLogo, whiteFilter, badgeColor). Normalize here so nothing else changes.
@@ -22,7 +22,7 @@ function fromRow(row) {
     fuel: row.fuel,
     transmission: row.transmission,
     seats: row.seats,
-    extra: row.extra,
+    features: parseFeatures(row.features),
     badge: row.badge,
     badgeColor: row.badge_color,
     sortOrder: row.sort_order,
@@ -105,7 +105,7 @@ function toRow(car) {
     fuel: car.fuel || 'Diesel',
     transmission: car.transmission || 'Manuel',
     seats: Number(car.seats) || 5,
-    extra: car.extra || 'Clim',
+    features: (car.features ?? []).filter(Boolean).length ? car.features.filter(Boolean) : null,
     badge: car.badge || null,
     badge_color: badgeColorFor(car.badge),
     sort_order: Number(car.sortOrder) || 0,
@@ -123,12 +123,14 @@ export function mergeByModel(cars) {
   for (const car of cars) {
     const key = car.name.trim().toLowerCase()
     if (!map.has(key)) {
-      map.set(key, { ...car, units: [car], colors: car.color ? [car.color] : [] })
+      map.set(key, { ...car, units: [car], colors: car.color ? [car.color] : [], features: [...(car.features ?? [])] })
     } else {
       const m = map.get(key)
       m.units.push(car)
       if (car.color && !m.colors.includes(car.color)) m.colors.push(car.color)
       if (car.price < m.price) m.price = car.price // show the lowest price
+      // Union features across units so the merged card lists every option.
+      for (const f of car.features ?? []) if (!m.features.includes(f)) m.features.push(f)
     }
   }
   return [...map.values()]

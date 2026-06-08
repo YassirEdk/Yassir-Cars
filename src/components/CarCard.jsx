@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { effectiveBadge } from '../lib/cars'
-import { colorName } from '../data'
+import { colorName, featureLabel, featureIcon } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import AvailabilityModal from './AvailabilityModal'
 import Icon from './Icon'
@@ -111,8 +111,19 @@ export default function CarCard({ car, cta = 'availability' }) {
           <span><Icon name="fuel" /> {active.fuel}</span>
           <span><Icon name="gear" /> {active.transmission}</span>
           <span><Icon name="users" /> {active.seats} places</span>
-          <span><Icon name="snow" /> {active.extra}</span>
         </div>
+        {active.features?.length > 0 && (
+          <div className="car-equip">
+            {active.features.slice(0, 6).map(f => (
+              <span className="equip-pill" key={f} title={featureLabel(f)}>
+                <Icon name={featureIcon(f)} className="equip-pill__icon" /> {featureLabel(f)}
+              </span>
+            ))}
+            {active.features.length > 6 && (
+              <span className="equip-pill equip-pill--more">+{active.features.length - 6}</span>
+            )}
+          </div>
+        )}
         <div className="car-footer">
           <div className="car-price">
             <span className="price-old-row">

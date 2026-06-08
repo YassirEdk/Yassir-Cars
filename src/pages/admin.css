@@ -542,6 +542,10 @@
 }
 .admin-cat-chip:hover { border-color: #9ca3af; }
 .admin-cat-chip.active { background: #0d5fab; color: #fff; border-color: #0d5fab; }
+/* Équipements picker: many chips → cap height and scroll inside the form */
+.admin-features-pick { max-height: 168px; overflow-y: auto; padding: 2px; }
+.admin-feature-chip { display: inline-flex; align-items: center; gap: .35rem; }
+.admin-feature-chip svg { width: 15px; height: 15px; flex-shrink: 0; }
 
 /* Colour swatch picker (per unit) */
 .admin-color-field { grid-column: 1 / -1; display: flex; flex-direction: column; gap: .45rem; font-size: .8rem; font-weight: 600; color: #374151; }

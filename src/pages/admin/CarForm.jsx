@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import { showError } from '../../components/AdminDialog'
-import { carColors, colorName } from '../../data'
+import { carColors, colorName, carFeatures } from '../../data'
+import Icon from '../../components/Icon'
 import { uploadCarPhotos, createCar, updateCar } from '../../lib/cars'
 
 export const CATEGORIES = [
@@ -16,7 +17,7 @@ export const EMPTY_CAR = {
   name: '', category: 'economique', categories: ['economique'], photo: '', photos: [],
   brandLogo: '', brandColor: '#1a1a1a', whiteFilter: false,
   price: 250, currency: 'MAD', fuel: 'Diesel', transmission: 'Manuel',
-  seats: 5, extra: 'Clim', badge: '', sortOrder: 0,
+  seats: 5, features: [], badge: '', sortOrder: 0,
   color: '', immatriculation: '', damaged: false,
 }
 
@@ -37,6 +38,15 @@ export default function CarForm({ initial, onSaved, onCancel }) {
       ? current.filter(v => v !== value)
       : [...current, value]
     return { ...c, categories: next, category: next[0] ?? '' }
+  })
+
+  // Toggle an équipement/feature on/off (multi-select, like categories).
+  const toggleFeature = (value) => setCar(c => {
+    const current = c.features ?? []
+    const next = current.includes(value)
+      ? current.filter(v => v !== value)
+      : [...current, value]
+    return { ...c, features: next }
   })
 
   // Upload one or more files → append their URLs to the gallery.
@@ -226,9 +236,6 @@ export default function CarForm({ initial, onSaved, onCancel }) {
         <label>Places *
           <input type="number" value={car.seats} onChange={e => set('seats', e.target.value)} min="1" max="20" required />
         </label>
-        <label>Extra (ex: Clim auto) *
-          <input type="text" value={car.extra} onChange={e => set('extra', e.target.value)} required />
-        </label>
         <label>Badge (ex: Nouveau)
           <input type="text" value={car.badge || ''} onChange={e => set('badge', e.target.value)} />
           <small className="admin-hint">Couleur auto : Nouveau=bleu · Prestige=or · autres=rouge</small>
@@ -241,6 +248,27 @@ export default function CarForm({ initial, onSaved, onCancel }) {
             onChange={e => set('sortOrder', Math.max(0, (Number(e.target.value) || 1) - 1))}
           />
         </label>
+      </div>
+
+      <div className="admin-section">
+        <span className="admin-section__label">
+          Équipements <small className="admin-hint">(cochez tout ce que la voiture possède)</small>
+        </span>
+        <div className="admin-cats-pick admin-features-pick">
+          {carFeatures.map(f => {
+            const on = (car.features ?? []).includes(f.value)
+            return (
+              <button
+                type="button"
+                key={f.value}
+                className={`admin-cat-chip admin-feature-chip ${on ? 'active' : ''}`}
+                onClick={() => toggleFeature(f.value)}
+              >
+                {on ? '✓ ' : ''}<Icon name={f.icon} /> {f.label}
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       <div className="admin-form-actions">

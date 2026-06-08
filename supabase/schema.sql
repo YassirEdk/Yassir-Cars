@@ -35,6 +35,7 @@ create table if not exists public.cars (
   transmission    text default 'Manuel',
   seats           integer default 5,
   extra           text default 'Clim',
+  features        text[],                              -- équipements/options keys (see carFeatures in data.js)
   badge           text,
   badge_color     text,
   sort_order      integer default 0,
@@ -113,6 +114,32 @@ create table if not exists public.app_settings (
   updated_at      timestamptz default now(),
   constraint app_settings_single_row check (id = 1)
 );
+
+-- Upgrade existing databases. `features` must be a text[] array. If it's
+-- missing it's added; if it exists with the wrong type (e.g. an older
+-- character(50)/text column), it's converted to text[] so saving a list of
+-- équipement keys no longer fails with "value too long for type character(50)".
+do $$
+declare
+  col_type text;
+begin
+  select data_type into col_type
+  from information_schema.columns
+  where table_schema = 'public' and table_name = 'cars' and column_name = 'features';
+
+  if col_type is null then
+    alter table public.cars add column features text[];
+  elsif col_type <> 'ARRAY' then
+    -- Wrong type → convert. Any single existing value becomes a 1-element array
+    -- (empty/blank values become an empty array), then lock the type to text[].
+    alter table public.cars
+      alter column features type text[]
+      using (case
+               when features is null or btrim(features::text) = '' then '{}'::text[]
+               else array[features::text]
+             end);
+  end if;
+end $$;
 
 -- Upgrade existing databases (table created before tiktok_url existed).
 alter table public.app_settings add column if not exists tiktok_url text;

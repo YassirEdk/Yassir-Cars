@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { carInCategory, colorName, moroccanCities, addDays } from '../data'
+import { carInCategory, colorName, moroccanCities, addDays, featureLabel, featureIcon } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currency'
@@ -9,6 +9,7 @@ import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBad
 import Logo from '../components/Logo'
 import CityWheel from '../components/CityWheel'
 import DatePicker from '../components/DatePicker'
+import Icon from '../components/Icon'
 
 function daysBetween(d1, d2) {
   if (!d1) return 1
@@ -306,11 +307,20 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
         </div>
 
         <div className="result-card__specs">
-          <span>⛽ {active.fuel}</span>
-          <span>⚙️ {active.transmission}</span>
-          <span>👥 {active.seats} places</span>
-          <span>❄️ {active.extra}</span>
+          <span><Icon name="fuel" /> {active.fuel}</span>
+          <span><Icon name="gear" /> {active.transmission}</span>
+          <span><Icon name="users" /> {active.seats} places</span>
         </div>
+
+        {active.features?.length > 0 && (
+          <div className="result-card__equip">
+            {active.features.map(f => (
+              <span className="equip-pill" key={f}>
+                <Icon name={featureIcon(f)} className="equip-pill__icon" /> {featureLabel(f)}
+              </span>
+            ))}
+          </div>
+        )}
 
         <div className="result-card__features">
           <span className="feature-pill">✓ Kilométrage illimité</span>
@@ -328,6 +338,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
                 couleur: effColor ? colorName(effColor) : '',
                 photo: shownPhoto || '',
                 photos: gallery,
+                features: active.features,
                 prix: active.price,
                 depart: depart || '',
                 retour: retour || '',
