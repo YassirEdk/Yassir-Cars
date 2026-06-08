@@ -1,5 +1,5 @@
 import { supabase, isSupabaseConfigured } from './supabase'
-import { MIN_RENTAL_DAYS } from '../data'
+import { MIN_RENTAL_DAYS, MIN_LONG_DURATION_DAYS } from '../data'
 
 // Fallback values used before the settings load, when Supabase isn't
 // configured, or if the read fails. Keep these in sync with the seed row in
@@ -10,6 +10,7 @@ export const DEFAULT_SETTINGS = {
   facebookUrl: '',
   tiktokUrl: '',
   minRentalDays: MIN_RENTAL_DAYS,
+  minLongDurationDays: MIN_LONG_DURATION_DAYS,
 }
 
 // DB row (snake_case) → app shape (camelCase), filling any blanks with defaults.
@@ -20,6 +21,7 @@ function fromRow(row) {
     facebookUrl: row.facebook_url || '',
     tiktokUrl: row.tiktok_url || '',
     minRentalDays: row.min_rental_days ?? DEFAULT_SETTINGS.minRentalDays,
+    minLongDurationDays: row.min_long_duration_days ?? DEFAULT_SETTINGS.minLongDurationDays,
   }
 }
 
@@ -49,6 +51,7 @@ export async function updateSettings(s) {
       facebook_url: s.facebookUrl?.trim() || null,
       tiktok_url: s.tiktokUrl?.trim() || null,
       min_rental_days: Math.max(1, Number(s.minRentalDays) || DEFAULT_SETTINGS.minRentalDays),
+      min_long_duration_days: Math.max(1, Number(s.minLongDurationDays) || DEFAULT_SETTINGS.minLongDurationDays),
       updated_at: new Date().toISOString(),
     })
     .select()

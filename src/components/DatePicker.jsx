@@ -17,7 +17,7 @@ const formatDisplay = (iso) => {
   return `${String(d).padStart(2, '0')}-${MONTHS_SHORT[m - 1]}-${y}`
 }
 
-export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast }) {
+export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
 
@@ -96,13 +96,15 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
               const isBlocked = blockedDates?.has(iso)
               const isSelected = iso === value
               const isToday = iso === todayISO
+              const isHighlight = highlight && iso === highlight
               return (
                 <button
                   type="button"
                   key={iso}
                   disabled={disabled || isBlocked}
                   onClick={() => pick(d)}
-                  className={`datepicker__day${isSelected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}${isBlocked ? ' is-blocked' : ''}`}
+                  title={isHighlight ? 'Date de départ' : undefined}
+                  className={`datepicker__day${isSelected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}${isBlocked ? ' is-blocked' : ''}${isHighlight ? ' is-highlight' : ''}`}
                 >
                   {d}
                 </button>

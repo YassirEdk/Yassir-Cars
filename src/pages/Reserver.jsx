@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import DatePicker from '../components/DatePicker'
-import Icon from '../components/Icon'
-import { moroccanCities, addDays, featureLabel, featureIcon } from '../data'
+import FeaturePills from '../components/FeaturePills'
+import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { formatMoney } from '../lib/currency'
@@ -306,15 +306,7 @@ export default function Reserver() {
                 <span className="rv-left__discount">-30%</span>
               </div>
             )}
-            {features.length > 0 && (
-              <div className="rv-left__equip">
-                {features.map(f => (
-                  <span className="rv-equip-pill" key={f}>
-                    <Icon name={featureIcon(f)} className="rv-equip-pill__icon" /> {featureLabel(f)}
-                  </span>
-                ))}
-              </div>
-            )}
+            <FeaturePills features={features} className="rv-left__equip" pillClass="rv-equip-pill" />
           </div>
         </aside>
 
@@ -384,6 +376,7 @@ export default function Reserver() {
                   value={form.retour}
                   onChange={v => setForm(f => ({ ...f, retour: v }))}
                   min={form.depart ? addDays(form.depart, minDays) : undefined}
+                  highlight={form.depart || undefined}
                   placeholder="JJ-MMM-AAAA"
                   className="rv-datepicker"
                 />

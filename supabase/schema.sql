@@ -111,6 +111,7 @@ create table if not exists public.app_settings (
   facebook_url    text,
   tiktok_url      text,
   min_rental_days integer not null default 3,
+  min_long_duration_days integer not null default 30,  -- minimum days for the « Longue durée » tab
   updated_at      timestamptz default now(),
   constraint app_settings_single_row check (id = 1)
 );
@@ -143,6 +144,9 @@ end $$;
 
 -- Upgrade existing databases (table created before tiktok_url existed).
 alter table public.app_settings add column if not exists tiktok_url text;
+
+-- Upgrade existing databases (table created before min_long_duration_days existed).
+alter table public.app_settings add column if not exists min_long_duration_days integer not null default 30;
 
 insert into public.app_settings (id, whatsapp, instagram_url, facebook_url, min_rental_days)
 values (1, '212661000000', '', '', 3)

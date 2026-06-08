@@ -51,7 +51,8 @@ export default function Hero() {
   const [shake,  setShake]  = useState(false)
   const navigate = useNavigate()
   const { settings } = useSettings()
-  const minDays = settings.minRentalDays
+  // The « Longue durée » tab (index 1) enforces its own, larger minimum.
+  const minDays = activeTab === 1 ? settings.minLongDurationDays : settings.minRentalDays
 
   const set = (key) => (e) => {
     setForm(f => ({ ...f, [key]: e.target.value }))
@@ -180,6 +181,7 @@ export default function Hero() {
                     if (errors.retour) setErrors(prev => ({ ...prev, retour: '' }))
                   }}
                   min={form.depart ? addDays(form.depart, minDays) : today}
+                  highlight={form.depart || undefined}
                   placeholder="Choisir une date"
                   className={errors.retour ? 'input-error' : ''}
                 />

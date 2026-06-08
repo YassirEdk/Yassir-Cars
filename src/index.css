@@ -194,8 +194,17 @@ ul { list-style: none; }
 .datepicker__day:hover:not(:disabled) { background: rgba(230,57,70,.12); color: var(--red); }
 .datepicker__day:disabled { background: #f3f4f6; color: #b0b6c0; cursor: not-allowed; }
 .datepicker__day.is-blocked { background: #f3f4f6; color: #9ca3af; cursor: not-allowed; text-decoration: line-through; }
-.datepicker__day.is-today { font-weight: 800; color: var(--red); }
-.datepicker__day.is-selected, .datepicker__day.is-selected:hover { background: var(--red); color: #fff; }
+.datepicker__day.is-today { font-weight: 800; color: #16a34a; box-shadow: inset 0 0 0 1.5px #16a34a; }
+.datepicker__day.is-selected, .datepicker__day.is-selected:hover { background: var(--red); color: #fff; box-shadow: none; }
+/* Départ marker inside the retour calendar — stays visible even when disabled */
+.datepicker__day.is-highlight, .datepicker__day.is-highlight:disabled {
+  position: relative; background: rgba(245,158,11,.16); color: #b45309;
+  font-weight: 800; cursor: default;
+}
+.datepicker__day.is-highlight::after {
+  content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 5px; height: 5px; border-radius: 50%; background: #f59e0b;
+}
 
 /* Shake animation */
 @keyframes formShake {
@@ -484,7 +493,9 @@ ul { list-style: none; }
 .step-card p { font-size: 14px; color: var(--gray-600); line-height: 1.7; }
 
 /* ===== WHY US ===== */
-.why-us { background: var(--gray-100); padding: 100px 0; }
+/* The car art uses transform: scale(2.15); clip the section at every width so
+   its visual bleed never produces horizontal page scroll (was ≤1024px only). */
+.why-us { background: var(--gray-100); padding: 100px 0; overflow-x: clip; }
 .why-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
 .why-text > p { font-size: 16px; color: var(--gray-600); line-height: 1.8; margin-bottom: 40px; margin-top: 16px; }
 .why-features { display: flex; flex-direction: column; gap: 24px; margin-bottom: 40px; }
@@ -798,7 +809,7 @@ ul { list-style: none; }
   background: #fff; border: 1px solid var(--gray-200); padding: 4px 11px; border-radius: 50px;
 }
 .equip-pill__icon { width: 15px; height: 15px; flex-shrink: 0; color: var(--red); }
-.equip-pill--more { color: var(--red); border-color: rgba(230,57,70,.3); background: #fff5f5; }
+.equip-pill--more { color: var(--red); border-color: rgba(230,57,70,.3); background: #fff5f5; font-family: inherit; cursor: pointer; }
 /* Compact version inside the dark home/all-cars CarCard */
 .car-equip { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
 .car-equip .equip-pill {
@@ -979,16 +990,16 @@ ul { list-style: none; }
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .why-inner { grid-template-columns: 1fr; gap: 48px; }
-  /* The car image is zoomed with transform: scale(2.15); on narrow phones its
-     visual box bleeds past the viewport and creates horizontal scroll. Clip it
-     to the section so the page never scrolls sideways (vertical stays intact). */
-  .why-us { overflow-x: clip; }
+  /* Tablet/landscape (769–1024px): the booking form's auto-fit grid drops to a
+     lopsided 3+1 here. Pin it to a tidy 2×2 until the phone breakpoint stacks it. */
+  .booking-form .form-row { grid-template-columns: 1fr 1fr; }
   .contact-grid { grid-template-columns: 1fr; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
 }
 
-@media (max-width: 768px) {
-  .container { padding: 0 18px; }
+/* Collapse the header to the hamburger menu up to 1120px (tablet/landscape),
+   while the rest of the mobile layout keeps its own 768px breakpoint below. */
+@media (max-width: 1120px) {
   .nav-links, .nav-cta { display: none; }
   .hamburger { display: flex; }
   .nav-links.open {
@@ -1001,6 +1012,10 @@ ul { list-style: none; }
     overflow-y: auto; overscroll-behavior: contain;
   }
   .nav-links.open a { color: #fff; font-size: 20px; }
+}
+
+@media (max-width: 768px) {
+  .container { padding: 0 18px; }
   .hero-title { letter-spacing: -1px; }
   .hero-subtitle { font-size: 16px; margin-bottom: 26px; }
   .booking-form .form-row { grid-template-columns: 1fr; }

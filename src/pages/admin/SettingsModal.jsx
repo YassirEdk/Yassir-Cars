@@ -12,6 +12,7 @@ export default function SettingsModal({ onClose }) {
     facebookUrl: settings.facebookUrl || '',
     tiktokUrl: settings.tiktokUrl || '',
     minRentalDays: settings.minRentalDays || 3,
+    minLongDurationDays: settings.minLongDurationDays || 30,
   })
   const [busy, setBusy] = useState(false)
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -22,6 +23,7 @@ export default function SettingsModal({ onClose }) {
   const save = async () => {
     if (!form.whatsapp.trim()) return showError('Indiquez le numéro WhatsApp.')
     if (Number(form.minRentalDays) < 1) return showError('La durée minimale doit être d’au moins 1 jour.')
+    if (Number(form.minLongDurationDays) < 1) return showError('La durée minimale longue durée doit être d’au moins 1 jour.')
     setBusy(true)
     try {
       await updateSettings(form)
@@ -69,7 +71,16 @@ export default function SettingsModal({ onClose }) {
               value={form.minRentalDays}
               onChange={e => setForm(f => ({ ...f, minRentalDays: e.target.value }))}
             />
-            <small className="admin-hint">Nombre de jours minimum entre la date de début et de fin sur tout le site.</small>
+            <small className="admin-hint">Nombre de jours minimum entre la date de début et de fin sur tout le site (courte durée).</small>
+          </label>
+
+          <label className="resa-full">Durée minimale — Longue durée (jours)
+            <input
+              type="number" min="1"
+              value={form.minLongDurationDays}
+              onChange={e => setForm(f => ({ ...f, minLongDurationDays: e.target.value }))}
+            />
+            <small className="admin-hint">Nombre de jours minimum exigé lorsque l’onglet « Longue durée » est sélectionné sur la page d’accueil.</small>
           </label>
         </div>
 

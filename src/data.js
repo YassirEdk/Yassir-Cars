@@ -197,6 +197,9 @@ export const moroccanCities = [
 // Minimum rental length, in days, for all public (non-admin) date pickers.
 export const MIN_RENTAL_DAYS = 3
 
+// Minimum rental length, in days, when the « Longue durée » tab is selected.
+export const MIN_LONG_DURATION_DAYS = 30
+
 // Add `n` days to an ISO date (YYYY-MM-DD) and return a new ISO date string.
 export const addDays = (iso, n) => {
   if (!iso) return ''

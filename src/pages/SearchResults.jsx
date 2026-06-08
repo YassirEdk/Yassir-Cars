@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
-import { carInCategory, colorName, moroccanCities, addDays, featureLabel, featureIcon } from '../data'
+import { carInCategory, colorName, moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currency'
@@ -10,6 +10,7 @@ import Logo from '../components/Logo'
 import CityWheel from '../components/CityWheel'
 import DatePicker from '../components/DatePicker'
 import Icon from '../components/Icon'
+import FeaturePills from '../components/FeaturePills'
 
 function daysBetween(d1, d2) {
   if (!d1) return 1
@@ -84,6 +85,7 @@ function MiniSearch({ params, onSearch }) {
               value={form.retour}
               onChange={(iso) => setForm(f => ({ ...f, retour: iso }))}
               min={form.depart ? addDays(form.depart, settings.minRentalDays) : undefined}
+              highlight={form.depart || undefined}
               placeholder="Choisir une date"
               className="mini-datepicker"
             />
@@ -312,15 +314,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
           <span><Icon name="users" /> {active.seats} places</span>
         </div>
 
-        {active.features?.length > 0 && (
-          <div className="result-card__equip">
-            {active.features.map(f => (
-              <span className="equip-pill" key={f}>
-                <Icon name={featureIcon(f)} className="equip-pill__icon" /> {featureLabel(f)}
-              </span>
-            ))}
-          </div>
-        )}
+        <FeaturePills features={active.features} className="result-card__equip" pillClass="equip-pill" />
 
         <div className="result-card__features">
           <span className="feature-pill">✓ Kilométrage illimité</span>
