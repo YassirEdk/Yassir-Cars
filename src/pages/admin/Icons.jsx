@@ -12,6 +12,7 @@ export const ICONS = {
   globe:    <><circle cx="12" cy="12" r="10" /><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20M2 12h20" /></>,
   logout:   <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" /></>,
   carplus:  <><path d="M5 17H3c-.6 0-1-.4-1-1v-3c0-.9.7-1.7 1.5-1.9C5.3 10.6 8 10 8 10s1.3-1.4 2.2-2.3c.5-.4 1.1-.7 1.8-.7h2" /><circle cx="7" cy="17" r="2" /><path d="M9 17h5" /><circle cx="16" cy="17" r="2" /><path d="M19 8v6M16 11h6" /></>,
+  drag:     <><circle cx="9" cy="6" r="1" /><circle cx="9" cy="12" r="1" /><circle cx="9" cy="18" r="1" /><circle cx="15" cy="6" r="1" /><circle cx="15" cy="12" r="1" /><circle cx="15" cy="18" r="1" /></>,
 }
 
 export function Ico({ name }) {

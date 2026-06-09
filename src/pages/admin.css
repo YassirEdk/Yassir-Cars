@@ -135,6 +135,20 @@
   display: flex; gap: 1.2rem; background: #fff; border: 1px solid #e5e7eb;
   border-radius: 14px; padding: 1.1rem; align-items: flex-start;
 }
+/* Drag handle (left of each card) for reordering */
+.admin-car__drag {
+  flex-shrink: 0; align-self: stretch; display: grid; place-items: center;
+  width: 26px; margin: -.2rem .1rem -.2rem -.4rem; cursor: grab;
+  color: #c2c8d0; border-radius: 8px; transition: color .15s, background .15s;
+}
+.admin-car__drag:hover { color: #6b7280; background: #f3f4f6; }
+.admin-car__drag:active { cursor: grabbing; }
+.admin-car__drag .svc-ico { width: 18px; height: 18px; }
+.admin-car--dragover { outline: 2px dashed #0d5fab; outline-offset: 2px; }
+
+/* Order number badge */
+.admin-tag--order { background: #eef4fb; color: #0d5fab; font-weight: 700; }
+
 .admin-car__photo {
   width: 130px; height: 90px; flex-shrink: 0; border-radius: 10px; overflow: hidden;
   background: #f3f4f6; display: grid; place-items: center; color: #9ca3af;

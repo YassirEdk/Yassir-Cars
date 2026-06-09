@@ -237,21 +237,65 @@ export async function uploadCarPhotos(files) {
 }
 
 // ── Admin: CRUD ─────────────────────────────────────────────────────────────
-export async function createCar(car) {
-  const { data, error } = await supabase.from('cars').insert(toRow(car)).select().single()
+// Renumber every car to a clean, contiguous 0,1,2,3… (so no duplicates, no
+// gaps). When `placeId`/`placeIndex` are given, that car is pulled out of the
+// list and re-inserted at exactly `placeIndex`, with every other car shifting
+// by one to make room. Because we rebuild the list explicitly (instead of
+// relying on a tie-breaker), this lands the car correctly whether it moves UP
+// (e.g. 5 → 3: the old 3,4… become 4,5…) or DOWN (e.g. 3 → 5).
+async function normalizeOrder(placeId = null, placeIndex = null) {
+  if (!isSupabaseConfigured) return
+  const { data, error } = await supabase
+    .from('cars')
+    .select('id, sort_order, created_at')
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: true })
   if (error) throw error
+
+  let ids = data.map(r => r.id)
+  if (placeId != null && placeIndex != null) {
+    ids = ids.filter(id => id !== placeId)
+    const idx = Math.max(0, Math.min(placeIndex, ids.length))
+    ids.splice(idx, 0, placeId)
+  }
+  // Only write the rows whose number actually changes.
+  const current = new Map(data.map(r => [r.id, r.sort_order]))
+  await Promise.all(
+    ids
+      .map((id, i) => (current.get(id) === i ? null : supabase.from('cars').update({ sort_order: i }).eq('id', id)))
+      .filter(Boolean)
+  )
+}
+
+export async function createCar(car) {
+  const row = toRow(car)
+  const { data, error } = await supabase.from('cars').insert(row).select().single()
+  if (error) throw error
+  // Drop the new car into the requested slot; everything below it shifts down.
+  await normalizeOrder(data.id, row.sort_order)
   return fromRow(data)
 }
 
 export async function updateCar(id, car) {
-  const { data, error } = await supabase.from('cars').update(toRow(car)).eq('id', id).select().single()
+  const row = toRow(car)
+  const { data, error } = await supabase.from('cars').update(row).eq('id', id).select().single()
   if (error) throw error
+  // Move this car to its requested slot and renumber the rest around it.
+  await normalizeOrder(id, row.sort_order)
   return fromRow(data)
+}
+
+// Move a car to a specific display slot (0-based) without touching its other
+// fields — used by the drag-to-reorder handle in the admin list.
+export async function setCarOrder(id, index) {
+  await normalizeOrder(id, index)
 }
 
 export async function deleteCar(id) {
   const { error } = await supabase.from('cars').delete().eq('id', id)
   if (error) throw error
+  // Close the gap left behind so numbering stays contiguous.
+  await normalizeOrder()
 }
 
 // ── Admin: blocked date ranges ──────────────────────────────────────────────

@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../../components/Logo'
 import { DialogHost, showError, confirmAsync } from '../../components/AdminDialog'
 import { colorName } from '../../data'
-import { fetchCarsAdmin, deleteCar, setCarDamaged } from '../../lib/cars'
+import { fetchCarsAdmin, deleteCar, setCarDamaged, setCarOrder } from '../../lib/cars'
 import { Ico } from './Icons'
 import { formatKm } from './format'
 import ServicesManager from './ServicesManager'
@@ -23,7 +23,8 @@ export default function Dashboard({ onLogout }) {
   const q = query.trim().toLowerCase()
   const visible = cars
     .filter(c => !q || c.name?.toLowerCase().includes(q) || c.immatriculation?.toLowerCase().includes(q))
-    .sort((a, b) => a.name.localeCompare(b.name)) // cluster units of the same model
+    // Order by the display number (Ordre d'affichage); same number → by name.
+    .sort((a, b) => (a.sortOrder - b.sortOrder) || a.name.localeCompare(b.name))
   const modelCount = new Set(cars.map(c => c.name.trim().toLowerCase())).size
 
   const load = useCallback(async () => {
@@ -57,6 +58,30 @@ export default function Dashboard({ onLogout }) {
   }
 
   const onSaved = () => { setEditing(null); load() }
+
+  // ── Drag-to-reorder (handle on the left of each card) ──────────────────────
+  // Only enabled when the list isn't filtered by a search, since the visible
+  // order must mirror the real stored order for the drop index to be correct.
+  const dragId = useRef(null)              // id of the card being dragged
+  const [dragOverId, setDragOverId] = useState(null)
+  const canReorder = !q
+
+  const onDrop = async (targetId) => {
+    const fromId = dragId.current
+    dragId.current = null
+    setDragOverId(null)
+    if (!fromId || fromId === targetId) return
+    // Reorder the local list immediately (optimistic), then persist.
+    const ordered = [...visible]
+    const from = ordered.findIndex(c => c.id === fromId)
+    const to = ordered.findIndex(c => c.id === targetId)
+    if (from < 0 || to < 0) return
+    const [moved] = ordered.splice(from, 1)
+    ordered.splice(to, 0, moved)
+    setCars(ordered.map((c, i) => ({ ...c, sortOrder: i })))
+    try { await setCarOrder(fromId, to) }
+    catch (e) { showError('Erreur de réordonnancement : ' + e.message); load() }
+  }
 
   return (
     <div className="admin-shell">
@@ -120,7 +145,23 @@ export default function Dashboard({ onLogout }) {
           {visible.map(car => {
             const isExpanded = expandedCars.has(car.id)
             return (
-              <div key={car.id} className={`admin-car${car.damaged ? ' admin-car--damaged' : ''}`}>
+              <div
+                key={car.id}
+                className={`admin-car${car.damaged ? ' admin-car--damaged' : ''}${dragOverId === car.id ? ' admin-car--dragover' : ''}`}
+                onDragOver={canReorder ? (e => { e.preventDefault(); if (dragOverId !== car.id) setDragOverId(car.id) }) : undefined}
+                onDrop={canReorder ? (e => { e.preventDefault(); onDrop(car.id) }) : undefined}
+              >
+                {canReorder && (
+                  <div
+                    className="admin-car__drag"
+                    title="Glisser pour changer l'ordre"
+                    draggable
+                    onDragStart={() => { dragId.current = car.id }}
+                    onDragEnd={() => { dragId.current = null; setDragOverId(null) }}
+                  >
+                    <Ico name="drag" />
+                  </div>
+                )}
                 <div className="admin-car__photo" onClick={() => toggleCar(car.id)} style={{ cursor: 'pointer' }}>
                   {car.photo ? <img src={car.photo} alt={car.name} /> : <span>—</span>}
                 </div>
@@ -129,6 +170,7 @@ export default function Dashboard({ onLogout }) {
                     <div className="admin-car__title-row" onClick={() => toggleCar(car.id)} style={{ cursor: 'pointer', flex: 1 }}>
                       <h3>{car.name} <span className="admin-car__chev">{isExpanded ? '▲' : '▼'}</span></h3>
                       <div className="admin-car__meta">
+                        <span className="admin-tag admin-tag--order" title="Ordre d'affichage">#{(Number(car.sortOrder) || 0) + 1}</span>
                         <span className="admin-tag">{car.category}</span>
                         {car.color && <span className="admin-dot" style={{ background: car.color }} title={colorName(car.color)} />}
                         {car.lastKm != null && <span className="admin-last-km" title="Dernier km déclaré"><Ico name="gauge" /> {formatKm(car.lastKm)} km</span>}
