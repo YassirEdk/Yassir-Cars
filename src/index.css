@@ -1071,6 +1071,10 @@ ul { list-style: none; }
   .section { padding: 64px 0; }
   .hero { padding: 88px 0 64px; }
   .booking-card { padding: 20px; margin-bottom: 28px; }
+  /* Shrink the rating card's padding and tame the car's scale so it
+     stays inside the card instead of clipping against the edges. */
+  .why-card-big { padding: 40px 20px; overflow: hidden; }
+  .why-car-image { height: 175px; transform: scale(2); margin-bottom: 20px; }
 }
 
 @media (max-width: 480px) {
@@ -1089,4 +1093,6 @@ ul { list-style: none; }
   .scroll-hint { display: none; }
   .promo-text h2 { font-size: 22px; }
   .promo-text p { font-size: 14px; }
+  .why-car-image { transform: scale(1.85); }
+  .stars svg { width: 24px; height: 24px; }
 }
