@@ -1057,11 +1057,37 @@
 .admin-chart-tip i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
 .admin-chart-tip b { font-weight: 700; }
 
+/* Pin the donut tooltip to the top-centre so it never covers the centre total */
+.admin-donut-wrap .admin-donut-tip {
+  left: 50% !important;
+  top: 0 !important;
+  transform: translateX(-50%) !important;
+  transition: none !important;
+  pointer-events: none;
+  z-index: 5;
+}
+/* Lift the chart (incl. its tooltip) above the centre label; the donut hole is
+   transparent, so "9 unités" still shows through but the tooltip paints on top. */
+.admin-donut-wrap .recharts-responsive-container {
+  position: relative;
+  z-index: 2;
+}
+
+/* Kill the focus outline Recharts draws around a chart/segment on click */
+.recharts-wrapper:focus,
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus,
+.recharts-surface:focus-visible,
+.recharts-wrapper *:focus,
+.recharts-wrapper *:focus-visible {
+  outline: none !important;
+}
+
 /* Donut centre total + legend */
 .admin-donut-wrap { position: relative; }
 .admin-donut-center {
   position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; pointer-events: none;
+  align-items: center; justify-content: center; pointer-events: none; z-index: 1;
 }
 .admin-donut-center strong { font-size: 1.6rem; font-weight: 800; color: #111827; line-height: 1; }
 .admin-donut-center span { font-size: .75rem; color: #6b7280; font-weight: 600; }

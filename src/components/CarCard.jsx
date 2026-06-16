@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { effectiveBadge } from '../lib/cars'
 import { colorName, featureLabel, featureIcon } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -21,9 +21,27 @@ export default function CarCard({ car, cta = 'availability' }) {
   const active = units.find(u => u.color === selColor) ?? car
 
   // Photo gallery of the selected unit.
-  const gallery = active.photos?.length ? active.photos : (active.photo ? [active.photo] : [])
+  const gallery = useMemo(
+    () => active.photos?.length ? active.photos : (active.photo ? [active.photo] : []),
+    [active]
+  )
   const [idx, setIdx] = useState(0)
   const activePhoto = gallery[idx]
+
+  // Preload the unit's other photos so flipping through the gallery is instant.
+  // Without this, photos 2 and 3 only start downloading when the arrow is
+  // clicked, so they visibly pop in a moment later (most noticeable on a first
+  // visit with a cold cache). Scheduled at idle time so it never competes with
+  // the cover image's initial load.
+  useEffect(() => {
+    if (gallery.length < 2) return
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 300))
+    const cancelIdle = window.cancelIdleCallback || clearTimeout
+    const handle = idle(() => {
+      for (const src of gallery) { const img = new Image(); img.src = src }
+    })
+    return () => cancelIdle(handle)
+  }, [gallery])
   const go = (dir) => (e) => {
     e.preventDefault(); e.stopPropagation()
     setPhotoFailed(false)
@@ -54,6 +72,7 @@ export default function CarCard({ car, cta = 'availability' }) {
             alt={car.name}
             className="car-photo"
             loading="lazy"
+            decoding="async"
             onError={() => setPhotoFailed(true)}
           />
         ) : active.brandLogo && !logoFailed ? (

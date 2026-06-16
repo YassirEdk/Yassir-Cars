@@ -113,7 +113,7 @@ export function StatusDonut({ status, height = 260 }) {
                paddingAngle={data.length > 1 ? 2 : 0} stroke="none">
             {data.map(d => <Cell key={d.key} fill={d.color} />)}
           </Pie>
-          <Tooltip content={tip} />
+          <Tooltip content={tip} wrapperClassName="admin-donut-tip" />
         </PieChart>
       </ResponsiveContainer>
       <div className="admin-donut-center">
