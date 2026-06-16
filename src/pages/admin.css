@@ -873,3 +873,103 @@
   /* History modal: needs more vertical space for 8-field cards */
   .admin-modal .admin-list-modal--wide { max-height: 92vh; }
 }
+
+/* ── Analytics dashboard ─────────────────────────────────────────────────── */
+.admin-dash, .admin-detail { padding: 1.6rem 2rem; }
+
+/* Summary stat tiles */
+.admin-stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem;
+}
+.admin-stat {
+  display: flex; align-items: center; gap: .85rem;
+  background: #fff; border: 1px solid #eceff3; border-radius: 14px;
+  padding: 1rem 1.15rem; box-shadow: 0 1px 3px rgba(16,24,40,.04);
+}
+.admin-stat__icon {
+  width: 42px; height: 42px; border-radius: 11px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.admin-stat__icon .svc-ico { width: 20px; height: 20px; }
+.admin-stat__body { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.admin-stat__value { font-size: 1.35rem; font-weight: 800; color: #111827; letter-spacing: -.01em; }
+.admin-stat__label { font-size: .78rem; color: #6b7280; font-weight: 600; }
+
+/* Chart cards */
+.admin-charts-grid {
+  margin-top: 1.2rem;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem;
+}
+.admin-chart-card {
+  background: #fff; border: 1px solid #eceff3; border-radius: 16px;
+  padding: 1.1rem 1.2rem 1.2rem; box-shadow: 0 1px 3px rgba(16,24,40,.04);
+  min-width: 0;
+}
+.admin-chart-card--wide { grid-column: 1 / -1; }
+.admin-chart-card__head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: .5rem;
+  margin-bottom: .8rem;
+}
+.admin-chart-card__head h3 { margin: 0; font-size: 1rem; color: #111827; font-weight: 700; }
+.admin-chart-card__head .admin-muted { font-size: .78rem; }
+.admin-chart-empty { color: #9ca3af; font-size: .9rem; text-align: center; padding: 2.5rem 0; }
+
+/* Recharts tooltip card */
+.admin-chart-tip {
+  background: #0f172a; color: #fff; border-radius: 9px; padding: .5rem .7rem;
+  font-size: .8rem; box-shadow: 0 6px 20px rgba(0,0,0,.22); display: flex; flex-direction: column; gap: .2rem;
+}
+.admin-chart-tip strong { font-size: .78rem; color: #cbd5e1; font-weight: 600; }
+.admin-chart-tip span { display: flex; align-items: center; gap: .4rem; }
+.admin-chart-tip i { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+.admin-chart-tip b { font-weight: 700; }
+
+/* Donut centre total + legend */
+.admin-donut-wrap { position: relative; }
+.admin-donut-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; pointer-events: none;
+}
+.admin-donut-center strong { font-size: 1.6rem; font-weight: 800; color: #111827; line-height: 1; }
+.admin-donut-center span { font-size: .75rem; color: #6b7280; font-weight: 600; }
+.admin-donut-legend {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1rem; margin-top: .4rem;
+}
+.admin-donut-legend span { display: inline-flex; align-items: center; gap: .4rem; font-size: .82rem; color: #475569; }
+.admin-donut-legend i { width: 10px; height: 10px; border-radius: 3px; }
+.admin-donut-legend b { color: #111827; }
+
+/* Status pill (list + detail) */
+.admin-status-pill {
+  font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .03em;
+  padding: .18rem .5rem; border-radius: 999px; vertical-align: middle;
+}
+.admin-status-pill.is-available { background: #dcfce7; color: #15803d; }
+.admin-status-pill.is-rented { background: #dbeafe; color: #0d5fab; }
+.admin-status-pill.is-damaged { background: #fee2e2; color: #b91c1c; }
+
+/* Per-car detail page */
+.admin-detail__hero {
+  display: flex; align-items: center; gap: 1.1rem; margin-bottom: 1.2rem;
+  background: #fff; border: 1px solid #eceff3; border-radius: 16px; padding: 1rem 1.2rem;
+  box-shadow: 0 1px 3px rgba(16,24,40,.04);
+}
+.admin-detail__photo {
+  width: 120px; height: 80px; flex-shrink: 0; border-radius: 11px; overflow: hidden;
+  background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #9ca3af;
+}
+.admin-detail__photo img { width: 100%; height: 100%; object-fit: cover; }
+.admin-detail__id { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .5rem; }
+.admin-detail__id h2 { margin: 0; font-size: 1.3rem; color: #111827; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+.admin-detail__edit { flex-shrink: 0; }
+.admin-detail__manage { margin-top: 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+
+/* ── Dashboard responsive ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-dash, .admin-detail { padding: 1rem; }
+  .admin-charts-grid { grid-template-columns: 1fr; }
+  .admin-chart-card--wide { grid-column: auto; }
+  .admin-detail__hero { flex-wrap: wrap; }
+  .admin-detail__photo { width: 100%; height: 150px; }
+  .admin-detail__edit { width: 100%; justify-content: center; }
+}
