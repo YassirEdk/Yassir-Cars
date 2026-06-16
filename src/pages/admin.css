@@ -1,10 +1,24 @@
 /* ── Admin panel styles (scoped to .admin-*) ─────────────────────────────── */
 .admin-shell, .admin-login {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: #1a1a1a;
-  background: #f4f5f7;
+  /* ── Design tokens (light & modern) ── */
+  --admin-bg: #f5f7fb;
+  --admin-surface: #ffffff;
+  --admin-border: #e9edf3;
+  --admin-text: #0f172a;
+  --admin-muted: #64748b;
+  --admin-primary: #0d5fab;
+  --admin-primary-d: #0a4f90;
+  --admin-soft: #eef5fc;
+  --admin-radius: 16px;
+  --admin-shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.04);
+  --admin-shadow-md: 0 10px 30px rgba(16,24,40,.10);
+  color: var(--admin-text);
+  background: var(--admin-bg);
   min-height: 100vh;
 }
+/* App layout: fixed sidebar + scrolling main column */
+.admin-shell { display: grid; grid-template-columns: 260px 1fr; }
 .admin-pad { padding: 2rem; }
 .admin-muted { color: #6b7280; font-size: .9rem; }
 .admin-error { background: #fee2e2; color: #b91c1c; padding: .6rem .8rem; border-radius: 8px; font-size: .85rem; }
@@ -80,29 +94,148 @@
 .admin-btn:disabled { opacity: .6; cursor: not-allowed; transform: none !important; }
 
 /* Login */
-.admin-login { display: flex; align-items: center; justify-content: center; padding: 2rem; }
+.admin-login {
+  display: flex; align-items: center; justify-content: center; padding: 2rem; min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 50% -12%, #e7f0fb 0%, rgba(231,240,251,0) 62%),
+    var(--admin-bg);
+}
 .admin-login__card {
-  background: #fff; padding: 2.2rem; border-radius: 16px; width: 100%; max-width: 380px;
-  box-shadow: 0 10px 40px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 1rem;
+  background: var(--admin-surface); padding: 2.4rem 2.2rem; border-radius: 20px; width: 100%; max-width: 400px;
+  border: 1px solid var(--admin-border); box-shadow: var(--admin-shadow-md);
+  display: flex; flex-direction: column; gap: 1rem;
 }
-.admin-login__card h1 { margin: 0; font-size: 1.4rem; }
-.admin-login__sub { margin: 0; color: #6b7280; font-size: .9rem; line-height: 1.5; }
+.admin-login__brand { display: flex; justify-content: center; margin-bottom: .1rem; }
+/* Wordmark is white-on-dark by default — force dark on the light card */
+.admin-login .logo-yassir { -webkit-text-fill-color: var(--admin-text); color: var(--admin-text); background: none; }
+.admin-login__intro { text-align: center; margin-bottom: .3rem; }
+.admin-login__card h1, .admin-login__intro h1 { margin: 0; font-size: 1.4rem; font-weight: 800; letter-spacing: -.01em; }
+.admin-login__sub { margin: .25rem 0 0; color: var(--admin-muted); font-size: .9rem; line-height: 1.5; }
 .admin-login__sub code { background: #f3f4f6; padding: .1rem .3rem; border-radius: 4px; font-size: .82rem; }
-.admin-login__card label { display: flex; flex-direction: column; gap: .35rem; font-size: .85rem; font-weight: 600; }
+.admin-login__card label { display: flex; flex-direction: column; gap: .4rem; font-size: .82rem; font-weight: 600; color: #374151; }
 .admin-login__card input {
-  padding: .6rem .7rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: .95rem;
+  padding: .7rem .8rem; border: 1px solid #d1d5db; border-radius: 10px; font-size: .95rem;
+  transition: border-color .15s, box-shadow .15s;
 }
-.admin-login__back { text-align: center; color: #0d5fab; text-decoration: none; font-size: .85rem; }
+.admin-login__card input:focus { outline: none; border-color: var(--admin-primary); box-shadow: 0 0 0 3px rgba(13,95,171,.12); }
+.admin-login__submit { justify-content: center; padding: .72rem; font-size: .95rem; margin-top: .2rem; }
+.admin-login__back { text-align: center; color: var(--admin-primary); text-decoration: none; font-size: .85rem; }
+.admin-login__back:hover { text-decoration: underline; }
 
-/* Header */
-.admin-header {
-  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
-  padding: 1.1rem 2rem; background: #0d0d0d; border-bottom: 1px solid rgba(255,255,255,.08);
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
+.admin-main { min-width: 0; display: flex; flex-direction: column; }
+.admin-sidebar {
+  position: sticky; top: 0; align-self: start; height: 100vh; z-index: 50;
+  display: flex; flex-direction: column; gap: .25rem;
+  background: var(--admin-surface); border-right: 1px solid var(--admin-border);
+  padding: 1.1rem .8rem; overflow-y: auto;
 }
-.admin-header__brand { display: flex; align-items: center; gap: 14px; }
-.admin-header h1 { margin: 0; font-size: 1.15rem; color: #fff; }
-.admin-header .admin-muted { color: rgba(255,255,255,.5); }
-.admin-header__actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.admin-sidebar__brand {
+  display: flex; align-items: center; gap: .55rem;
+  padding: .3rem .5rem 1rem; margin-bottom: .5rem; border-bottom: 1px solid var(--admin-border);
+}
+/* The wordmark is white-on-dark by default — force it dark for the light rail */
+.admin-sidebar .logo-yassir {
+  -webkit-text-fill-color: var(--admin-text); color: var(--admin-text); background: none;
+}
+.admin-sidebar .logo-wordmark span { font-size: 17px; }
+.admin-sidebar__badge {
+  margin-left: auto; font-size: .58rem; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--admin-primary); background: var(--admin-soft); padding: .18rem .5rem; border-radius: 999px;
+}
+.admin-sidebar__section {
+  font-size: .67rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em;
+  color: #94a3b8; margin: .5rem .75rem .3rem;
+}
+.admin-sidebar__nav { display: flex; flex-direction: column; gap: .15rem; }
+.admin-sidebar__foot {
+  margin-top: auto; padding-top: .7rem; border-top: 1px solid var(--admin-border);
+  display: flex; flex-direction: column; gap: .15rem;
+}
+
+/* Nav items */
+.admin-nav-item {
+  display: flex; align-items: center; gap: .7rem; width: 100%; text-align: left;
+  padding: .6rem .75rem; border: none; background: none; cursor: pointer;
+  border-radius: 11px; font-size: .9rem; font-weight: 600; color: #475569;
+  text-decoration: none; transition: background .15s, color .15s;
+}
+.admin-nav-item .svc-ico { width: 18px; height: 18px; flex-shrink: 0; color: #94a3b8; transition: color .15s; }
+.admin-nav-item:hover { background: #f1f5f9; color: var(--admin-text); }
+.admin-nav-item:hover .svc-ico { color: #64748b; }
+.admin-nav-item.is-active { background: var(--admin-soft); color: var(--admin-primary); }
+.admin-nav-item.is-active .svc-ico { color: var(--admin-primary); }
+.admin-nav-item--sub { font-size: .86rem; font-weight: 500; color: #64748b; }
+.admin-nav-item--danger { color: #b91c1c; }
+.admin-nav-item--danger .svc-ico { color: #ef4444; }
+.admin-nav-item--danger:hover { background: #fef2f2; color: #b91c1c; }
+.admin-nav-item--danger:hover .svc-ico { color: #dc2626; }
+
+/* Off-canvas bits — hidden on desktop, shown ≤ 1024px */
+.admin-sidebar__scrim { display: none; }
+.admin-burger { display: none; }
+
+/* ── Topbar ──────────────────────────────────────────────────────────────── */
+.admin-topbar {
+  position: sticky; top: 0; z-index: 30;
+  display: flex; align-items: center; gap: .9rem;
+  padding: .85rem 1.8rem; background: rgba(255,255,255,.82);
+  backdrop-filter: saturate(180%) blur(10px); border-bottom: 1px solid var(--admin-border);
+}
+.admin-topbar__back {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid var(--admin-border); background: #fff; cursor: pointer;
+  font-size: 1.15rem; color: #475569; display: grid; place-items: center; transition: all .15s;
+}
+.admin-topbar__back:hover { background: #f1f5f9; color: var(--admin-text); }
+.admin-topbar__title { flex: 1; min-width: 0; }
+.admin-topbar__title h1 { margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -.01em; color: var(--admin-text); }
+.admin-topbar__title p { margin: .08rem 0 0; font-size: .82rem; color: var(--admin-muted); }
+.admin-topbar__actions { display: flex; gap: .6rem; flex-shrink: 0; }
+
+/* Content scroll region */
+.admin-content { flex: 1; min-width: 0; }
+
+/* ── Reservations view ───────────────────────────────────────────────────── */
+.admin-rtabs { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; padding: 1.4rem 2rem .2rem; }
+.admin-rtabs__spacer { flex: 1; }
+.admin-rtabs__search { flex: 0 1 280px; max-width: 320px; }
+.admin-rtab {
+  display: inline-flex; align-items: center; gap: .5rem; padding: .5rem .9rem;
+  border-radius: 999px; cursor: pointer; border: 1px solid var(--admin-border);
+  background: #fff; color: #475569; font-size: .88rem; font-weight: 600; transition: all .15s;
+}
+.admin-rtab:hover { border-color: #cbd5e1; background: #f8fafc; }
+.admin-rtab__count {
+  font-size: .72rem; font-weight: 800; min-width: 20px; text-align: center;
+  padding: .05rem .4rem; border-radius: 999px; background: #f1f5f9; color: #64748b;
+}
+.admin-rtab.is-active { color: #fff; border-color: transparent; }
+.admin-rtab.is-active .admin-rtab__count { background: rgba(255,255,255,.25); color: #fff; }
+.admin-rtab.is-upcoming.is-active { background: var(--admin-primary); }
+.admin-rtab.is-ongoing.is-active  { background: #b45309; }
+.admin-rtab.is-history.is-active   { background: #475569; }
+
+.admin-card-table {
+  margin: 1rem 2rem 2rem; background: #fff; border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius); box-shadow: var(--admin-shadow); overflow: hidden;
+}
+.admin-rtable { width: 100%; border-collapse: collapse; font-size: .85rem; color: #374151; }
+.admin-rtable thead tr { background: #f8fafc; }
+.admin-rtable th {
+  padding: .7rem 1rem; text-align: left; font-size: .72rem; font-weight: 700; color: #6b7280;
+  text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; border-bottom: 1px solid var(--admin-border);
+}
+.admin-rtable td { padding: .7rem 1rem; border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap; }
+.admin-rtable tbody tr:last-child td { border-bottom: none; }
+.admin-rtable tbody tr:hover td { background: #f8fafc; }
+.admin-rtable__row--damaged td { background: #fff7f7; }
+.admin-rtable td strong { color: #1e40af; font-weight: 700; }
+.admin-rtable__car {
+  display: inline-flex; align-items: center; gap: .5rem; background: none; border: none; padding: 0;
+  cursor: pointer; font-weight: 700; color: var(--admin-text); font-size: .85rem;
+}
+.admin-rtable__car:hover { color: var(--admin-primary); }
 
 /* Toolbar / search */
 .admin-toolbar { display: flex; align-items: center; gap: 1rem; padding: 1.2rem 2rem 0; }
@@ -972,4 +1105,37 @@
   .admin-detail__hero { flex-wrap: wrap; }
   .admin-detail__photo { width: 100%; height: 150px; }
   .admin-detail__edit { width: 100%; justify-content: center; }
+}
+
+/* ── Sidebar → off-canvas drawer (≤ 1024px) ──────────────────────────────── */
+@media (max-width: 1024px) {
+  .admin-shell { grid-template-columns: 1fr; }
+  .admin-sidebar {
+    position: fixed; top: 0; left: 0; bottom: 0; height: 100vh; width: 268px;
+    transform: translateX(-100%); transition: transform .25s ease; box-shadow: var(--admin-shadow-md);
+  }
+  .admin-sidebar.is-open { transform: none; }
+  .admin-sidebar__scrim {
+    display: block; position: fixed; inset: 0; z-index: 49;
+    background: rgba(15,23,42,.45); opacity: 0; pointer-events: none; transition: opacity .25s;
+  }
+  .admin-sidebar__scrim.is-open { opacity: 1; pointer-events: auto; }
+  .admin-burger {
+    display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px;
+    border-radius: 10px; border: 1px solid var(--admin-border); background: #fff; cursor: pointer; color: #475569;
+  }
+  .admin-burger:hover { background: #f1f5f9; }
+  .admin-burger .svc-ico { width: 20px; height: 20px; }
+}
+
+/* ── Topbar / reservations on small screens ──────────────────────────────── */
+@media (max-width: 768px) {
+  .admin-topbar { padding: .7rem 1rem; }
+  .admin-topbar__title h1 { font-size: 1.05rem; }
+  .admin-topbar__actions .admin-btn { padding: .5rem .7rem; font-size: .82rem; }
+  .admin-rtabs { padding: 1rem 1rem .2rem; }
+  .admin-rtabs__search { flex-basis: 100%; max-width: none; order: 3; }
+  .admin-rtabs__spacer { display: none; }
+  .admin-card-table { margin: .8rem 1rem 1.4rem; }
+  .admin-dash, .admin-reservations { --pad: 1rem; }
 }
