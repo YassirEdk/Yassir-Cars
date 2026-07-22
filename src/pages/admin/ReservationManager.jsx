@@ -50,7 +50,7 @@ function KmConfirm({ label, actionLabel, onSubmit, onCancel, withDamage }) {
 }
 
 /* ── Pop-up: all reservations / rental history with search + date range ───── */
-function ReservationsModal({ title, reservations, onClose, onRemove, removeLabel = 'Annuler', history = false }) {
+function ReservationsModal({ title, reservations, car, onClose, onRemove, removeLabel = 'Annuler', history = false }) {
   const [q, setQ] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -563,6 +563,7 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
         <ReservationsModal
           title="📋 Toutes les réservations"
           reservations={reserved}
+          car={car}
           onClose={() => setModalOpen(false)}
           onRemove={remove}
         />
@@ -572,6 +573,7 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
         <ReservationsModal
           title="📜 Location historique"
           reservations={history}
+          car={car}
           history
           removeLabel="Supprimer"
           onClose={() => setHistOpen(false)}

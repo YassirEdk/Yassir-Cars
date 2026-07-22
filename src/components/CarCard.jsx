@@ -152,17 +152,19 @@ export default function CarCard({ car, cta = 'availability' }) {
             <span className="price">{Math.round(active.price * 0.7).toLocaleString('fr-FR')} <small>{active.currency}</small></span>
             <span className="price-period">/ jour</span>
           </div>
-          {cta === 'reserve' ? (
-            <a href="#reserver" className="btn btn-primary btn-sm">Réserver</a>
-          ) : (
-            <button className="btn btn-primary btn-sm" onClick={() => setShowAvail(true)}>
-              Vérifier la disponibilité
-            </button>
-          )}
+          <button className="btn btn-primary btn-sm" onClick={() => setShowAvail(true)}>
+            {cta === 'reserve' ? 'Réserver' : 'Vérifier la disponibilité'}
+          </button>
         </div>
       </div>
 
-      {cta !== 'reserve' && showAvail && <AvailabilityModal car={active} onClose={() => setShowAvail(false)} />}
+      {showAvail && (
+        cta === 'reserve'
+          // Home page: check THIS car for the chosen dates, then book it or
+          // propose the cars that are free instead.
+          ? <AvailabilityModal car={car} mode="reserve" initialColor={selColor} onClose={() => setShowAvail(false)} />
+          : <AvailabilityModal car={active} onClose={() => setShowAvail(false)} />
+      )}
     </div>
   )
 }

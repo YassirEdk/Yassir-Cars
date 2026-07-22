@@ -17,7 +17,9 @@ const formatDisplay = (iso) => {
   return `${String(d).padStart(2, '0')}-${MONTHS_SHORT[m - 1]}-${y}`
 }
 
-export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight }) {
+// `openKey`: bump this counter from the parent to pop the calendar open — used
+// to chain "date de début" → "date de fin" without a second click.
+export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight, openKey }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
 
@@ -37,6 +39,18 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [open])
+
+  // Parent asked us to open (e.g. the start date was just picked). Show the
+  // month of the current value, or of the earliest selectable day.
+  useEffect(() => {
+    if (!openKey) return
+    const anchor = value || min
+    if (anchor) {
+      const [y, m] = anchor.split('-').map(Number)
+      setView({ year: y, month: m - 1 })
+    }
+    setOpen(true)
+  }, [openKey])   // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep the view in sync when opening with an existing value
   const openCalendar = () => {

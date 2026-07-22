@@ -8,7 +8,6 @@ import { useSettings } from '../lib/SettingsContext'
 
 const HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1800&q=80'
 
-const tabs = ['Courte durée', 'Longue durée']
 const categories = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
 
 const stats = [
@@ -40,7 +39,6 @@ function loadSaved() {
 
 export default function Hero() {
   const saved = loadSaved()
-  const [activeTab, setActiveTab] = useState(saved?.tab ?? 0)
   const [form, setForm] = useState({
     lieu:      saved?.lieu      ?? '',
     depart:    saved?.depart    ?? '',
@@ -49,10 +47,11 @@ export default function Hero() {
   })
   const [errors, setErrors] = useState({})
   const [shake,  setShake]  = useState(false)
+  // Bumped when a start date is picked, so the return calendar opens by itself.
+  const [openRetour, setOpenRetour] = useState(0)
   const navigate = useNavigate()
   const { settings } = useSettings()
-  // The « Longue durée » tab (index 1) enforces its own, larger minimum.
-  const minDays = activeTab === 1 ? settings.minLongDurationDays : settings.minRentalDays
+  const minDays = settings.minRentalDays
 
   const set = (key) => (e) => {
     setForm(f => ({ ...f, [key]: e.target.value }))
@@ -93,7 +92,6 @@ export default function Hero() {
       depart:    form.depart,
       retour:    form.retour,
       categorie: form.categorie,
-      tab:       activeTab,
       savedAt:   Date.now(),
     }))
 
@@ -103,7 +101,6 @@ export default function Hero() {
     params.set('depart', form.depart)
     if (form.retour) params.set('retour', form.retour)
     if (form.categorie && form.categorie !== categories[0]) params.set('categorie', form.categorie)
-    params.set('type', tabs[activeTab])
     navigate(`/resultats?${params.toString()}`)
   }
 
@@ -128,17 +125,7 @@ export default function Hero() {
         </p>
 
         <div className="booking-card" id="reserver">
-          <div className="booking-tabs">
-            {tabs.map((t, i) => (
-              <button
-                key={t}
-                className={`tab-btn ${activeTab === i ? 'active' : ''}`}
-                onClick={() => setActiveTab(i)}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <h2 className="booking-heading">Réservez votre véhicule</h2>
 
           <form className={`booking-form ${shake ? 'form-shake' : ''}`} onSubmit={handleSubmit}>
             <div className="form-row">
@@ -164,6 +151,7 @@ export default function Hero() {
                   onChange={(iso) => {
                     setForm(f => ({ ...f, depart: iso }))
                     if (errors.depart) setErrors(prev => ({ ...prev, depart: '' }))
+                    setOpenRetour(n => n + 1)
                   }}
                   min={today}
                   placeholder="Choisir une date"
@@ -182,6 +170,7 @@ export default function Hero() {
                   }}
                   min={form.depart ? addDays(form.depart, minDays) : today}
                   highlight={form.depart || undefined}
+                  openKey={openRetour}
                   placeholder="Choisir une date"
                   className={errors.retour ? 'input-error' : ''}
                 />
