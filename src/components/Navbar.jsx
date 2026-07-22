@@ -58,16 +58,7 @@ export default function Navbar() {
               <a href={l.href} onClick={() => setMenuOpen(false)}>{l.label}</a>
             </li>
           ))}
-          {menuOpen && (
-            <li>
-              <a href="#reserver" className="btn btn-primary" onClick={() => setMenuOpen(false)}>
-                Réserver maintenant
-              </a>
-            </li>
-          )}
         </ul>
-
-        <a href="#reserver" className="btn btn-primary nav-cta">Réserver maintenant</a>
 
         <button
           className={`hamburger ${menuOpen ? 'active' : ''}`}
