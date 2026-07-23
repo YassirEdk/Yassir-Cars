@@ -56,7 +56,20 @@ export default function AllCars() {
           ))}
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="cars-grid">
+            {[0, 1, 2, 3, 4, 5].map(i => (
+              <div className="car-card result-skeleton" key={i} aria-hidden>
+                <div className="sk-block" style={{ aspectRatio: '16 / 10' }} />
+                <div style={{ padding: '1.25rem' }}>
+                  <div className="sk-line sk-line--title" />
+                  <div className="sk-line sk-line--short" />
+                  <div className="sk-line" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <p className="section-subtitle light" style={{ textAlign: 'center', padding: '2rem 0' }}>
             Aucun véhicule dans cette catégorie.
           </p>

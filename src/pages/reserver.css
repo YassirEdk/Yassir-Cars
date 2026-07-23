@@ -482,4 +482,55 @@
   .rv-dates { grid-template-columns: 1fr; }
   .rv-card__title { font-size: 1.2rem; }
   .rv-guarantees { gap: .5rem .9rem; }
+  .rv-sent__actions { flex-direction: column; }
+  .rv-sent__msg { max-height: 160px; }
 }
+
+/* ── Confirmation panel ───────────────────────────────────────────────────────
+   Replaces the form once the request has been handed to WhatsApp. The fallback
+   link matters: window.open is silently blocked on iOS Safari often enough that
+   customers would otherwise believe they had booked. */
+.rv-sent {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; gap: .85rem;
+  animation: rv-card-in .5s cubic-bezier(.16,1,.3,1) both;
+}
+.rv-sent__icon {
+  display: grid; place-items: center;
+  width: 68px; height: 68px; border-radius: 50%;
+  background: linear-gradient(135deg, #25d366, #1eb958);
+  color: #fff;
+  box-shadow: 0 10px 28px rgba(37,211,102,.38);
+  margin-bottom: .2rem;
+}
+.rv-sent__title { margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; letter-spacing: -.02em; }
+.rv-sent__sub   { margin: 0; font-size: .9rem; line-height: 1.55; color: #64748b; }
+.rv-sent__sub strong { color: #0f172a; }
+
+/* The exact text that was handed off, so nothing is a mystery. */
+.rv-sent__msg {
+  width: 100%; max-height: 210px; overflow: auto;
+  margin: .2rem 0 0;
+  padding: .9rem 1rem;
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border: 1px solid #e2e8f0; border-radius: 14px;
+  text-align: left; white-space: pre-wrap; word-break: break-word;
+  font-family: inherit; font-size: .8rem; line-height: 1.6; color: #334155;
+}
+.rv-sent .rv-wa-btn { text-decoration: none; }
+
+.rv-sent__actions { display: flex; gap: .6rem; width: 100%; }
+.rv-sent__copy, .rv-sent__back {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
+  padding: .8rem 1rem;
+  border-radius: 12px; border: 1px solid #e2e8f0; background: #fff;
+  font-size: .85rem; font-weight: 700; color: #475569; cursor: pointer;
+  transition: background .18s, border-color .18s, color .18s;
+}
+.rv-sent__copy:hover, .rv-sent__back:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
+.rv-sent__link {
+  margin-top: .2rem;
+  font-size: .84rem; font-weight: 600; color: #94a3b8; text-decoration: none;
+}
+.rv-sent__link:hover { color: #475569; }

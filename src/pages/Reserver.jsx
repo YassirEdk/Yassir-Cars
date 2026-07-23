@@ -7,6 +7,8 @@ import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { formatMoney } from '../lib/currency'
+import { waLink } from '../lib/contact'
+import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 import './reserver.css'
 
 function fmt(iso) {
@@ -80,6 +82,21 @@ const IcoAlert = () => (
     <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
     <line x1="12" y1="9" x2="12" y2="13" />
     <line x1="12" y1="17" x2="12.01" y2="17" />
+  </svg>
+)
+
+const IcoCheck = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+    strokeLinecap="round" strokeLinejoin="round" width={34} height={34} aria-hidden>
+    <path d="M20 6 9 17l-5-5" />
+  </svg>
+)
+
+const IcoCopy = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+    strokeLinecap="round" strokeLinejoin="round" width={18} height={18} aria-hidden>
+    <rect x="9" y="9" width="13" height="13" rx="2" />
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
   </svg>
 )
 
@@ -187,6 +204,30 @@ export default function Reserver() {
   })
   const [error, setError] = useState('')
 
+  /* Where the "back" link goes. It used to be a bare <Link to="/resultats">,
+     which sent everyone to a parameterless search — so arriving from the home
+     page (where there were no results to begin with) dropped the city and both
+     dates. The origin travels in router state, and the search is rebuilt from
+     the values currently in the form. */
+  const back = useMemo(() => {
+    const origin = data.from || ''
+    if (origin === '/resultats') {
+      const p = new URLSearchParams()
+      if (form.lieu)   p.set('lieu', form.lieu)
+      if (form.depart) p.set('depart', form.depart)
+      if (form.retour) p.set('retour', form.retour)
+      const qs = p.toString()
+      return { href: qs ? `/resultats?${qs}` : '/resultats', label: 'Retour aux résultats' }
+    }
+    if (origin === '/flotte') return { href: '/flotte', label: 'Retour à la flotte' }
+    return { href: '/', label: 'Retour à l’accueil' }
+  }, [data.from, form.lieu, form.depart, form.retour])
+
+  // Set once the request has been handed off to WhatsApp. Holds the wa.me URL so
+  // the confirmation panel can offer it again when the popup was blocked.
+  const [sent, setSent] = useState(null)   // { url, text }
+  const [copied, setCopied] = useState(false)
+
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const days = (() => {
@@ -195,32 +236,60 @@ export default function Reserver() {
     return diff > 0 ? Math.ceil(diff) : null
   })()
 
-  const promoPrice = prix ? Math.round(Number(prix) * 0.7) : null
+  // Resolve the promotion from the car id carried in, so this page can't show a
+  // discount the car no longer has.
+  const rate = rateForCar(data.carId, settings)
+  const promoPrice = prix ? discounted(Number(prix), rate) : null
+  const promoLabel = discountLabel(rate)
+
+  // Every line is conditional: a missing value drops its whole line rather than
+  // sending "Lieu : " or "Durée : null jours" to the agency.
+  const buildMessage = () => [
+    `Bonjour YASSIR CARS`,
+    ``,
+    `Je souhaite réserver le véhicule suivant :`,
+    `Voiture : *${carName}*${carColor ? ` — ${carColor}` : ''}`,
+    ``,
+    `Nom complet : ${form.fullName.trim()}`,
+    form.lieu   ? `Lieu : ${form.lieu}` : '',
+    form.depart ? `Date de début : ${fmt(form.depart)}` : '',
+    form.retour ? `Date de fin : ${fmt(form.retour)}` : '',
+    days        ? `Durée : ${days === 1 ? '1 jour' : `${days} jours`}` : '',
+    (promoPrice && days)
+      ? `Prix estimé : ${formatMoney(promoPrice * days, currency)}${currency !== 'MAD' ? ` (≈ ${(promoPrice * days).toLocaleString('fr-FR')} MAD)` : ''}`
+      : '',
+    ``,
+    `Merci !`,
+  ].filter(Boolean).join('\n')
 
   const handleWhatsApp = () => {
+    // Validate everything the agency needs to act on the request — previously
+    // only the name was checked, so requests arrived with no city and no dates.
     if (!form.fullName.trim()) return setError('Veuillez entrer votre nom complet.')
-    if (form.depart && form.retour && form.retour < addDays(form.depart, minDays))
+    if (!form.lieu)   return setError('Veuillez choisir le lieu de prise en charge.')
+    if (!form.depart) return setError('Veuillez choisir la date de départ.')
+    if (!form.retour) return setError('Veuillez choisir la date de retour.')
+    if (form.retour < addDays(form.depart, minDays))
       return setError(`La location doit durer au moins ${minDays} jours.`)
     setError('')
-    const durée = days === 1 ? '1 jour' : `${days} jours`
-    const msg = [
-      `Bonjour YASSIR CARS`,
-      ``,
-      `Je souhaite réserver le véhicule suivant :`,
-      `Voiture : *${carName}*${carColor ? ` — ${carColor}` : ''}`,
-      ``,
-      `Nom complet : ${form.fullName}`,
-      `Lieu : ${form.lieu}`,
-      `Date de début : ${fmt(form.depart)}`,
-      `Date de fin : ${fmt(form.retour)}`,
-      `Durée : ${durée}`,
-      promoPrice
-        ? `Prix estimé : ${formatMoney(promoPrice * (days || 1), currency)}${currency !== 'MAD' ? ` (≈ ${(promoPrice * (days || 1)).toLocaleString('fr-FR')} MAD)` : ''}`
-        : '',
-      ``,
-      `Merci !`,
-    ].filter(Boolean).join('\n')
-    window.open(`https://wa.me/${settings.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank')
+
+    const text = buildMessage()
+    const url = waLink(settings.whatsapp, text)
+    // window.open can be swallowed (iOS Safari, popup blockers). Show the
+    // confirmation panel either way — it carries the link as a fallback so the
+    // customer is never left thinking the request went through when it didn't.
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setSent({ url, text })
+    setCopied(false)
+  }
+
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(sent.text)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+    }
   }
 
   if (!hasCar) {
@@ -244,12 +313,12 @@ export default function Reserver() {
       {/* Sticky top bar */}
       <header className="rv-topbar">
         <Link to="/" className="rv-topbar__logo"><Logo size={36} animated={false} /></Link>
-        <Link to="/resultats" className="rv-topbar__back">
+        <Link to={back.href} className="rv-topbar__back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
             strokeLinecap="round" strokeLinejoin="round" width={16} height={16}>
             <path d="M19 12H5M12 5l-7 7 7 7"/>
           </svg>
-          Retour aux résultats
+          {back.label}
         </Link>
       </header>
 
@@ -302,8 +371,10 @@ export default function Reserver() {
               <div className="rv-left__pricing">
                 <span className="rv-left__promo">{formatMoney(promoPrice, currency)}</span>
                 <span className="rv-left__per">/ jour</span>
-                <s className="rv-left__old">{formatMoney(Number(prix), currency)}</s>
-                <span className="rv-left__discount">-30%</span>
+                {promoLabel && <>
+                  <s className="rv-left__old">{formatMoney(Number(prix), currency)}</s>
+                  <span className="rv-left__discount">{promoLabel}</span>
+                </>}
               </div>
             )}
             <FeaturePills features={features} className="rv-left__equip" pillClass="rv-equip-pill" />
@@ -313,6 +384,37 @@ export default function Reserver() {
         {/* ── Right: form ── */}
         <section className="rv-right">
           <div className="rv-card">
+            {sent ? (
+              /* ── Sent: confirm what left, and keep a way through if the
+                    WhatsApp tab was blocked by the browser. ── */
+              <div className="rv-sent">
+                <div className="rv-sent__icon"><IcoCheck /></div>
+                <h2 className="rv-sent__title">Demande envoyée</h2>
+                <p className="rv-sent__sub">
+                  Votre demande pour la <strong>{carName}</strong> a été préparée dans WhatsApp.
+                  Envoyez le message pour la confirmer — l’agence vous répond en général sous 1&nbsp;heure.
+                </p>
+
+                <pre className="rv-sent__msg">{sent.text}</pre>
+
+                <a href={sent.url} target="_blank" rel="noopener noreferrer" className="rv-wa-btn">
+                  <IcoWhatsApp />
+                  WhatsApp ne s’est pas ouvert ? Cliquez ici
+                </a>
+
+                <div className="rv-sent__actions">
+                  <button type="button" className="rv-sent__copy" onClick={copyMessage}>
+                    <IcoCopy /> {copied ? 'Message copié' : 'Copier le message'}
+                  </button>
+                  <button type="button" className="rv-sent__back" onClick={() => setSent(null)}>
+                    Modifier ma demande
+                  </button>
+                </div>
+
+                <Link to={back.href} className="rv-sent__link">← {back.label}</Link>
+              </div>
+            ) : (
+            <>
             <div className="rv-card__header">
               <div className="rv-card__icon"><IcoClipboard /></div>
               <div>
@@ -341,7 +443,7 @@ export default function Reserver() {
 
             {/* Lieu */}
             <div className="rv-field">
-              <label className="rv-field__label">Lieu de prise en charge</label>
+              <label className="rv-field__label">Lieu de prise en charge <span className="rv-req">*</span></label>
               <div className="rv-field__wrap">
                 <span className="rv-field__ico"><IcoPin /></span>
                 <select
@@ -359,7 +461,7 @@ export default function Reserver() {
             <div className="rv-dates">
               <div className="rv-field">
                 <label className="rv-field__label">
-                  <IcoCalStart /> Départ
+                  <IcoCalStart /> Départ <span className="rv-req">*</span>
                 </label>
                 <DatePicker
                   value={form.depart}
@@ -370,7 +472,7 @@ export default function Reserver() {
               </div>
               <div className="rv-field">
                 <label className="rv-field__label">
-                  <IcoCalEnd /> Retour
+                  <IcoCalEnd /> Retour <span className="rv-req">*</span>
                 </label>
                 <DatePicker
                   value={form.retour}
@@ -394,9 +496,11 @@ export default function Reserver() {
                   <>
                     <div className="rv-summary__row">
                       <span className="rv-summary__label"><IcoTag /> {formatMoney(promoPrice, currency)} × {days}</span>
-                      <span className="rv-summary__val rv-summary__val--muted">
-                        <s>{formatMoney(Number(prix) * days, currency)}</s>
-                      </span>
+                      {promoLabel && (
+                        <span className="rv-summary__val rv-summary__val--muted">
+                          <s>{formatMoney(Number(prix) * days, currency)}</s>
+                        </span>
+                      )}
                     </div>
                     <div className="rv-summary__total">
                       <span>Total estimé</span>
@@ -426,6 +530,8 @@ export default function Reserver() {
             </div>
 
             </div>
+            </>
+            )}
           </div>
         </section>
 

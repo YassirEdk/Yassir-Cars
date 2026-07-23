@@ -6,20 +6,39 @@ import { MIN_RENTAL_DAYS } from '../data'
 // migration-settings.sql.
 export const DEFAULT_SETTINGS = {
   whatsapp: '212661000000',   // international digits, no leading 0
+  // Blank on purpose: every consumer hides its phone/email block when these are
+  // empty, so the site can never ship a placeholder number a customer might dial.
+  phone: '',                  // international digits, no leading 0
+  contactEmail: '',
+  address: '',
   instagramUrl: '',
   facebookUrl: '',
   tiktokUrl: '',
   minRentalDays: MIN_RENTAL_DAYS,
+  // Promotion. Defaults match what the site displayed before this became
+  // configurable: 30% off the whole fleet.
+  discountRate: 30,
+  discountActive: true,
+  discountAllCars: true,
+  discountCarIds: [],
 }
 
 // DB row (snake_case) → app shape (camelCase), filling any blanks with defaults.
 function fromRow(row) {
   return {
     whatsapp: row.whatsapp || DEFAULT_SETTINGS.whatsapp,
+    phone: row.phone || '',
+    contactEmail: row.contact_email || '',
+    address: row.address || '',
     instagramUrl: row.instagram_url || '',
     facebookUrl: row.facebook_url || '',
     tiktokUrl: row.tiktok_url || '',
     minRentalDays: row.min_rental_days ?? DEFAULT_SETTINGS.minRentalDays,
+    discountRate: row.discount_rate ?? DEFAULT_SETTINGS.discountRate,
+    discountActive: row.discount_active ?? DEFAULT_SETTINGS.discountActive,
+    discountAllCars: row.discount_all_cars ?? DEFAULT_SETTINGS.discountAllCars,
+    // Always a list of strings — car ids are uuids and get compared as strings.
+    discountCarIds: (row.discount_car_ids ?? []).map(String),
   }
 }
 
@@ -45,10 +64,18 @@ export async function updateSettings(s) {
     .upsert({
       id: 1,
       whatsapp: (s.whatsapp || '').replace(/\D/g, '') || null,
+      phone: (s.phone || '').replace(/\D/g, '') || null,
+      contact_email: s.contactEmail?.trim() || null,
+      address: s.address?.trim() || null,
       instagram_url: s.instagramUrl?.trim() || null,
       facebook_url: s.facebookUrl?.trim() || null,
       tiktok_url: s.tiktokUrl?.trim() || null,
       min_rental_days: Math.max(1, Number(s.minRentalDays) || DEFAULT_SETTINGS.minRentalDays),
+      // 0 is meaningful here (no promotion), so don't fall back on falsy.
+      discount_rate: Math.min(99, Math.max(0, Math.round(Number(s.discountRate) || 0))),
+      discount_active: !!s.discountActive,
+      discount_all_cars: !!s.discountAllCars,
+      discount_car_ids: (s.discountCarIds ?? []).map(String),
       updated_at: new Date().toISOString(),
     })
     .select()

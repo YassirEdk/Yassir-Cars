@@ -1,16 +1,19 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation, Link } from 'react-router-dom'
 import { carInCategory, colorName, moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currency'
 import SelectMenu from '../components/SelectMenu'
-import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge } from '../lib/cars'
+import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge, nextFreeDateForModel } from '../lib/cars'
 import Logo from '../components/Logo'
 import CityWheel from '../components/CityWheel'
 import DatePicker from '../components/DatePicker'
 import Icon from '../components/Icon'
+import SocialIcon from '../components/SocialIcon'
 import FeaturePills from '../components/FeaturePills'
+import { formatPhone, waLink } from '../lib/contact'
+import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 
 function daysBetween(d1, d2) {
   if (!d1) return 1
@@ -24,15 +27,6 @@ function fmt(dateStr) {
   return new Date(dateStr).toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
-}
-
-// International digits → readable phone: "212661234567" → "+212 661 234 567".
-function formatPhone(digits) {
-  const s = String(digits || '').replace(/\D/g, '')
-  if (!s) return ''
-  const cc = s.slice(0, 3)
-  const rest = s.slice(3).replace(/(\d{3})(?=\d)/g, '$1 ')
-  return `+${cc} ${rest}`.trim()
 }
 
 const CATEGORIES = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
@@ -63,7 +57,7 @@ function MiniSearch({ params, onSearch }) {
       <div className="container">
         <form className="mini-search-form" onSubmit={handleSubmit}>
           <div className="mini-field">
-            <label>📍 Lieu</label>
+            <label><Icon name="pin" /> Lieu</label>
             <CityWheel
               value={form.lieu}
               onChange={(city) => setForm(f => ({ ...f, lieu: city }))}
@@ -71,7 +65,7 @@ function MiniSearch({ params, onSearch }) {
             />
           </div>
           <div className="mini-field">
-            <label>📅 Départ</label>
+            <label><Icon name="calendar" /> Départ</label>
             <DatePicker
               value={form.depart}
               onChange={(iso) => setForm(f => ({ ...f, depart: iso }))}
@@ -80,7 +74,7 @@ function MiniSearch({ params, onSearch }) {
             />
           </div>
           <div className="mini-field">
-            <label>📅 Retour</label>
+            <label><Icon name="calendar" /> Retour</label>
             <DatePicker
               value={form.retour}
               onChange={(iso) => setForm(f => ({ ...f, retour: iso }))}
@@ -91,7 +85,7 @@ function MiniSearch({ params, onSearch }) {
             />
           </div>
           <div className="mini-field">
-            <label>🚘 Catégorie</label>
+            <label><Icon name="car" /> Catégorie</label>
             <select value={form.categorie} onChange={set('categorie')}>
               {CATEGORIES.map(c => <option key={c}>{c}</option>)}
             </select>
@@ -127,26 +121,30 @@ function PhoneModal({ car, onClose }) {
       <div className="phone-modal">
         <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
 
-        <div className="phone-modal__icon">📞</div>
+        <div className="phone-modal__icon"><Icon name="phone" /></div>
         <h3 className="phone-modal__title">Contacter l'agence</h3>
         <p className="phone-modal__car">Pour réserver la <strong>{car.name}</strong></p>
 
         <div className="phone-modal__numbers">
-          <span className="phone-modal__btn phone-modal__btn--disabled">
-            <span className="phone-modal__btn-icon">📞</span>
-            <div>
-              <span className="phone-modal__btn-label">Appel standard</span>
-              <span className="phone-modal__btn-num">+212 522 000 000</span>
-            </div>
-          </span>
+          {/* Rendered only when a real number is configured in the admin
+              settings — a dead placeholder number is worse than no number. */}
+          {settings.phone && (
+            <a href={`tel:+${settings.phone}`} className="phone-modal__btn phone-modal__btn--call">
+              <span className="phone-modal__btn-icon"><Icon name="phone" /></span>
+              <div>
+                <span className="phone-modal__btn-label">Appel standard</span>
+                <span className="phone-modal__btn-num">{formatPhone(settings.phone)}</span>
+              </div>
+            </a>
+          )}
 
           <a
-            href={`https://wa.me/${settings.whatsapp}`}
+            href={waLink(settings.whatsapp, `Bonjour YASSIR CARS, je suis intéressé par la ${car.name}.`)}
             target="_blank"
             rel="noopener noreferrer"
             className="phone-modal__btn phone-modal__btn--whatsapp"
           >
-            <span className="phone-modal__btn-icon">💬</span>
+            <span className="phone-modal__btn-icon"><SocialIcon name="whatsapp" /></span>
             <div>
               <span className="phone-modal__btn-label">WhatsApp</span>
               <span className="phone-modal__btn-num">{formatPhone(settings.whatsapp)}</span>
@@ -154,7 +152,7 @@ function PhoneModal({ car, onClose }) {
           </a>
         </div>
 
-        <p className="phone-modal__hours">⏰ Disponible Lun–Sam 8h–20h · Dim 9h–18h</p>
+        <p className="phone-modal__hours"><Icon name="clock" /> Disponible Lun–Sam 8h–20h · Dim 9h–18h</p>
         <button className="phone-modal__cancel" onClick={onClose}>Annuler</button>
       </div>
     </div>
@@ -162,8 +160,9 @@ function PhoneModal({ car, onClose }) {
 }
 
 /* ── Individual result card ── */
-function ResultCard({ car, days, available, depart, retour, lieu, availableOnly, onCall }) {
+function ResultCard({ car, days, available, depart, retour, lieu, availableOnly, onCall, onSearchFrom }) {
   const { currency } = useCurrency()
+  const { settings } = useSettings()
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
   // Pick a colour → switch to that unit (photos, price, specs follow it).
@@ -199,7 +198,12 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
     const g = unit.photos?.length ? unit.photos : (unit.photo ? [unit.photo] : [])
     setSelColor(hex); setActivePhoto(g[0] || unit.photo); setPhotoFailed(false)
   }
-  const promoPrice = Math.round(active.price * 0.7) // -30%
+  // Only computed for cards that came back unavailable.
+  const freeFrom = available ? null : nextFreeDateForModel(car, depart)
+  // The promotion is per car, so it follows the colour/unit the visitor picked.
+  const rate = rateForCar(active.id, settings)
+  const promoPrice = discounted(active.price, rate)
+  const promoLabel = discountLabel(rate)
   const total = promoPrice * days
   const oldTotal = active.price * days
 
@@ -231,7 +235,9 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
           <span className={`result-badge result-badge--${active.badgeColor}`}>{effectiveBadge(active)}</span>
         )}
         <span className={`avail-tag ${activeAvailable ? 'avail-tag--ok' : 'avail-tag--no'}`}>
-          {activeAvailable ? '✅ Disponible' : '❌ Non disponible'}
+          {activeAvailable
+            ? <><Icon name="checkCircle" /> Disponible</>
+            : <><Icon name="clock" /> Non disponible</>}
         </span>
 
         {gallery.length > 1 && (
@@ -289,10 +295,12 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
             )}
           </div>
           <div className="result-card__pricing">
-            <div className="result-price-old-row">
-              <span className="result-price-old">{formatMoney(active.price, currency)}</span>
-              <span className="result-discount">-30%</span>
-            </div>
+            {promoLabel && (
+              <div className="result-price-old-row">
+                <span className="result-price-old">{formatMoney(active.price, currency)}</span>
+                <span className="result-discount">{promoLabel}</span>
+              </div>
+            )}
             <div className="result-card__day">
               <span className="result-price">{convert(promoPrice, currency).toLocaleString('fr-FR')}</span>
               <span className="result-currency"> {CURRENCIES[currency].symbol}</span>
@@ -301,7 +309,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
             {days > 1 && (
               <div className="result-total">
                 Total : <strong>{formatMoney(total, currency)}</strong>
-                <s className="result-total-old">{formatMoney(oldTotal, currency)}</s>
+                {promoLabel && <s className="result-total-old">{formatMoney(oldTotal, currency)}</s>}
                 <small> ({days} jours)</small>
               </div>
             )}
@@ -329,6 +337,12 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
               to="/reserver"
               state={{
                 nom: car.name,
+                // Lets the booking page send the visitor back to THIS search
+                // instead of a parameterless one.
+                from: '/resultats',
+                // Carried so the booking page can resolve the promotion itself
+                // rather than trusting a price computed on this screen.
+                carId: active.id,
                 couleur: effColor ? colorName(effColor) : '',
                 photo: shownPhoto || '',
                 photos: gallery,
@@ -342,11 +356,101 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
               Réserver maintenant <span className="result-reserve__arrow">→</span>
             </Link>
           ) : (
-            <span className="result-unavailable-label">❌ Indisponible pour ces dates</span>
+            /* Rather than dead-ending, offer the first date this model frees up
+               — the blocked ranges are already loaded on the card. */
+            <div className="result-unavailable">
+              <span className="result-unavailable-label">
+                <Icon name="clock" /> Indisponible pour ces dates
+              </span>
+              {freeFrom && (
+                <button type="button" className="result-freefrom" onClick={() => onSearchFrom(freeFrom)}>
+                  Libre à partir du <strong>{fmt(freeFrom)}</strong> — voir ces dates
+                </button>
+              )}
+            </div>
           )}
-          <button className="result-phone" onClick={() => onCall(car)}>
-            📞 Appeler
-          </button>
+          {/* With a call number configured, offer the choice; without one, skip
+              the modal entirely and go straight to WhatsApp. */}
+          {settings.phone ? (
+            <button className="result-phone" onClick={() => onCall(car)}>
+              <Icon name="phone" /> Appeler
+            </button>
+          ) : (
+            <a
+              className="result-phone"
+              href={waLink(settings.whatsapp, `Bonjour YASSIR CARS, je suis intéressé par la ${car.name}.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <SocialIcon name="whatsapp" /> WhatsApp
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── "The car you came for is taken" popup ──────────────────────────────────
+   Shown on arrival when the visitor was redirected here from a car whose dates
+   were already booked, so the reason they can't find it is never a mystery. */
+function UnavailableNotice({ info, onClose }) {
+  const overlayRef = useRef(null)
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div
+      className="phone-overlay"
+      ref={overlayRef}
+      onClick={e => { if (e.target === overlayRef.current) onClose() }}
+      role="alertdialog"
+      aria-labelledby="unavail-title"
+    >
+      <div className="phone-modal unavail-notice">
+        <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+
+        <div className="unavail-notice__icon" aria-hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
+            strokeLinecap="round" width="30" height="30">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m15 9-6 6M9 9l6 6" />
+          </svg>
+        </div>
+
+        <h3 className="phone-modal__title" id="unavail-title">Véhicule non disponible</h3>
+        <p className="unavail-notice__text">
+          La <strong>{info.name}</strong>{info.couleur ? <> en <strong>{info.couleur}</strong></> : null} est
+          déjà réservée du <strong>{fmt(info.depart)}</strong> au <strong>{fmt(info.retour)}</strong>.
+        </p>
+        <p className="unavail-notice__sub">
+          Voici tous les véhicules libres pour ces mêmes dates.
+        </p>
+
+        <button className="btn btn-accent unavail-notice__btn" onClick={onClose}>
+          Voir les véhicules disponibles →
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* ── Placeholder card shown while the cars are still loading ── */
+function ResultSkeleton() {
+  return (
+    <div className="result-card result-skeleton" aria-hidden>
+      <div className="result-card__img sk-block" />
+      <div className="result-card__body">
+        <div className="sk-line sk-line--title" />
+        <div className="sk-line sk-line--short" />
+        <div className="sk-line" />
+        <div className="sk-line sk-line--short" />
+        <div className="result-card__footer">
+          <div className="sk-line sk-line--btn" />
         </div>
       </div>
     </div>
@@ -370,6 +474,10 @@ function urlCatToKey(cat) {
 export default function SearchResults() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const { settings } = useSettings()
+  // Carried in by AvailabilityModal when the car the visitor wanted was booked.
+  const [notice, setNotice] = useState(location.state?.unavailable ?? null)
   const { currency, setCurrency } = useCurrency()
   const currencyOptions = CURRENCY_CODES.map(code => ({ value: code, label: CURRENCIES[code].label }))
 
@@ -388,9 +496,15 @@ export default function SearchResults() {
   const days = daysBetween(depart, retour)
 
   const [cars, setCars] = useState([])
+  // Cars arrive asynchronously (always — even the static fallback resolves a
+  // promise). Without this flag the empty state renders on the very first paint
+  // and every visitor is briefly told there are no cars for their dates.
+  const [loading, setLoading] = useState(true)
   useEffect(() => {
     let alive = true
-    fetchCars().then(list => { if (alive) setCars(list) })
+    fetchCars()
+      .then(list => { if (alive) setCars(list) })
+      .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [])
 
@@ -448,6 +562,19 @@ export default function SearchResults() {
 
   const availableCount = results.filter(c => c.available).length
 
+  // "Libre à partir du X" → re-run the same search from that date, keeping the
+  // trip the same length as the one the visitor originally asked for.
+  const handleSearchFrom = (isoStart) => {
+    const end = new Date(`${isoStart}T00:00:00Z`)
+    end.setUTCDate(end.getUTCDate() + Math.max(days, settings.minRentalDays))
+    handleNewSearch({
+      lieu,
+      depart: isoStart,
+      retour: end.toISOString().slice(0, 10),
+      categorie: catParam,
+    })
+  }
+
   const handleNewSearch = (form) => {
     const params = new URLSearchParams()
     if (form.lieu)   params.set('lieu',   form.lieu)
@@ -480,7 +607,9 @@ export default function SearchResults() {
         <div className="container results-summary__inner">
           <div className="results-summary__text">
             <h2>
-              <span className="results-count">{availableCount}</span> voiture{availableCount > 1 ? 's' : ''} disponible{availableCount > 1 ? 's' : ''}
+              {loading
+                ? 'Recherche en cours…'
+                : <><span className="results-count">{availableCount}</span> voiture{availableCount > 1 ? 's' : ''} disponible{availableCount > 1 ? 's' : ''}</>}
             </h2>
             <p>
               {lieu && <><strong>{lieu}</strong> · </>}
@@ -490,9 +619,9 @@ export default function SearchResults() {
             </p>
           </div>
           <div className="results-summary__meta">
-            <span>🔄 Annulation gratuite</span>
-            <span>🛡️ Assurance incluse</span>
-            <span>📞 Support 24h/24</span>
+            <span><Icon name="check" /> Annulation gratuite</span>
+            <span><Icon name="shield" /> Assurance incluse</span>
+            <span><Icon name="phone" /> Support 24h/24</span>
           </div>
         </div>
       </div>
@@ -525,7 +654,7 @@ export default function SearchResults() {
 
             {/* Text search by model */}
             <div className="results-search-wrap">
-              <span className="results-search-icon" aria-hidden>🔍</span>
+              <span className="results-search-icon" aria-hidden><Icon name="search" /></span>
               <input
                 type="search"
                 className="results-search"
@@ -575,9 +704,13 @@ export default function SearchResults() {
       {/* Results grid */}
       <div className="results-body">
         <div className="container">
-          {results.length === 0 ? (
+          {loading ? (
+            <div className="result-list">
+              {[0, 1, 2].map(i => <ResultSkeleton key={i} />)}
+            </div>
+          ) : results.length === 0 ? (
             <div className="no-results">
-              <div className="no-results__icon">😔</div>
+              <div className="no-results__icon"><Icon name="search" /></div>
               <h3>Aucun véhicule trouvé</h3>
               <p>Essayez de modifier vos dates ou votre catégorie.</p>
               <Link to="/" className="btn btn-primary">Nouvelle recherche</Link>
@@ -585,12 +718,15 @@ export default function SearchResults() {
           ) : (
             <div className="result-list">
               {results.map(car => (
-                <ResultCard key={car.id} car={car} days={days} available={car.available} depart={depart} retour={retour} lieu={lieu} availableOnly={filterDispo} onCall={setCallingCar} />
+                <ResultCard key={car.id} car={car} days={days} available={car.available} depart={depart} retour={retour} lieu={lieu} availableOnly={filterDispo} onCall={setCallingCar} onSearchFrom={handleSearchFrom} />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* "The car you came for is booked" popup */}
+      {notice && <UnavailableNotice info={notice} onClose={() => setNotice(null)} />}
 
       {/* Phone modal */}
       {callingCar && (
@@ -600,7 +736,11 @@ export default function SearchResults() {
       {/* Footer strip */}
       <div className="results-footer-strip">
         <div className="container">
-          <p>© 2026 YASSIR CARS · <a href="tel:+212522000000">+212 522 000 000</a> · contact@yassir-cars.ma</p>
+          <p>
+            © {new Date().getFullYear()} YASSIR CARS
+            {settings.phone && <> · <a href={`tel:+${settings.phone}`}>{formatPhone(settings.phone)}</a></>}
+            {settings.contactEmail && <> · <a href={`mailto:${settings.contactEmail}`}>{settings.contactEmail}</a></>}
+          </p>
         </div>
       </div>
     </div>

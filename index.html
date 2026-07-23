@@ -4,14 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YASSIR CARS — Location de Voitures</title>
-    <meta name="description" content="YASSIR CARS — Location de voitures premium, partout au Maroc." />
+    <meta name="description" content="YASSIR CARS — Location de voitures premium, partout au Maroc. Réservation en ligne, assurance incluse, kilométrage illimité." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- %VITE_SITE_URL% is substituted at build time from .env — set it once
+         there and every absolute URL on the site follows. -->
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
+    <meta name="theme-color" content="#0d0d0d" />
+
+    <!-- LCP element: start the hero download before the JS bundle parses.
+         Keep in sync with HERO_SRCSET in src/components/Hero.jsx. -->
+    <link
+      rel="preload" as="image" fetchpriority="high"
+      href="/hero/hero-1400.webp"
+      imagesrcset="/hero/hero-800.webp 800w, /hero/hero-1400.webp 1400w, /hero/hero-2000.webp 2000w"
+      imagesizes="100vw"
+    />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="YASSIR CARS — Location de Voitures" />
     <meta property="og:description" content="Voitures premium en location, partout au Maroc." />
-    <meta property="og:image" content="/og-image.png" />
+    <!-- Absolute: Facebook/WhatsApp/LinkedIn do not resolve relative og:image. -->
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
 
@@ -19,10 +34,50 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="YASSIR CARS — Location de Voitures" />
     <meta name="twitter:description" content="Voitures premium en location, partout au Maroc." />
-    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+
+    <!-- Local-business structured data. Local search is the main free channel
+         for a Moroccan rental agency; without this the site is invisible to it.
+         Fill in telephone/address to match the admin « Réglages » values. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "AutoRental",
+      "name": "YASSIR CARS",
+      "description": "Location de voitures premium au Maroc.",
+      "url": "%VITE_SITE_URL%/",
+      "image": "%VITE_SITE_URL%/og-image.png",
+      "priceRange": "MAD",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Casablanca",
+        "addressCountry": "MA"
+      },
+      "areaServed": [
+        { "@type": "City", "name": "Casablanca" },
+        { "@type": "City", "name": "Rabat" },
+        { "@type": "City", "name": "Marrakech" },
+        { "@type": "City", "name": "Agadir" },
+        { "@type": "City", "name": "Tanger" },
+        { "@type": "City", "name": "Fès" }
+      ],
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+          "opens": "08:00", "closes": "20:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "09:00", "closes": "18:00"
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

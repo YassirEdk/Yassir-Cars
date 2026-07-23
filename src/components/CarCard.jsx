@@ -4,11 +4,14 @@ import { colorName, featureLabel, featureIcon } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import AvailabilityModal from './AvailabilityModal'
 import Icon from './Icon'
+import { useSettings } from '../lib/SettingsContext'
+import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 
 // cta: 'availability' (default) shows "Vérifier la disponibilité" + popup,
 //      'reserve' shows the simple "Réserver" link to the booking form.
 export default function CarCard({ car, cta = 'availability' }) {
   const ref = useScrollReveal()
+  const { settings } = useSettings()
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [showAvail, setShowAvail] = useState(false)
@@ -27,6 +30,10 @@ export default function CarCard({ car, cta = 'availability' }) {
   )
   const [idx, setIdx] = useState(0)
   const activePhoto = gallery[idx]
+
+  // Promotion follows the selected colour/unit.
+  const promoRate = rateForCar(active.id, settings)
+  const promoLabel = discountLabel(promoRate)
 
   // Preload the unit's other photos so flipping through the gallery is instant.
   // Without this, photos 2 and 3 only start downloading when the arrow is
@@ -145,11 +152,13 @@ export default function CarCard({ car, cta = 'availability' }) {
         )}
         <div className="car-footer">
           <div className="car-price">
-            <span className="price-old-row">
-              <s className="price-old">{active.price.toLocaleString('fr-FR')} {active.currency}</s>
-              <span className="price-discount">-30%</span>
-            </span>
-            <span className="price">{Math.round(active.price * 0.7).toLocaleString('fr-FR')} <small>{active.currency}</small></span>
+            {promoLabel && (
+              <span className="price-old-row">
+                <s className="price-old">{active.price.toLocaleString('fr-FR')} {active.currency}</s>
+                <span className="price-discount">{promoLabel}</span>
+              </span>
+            )}
+            <span className="price">{discounted(active.price, promoRate).toLocaleString('fr-FR')} <small>{active.currency}</small></span>
             <span className="price-period">/ jour</span>
           </div>
           <button className="btn btn-primary btn-sm" onClick={() => setShowAvail(true)}>

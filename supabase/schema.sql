@@ -107,10 +107,17 @@ create index if not exists idx_car_services_car on public.car_services(car_id);
 create table if not exists public.app_settings (
   id              integer primary key default 1,
   whatsapp        text,          -- international digits, no leading 0 (e.g. 212661234567)
+  phone           text,          -- public call number, same format; hidden site-wide when NULL
+  contact_email   text,          -- public email; hidden when NULL
+  address         text,          -- public address shown on the contact block; hidden when NULL
   instagram_url   text,
   facebook_url    text,
   tiktok_url      text,
   min_rental_days integer not null default 3,
+  discount_rate     integer not null default 30,    -- % off the daily rate
+  discount_active   boolean not null default true,  -- master promotion switch
+  discount_all_cars boolean not null default true,  -- false → only discount_car_ids
+  discount_car_ids  text[]  not null default '{}',  -- cars the promotion applies to
   min_long_duration_days integer not null default 30,  -- minimum days for the « Longue durée » tab
   updated_at      timestamptz default now(),
   constraint app_settings_single_row check (id = 1)
@@ -147,6 +154,26 @@ alter table public.app_settings add column if not exists tiktok_url text;
 
 -- Upgrade existing databases (table created before min_long_duration_days existed).
 alter table public.app_settings add column if not exists min_long_duration_days integer not null default 30;
+
+-- Public contact details. Left NULL on purpose: the site hides the phone row,
+-- the email and the address whenever they are empty, so a placeholder number is
+-- never shown to a customer. Fill them in from the admin « Réglages » modal.
+alter table public.app_settings add column if not exists phone         text;
+alter table public.app_settings add column if not exists contact_email text;
+alter table public.app_settings add column if not exists address       text;
+
+-- Promotional discount, whole percent off the daily rate (0 = no promotion).
+-- Defaults to 30 to preserve what the site displayed when this was hardcoded.
+alter table public.app_settings add column if not exists discount_rate integer not null default 30;
+
+-- Promotion switch and scope.
+--   discount_active   : master on/off, independent of the rate.
+--   discount_all_cars : true  → every car, including ones added later.
+--                       false → only the cars listed in discount_car_ids.
+-- Both default to the previous behaviour (30% on the whole fleet).
+alter table public.app_settings add column if not exists discount_active   boolean not null default true;
+alter table public.app_settings add column if not exists discount_all_cars boolean not null default true;
+alter table public.app_settings add column if not exists discount_car_ids  text[]  not null default '{}';
 
 insert into public.app_settings (id, whatsapp, instagram_url, facebook_url, min_rental_days)
 values (1, '212661000000', '', '', 3)

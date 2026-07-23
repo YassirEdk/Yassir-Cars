@@ -142,12 +142,70 @@ export function isModelAvailable(model, depart, retour) {
   return units.some(u => isCarAvailable(u, depart, retour))
 }
 
+// ISO date + n days, without touching the local timezone.
+function addIsoDays(iso, n) {
+  const d = new Date(`${iso}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+// First day on or after `from` when this unit is free, or null if it never is
+// (out of service). Walks forward past each blocking period it lands inside, so
+// back-to-back reservations are skipped in one go.
+export function nextFreeDate(car, from) {
+  if (car.damaged) return null
+  if (!from) return null
+  const periods = (car.unavailable ?? []).slice().sort((a, b) => (a.start < b.start ? -1 : 1))
+  let day = from
+  // Each pass can only move the cursor forward, so this terminates.
+  for (let guard = 0; guard < periods.length + 1; guard++) {
+    const hit = periods.find(p => p.start <= day && p.end >= day)
+    if (!hit) return day
+    day = addIsoDays(hit.end, 1)
+  }
+  return day
+}
+
+// Earliest date any unit of this model frees up — the one worth showing on a
+// card that came back unavailable.
+export function nextFreeDateForModel(model, from) {
+  const units = model.units ?? [model]
+  const dates = units.map(u => nextFreeDate(u, from)).filter(Boolean)
+  if (!dates.length) return null
+  return dates.sort()[0]
+}
+
 // ── Public read ─────────────────────────────────────────────────────────────
 // Returns all cars with their blocked date ranges, for the PUBLIC site.
 // Privacy: never reads client PII (name/CIN/phone/licence). It reads only the
 // `car_availability` view (date ranges) — see migration-privacy.sql.
 // Falls back to the static data.js list when Supabase isn't configured yet.
-export async function fetchCars() {
+// SearchResults, AllCars, Fleet and AvailabilityModal each call fetchCars()
+// independently — up to four identical round-trips for the same data on one
+// page. This de-duplicates that burst; it is deliberately NOT a data cache, so
+// the window stays short enough that availability can't go visibly stale.
+// Admin screens read through fetchCarsAdmin(), which is never cached.
+let carsPromise = null
+let carsFetchedAt = 0
+const CARS_TTL = 20_000
+
+export function invalidateCars() {
+  carsPromise = null
+  carsFetchedAt = 0
+}
+
+export function fetchCars() {
+  const fresh = carsPromise && (Date.now() - carsFetchedAt) < CARS_TTL
+  if (!fresh) {
+    carsFetchedAt = Date.now()
+    // A failed request must not be cached, or the site stays broken for a
+    // minute after one blip.
+    carsPromise = fetchCarsUncached().catch(err => { invalidateCars(); throw err })
+  }
+  return carsPromise
+}
+
+async function fetchCarsUncached() {
   if (!isSupabaseConfigured) {
     return staticCars.map(c => ({ ...c, unavailable: [] }))
   }

@@ -26,6 +26,13 @@ export default function App() {
 
   const location = useLocation()
 
+  // React Router keeps the scroll position across route changes, so jumping
+  // from halfway down the home page to /flotte landed halfway down that page
+  // too. Every route here is a fresh page, so start each one at the top.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />

@@ -4,8 +4,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/build-seo.mjs",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seo": "node scripts/build-seo.mjs",
+    "hero": "node scripts/build-hero.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.107.0",

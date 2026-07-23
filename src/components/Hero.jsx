@@ -6,7 +6,11 @@ import Icon from './Icon'
 import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 
-const HERO_BG = 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1800&q=80'
+/* Self-hosted, responsive hero. Regenerate with `node scripts/build-hero.mjs`.
+   Previously a fixed 1800px JPEG pulled from Unsplash's CDN — a third-party
+   round-trip on the LCP element of every first visit. */
+const HERO_SRCSET = '/hero/hero-800.webp 800w, /hero/hero-1400.webp 1400w, /hero/hero-2000.webp 2000w'
+const HERO_FALLBACK = '/hero/hero-1400.jpg'
 
 const categories = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
 
@@ -106,10 +110,18 @@ export default function Hero() {
 
   return (
     <section className="hero" id="accueil">
-      <div
-        className="hero-bg"
-        style={{ backgroundImage: `url('${HERO_BG}')` }}
-      >
+      <div className="hero-bg">
+        <img
+          className="hero-bg__img"
+          src={HERO_FALLBACK}
+          srcSet={HERO_SRCSET}
+          sizes="100vw"
+          alt=""
+          aria-hidden
+          /* LCP element: load it eagerly and ahead of everything else. */
+          fetchPriority="high"
+          decoding="async"
+        />
         <div className="hero-overlay" />
       </div>
 

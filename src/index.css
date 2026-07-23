@@ -18,6 +18,7 @@ img {
   --white: #ffffff;
   --gray-100: #f8f9fa;
   --gray-200: #e9ecef;
+  --gray-300: #dee2e6;
   --gray-400: #adb5bd;
   --gray-600: #6c757d;
   --gray-800: #343a40;
@@ -96,17 +97,97 @@ ul { list-style: none; }
 
 /* ===== NAVBAR ===== */
 .navbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 16px 0; transition: var(--transition); }
-.navbar.scrolled { background: rgba(13,13,13,.95); backdrop-filter: blur(20px); padding: 12px 0; box-shadow: 0 2px 20px rgba(0,0,0,.3); }
-.nav-inner { display: flex; align-items: center; gap: 32px; }
+.navbar.scrolled {
+  background: rgba(13,13,13,.92); backdrop-filter: blur(20px) saturate(140%);
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 2px 20px rgba(0,0,0,.3);
+}
+/* Three tracks with equal outer columns, so the links sit on the true centre of
+   the header. With flexbox they were centred in the space LEFT OVER between the
+   logo and the actions — and since those differ in width, the row landed 22px
+   right of centre. */
+.nav-inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 20px;
+}
+/* Explicit columns: when .nav-links is display:none on mobile it leaves the
+   grid entirely, and auto-placement would slide the actions into the middle
+   track instead of the right edge. */
+.nav-brand   { grid-column: 1; text-decoration: none; display: inline-flex; justify-self: start; min-width: 0; }
 .logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px; flex-shrink: 0; }
 .logo-icon { font-size: 28px; }
 .accent { color: var(--red); }
-.nav-links { display: flex; align-items: center; gap: 4px; flex: 1; justify-content: center; }
-.nav-links a { color: rgba(255,255,255,.85); padding: 8px 14px; border-radius: 50px; font-size: 14px; font-weight: 500; transition: var(--transition); }
-.nav-links a:hover { color: #fff; background: rgba(255,255,255,.1); }
-.hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; margin-left: auto; }
-.hamburger span { display: block; width: 24px; height: 2px; background: #fff; border-radius: 2px; transition: var(--transition); }
-.menu-close { background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; position: absolute; top: 24px; right: 24px; }
+
+.nav-links { grid-column: 2; display: flex; align-items: center; gap: 2px; justify-self: center; }
+/* .nav-link, not a bare `a`: the drawer also contains the CTA and the contact
+   buttons, which must not inherit nav-item styling. */
+.nav-links .nav-link {
+  position: relative;
+  color: rgba(255,255,255,.8); padding: 8px 14px; border-radius: 50px;
+  font-size: 14px; font-weight: 500; transition: color .25s, background .25s;
+}
+.nav-links .nav-link:hover { color: #fff; background: rgba(255,255,255,.08); }
+/* Current section. The underline is drawn on a pseudo-element so it can grow
+   from the centre instead of popping in. */
+.nav-links .nav-link.active { color: #fff; font-weight: 600; }
+.nav-links .nav-link::after {
+  content: ''; position: absolute; left: 50%; bottom: 2px;
+  width: 0; height: 2px; border-radius: 2px;
+  background: var(--red);
+  transform: translateX(-50%);
+  transition: width .28s cubic-bezier(.4,0,.2,1);
+}
+.nav-links .nav-link.active::after { width: 18px; }
+
+/* Right-hand actions: WhatsApp, booking CTA, hamburger. */
+.nav-actions { grid-column: 3; display: flex; align-items: center; gap: 10px; justify-self: end; min-width: 0; }
+.nav-icon-btn {
+  display: grid; place-items: center;
+  width: 38px; height: 38px; border-radius: 50%;
+  color: rgba(255,255,255,.85);
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 17px;
+  transition: var(--transition);
+}
+.nav-icon-btn:hover { background: #25d366; border-color: #25d366; color: #fff; transform: translateY(-1px); }
+.nav-cta { padding: 9px 20px; font-size: 14px; white-space: nowrap; }
+
+.hamburger {
+  display: none; flex-direction: column; justify-content: center; gap: 5px;
+  width: 38px; height: 38px; border-radius: 10px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+  cursor: pointer; padding: 0; align-items: center;
+  transition: var(--transition);
+}
+.hamburger:hover { background: rgba(255,255,255,.14); }
+.hamburger span {
+  display: block; width: 18px; height: 2px; background: #fff; border-radius: 2px;
+  transition: transform .3s cubic-bezier(.4,0,.2,1), opacity .2s;
+}
+/* The .active class was already being set in JS but had no styles — the bars
+   never became an X. */
+.hamburger.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.active span:nth-child(2) { opacity: 0; }
+.hamburger.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Drawer-only blocks — hidden until the overlay opens (see the 1120px query). */
+.nav-drawer__top, .nav-drawer__foot { display: none; }
+.menu-close {
+  display: grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+  color: #fff; cursor: pointer; transition: var(--transition);
+}
+.menu-close:hover { background: rgba(255,255,255,.16); }
+
+/* Fixed header would otherwise cover the top of every anchor target. Not just
+   `section[id]`: #reserver is the booking card, a div, and it was landing flush
+   under the navbar with its heading hidden. */
+section[id], .booking-card[id] { scroll-margin-top: 84px; }
 
 /* ===== HERO ===== */
 .hero { min-height: 100vh; display: flex; align-items: center; position: relative; padding: 96px 0 96px; }
@@ -115,7 +196,14 @@ ul { list-style: none; }
 }
 .hero-bg {
   position: absolute; inset: 0; overflow: hidden;
-  background-size: cover; background-position: center; background-repeat: no-repeat;
+  background: var(--dark);   /* holds the colour while the image decodes */
+}
+/* The backdrop is a real <img> so the browser can pick a width from srcset and
+   the preload in index.html can hit the same file. */
+.hero-bg__img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center;
 }
 .hero-bg::after {
   content: '';
@@ -896,10 +984,74 @@ ul { list-style: none; }
   cursor: pointer; font-family: inherit; transition: var(--transition);
 }
 .result-phone:hover { border-color: var(--red); color: var(--red); background: rgba(230,57,70,.04); }
+/* The button becomes an <a> when no call number is configured. */
+a.result-phone { text-decoration: none; }
+.result-phone svg { width: 1em; height: 1em; }
+
+/* "Véhicule non disponible" popup on arriving at the results page */
+.unavail-notice__icon {
+  display: grid; place-items: center;
+  width: 62px; height: 62px; border-radius: 50%;
+  margin: 0 auto 14px;
+  background: rgba(230,57,70,.1); color: var(--red);
+}
+.unavail-notice__text { font-size: 15px; color: var(--gray-800); line-height: 1.6; margin-bottom: 6px; }
+.unavail-notice__text strong { color: var(--dark); }
+.unavail-notice__sub { font-size: 13.5px; color: var(--gray-600); margin-bottom: 22px; }
+.unavail-notice__btn { width: 100%; }
+
+/* Emoji replaced by Icon.jsx SVGs — keep glyph and text on a shared baseline. */
+.mini-field label,
+.results-summary__meta span,
+.avail-tag { display: inline-flex; align-items: center; gap: 6px; }
+.results-search-icon { display: inline-flex; align-items: center; }
+
+/* Unavailable card — offers the next free date instead of dead-ending */
+.result-unavailable { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.result-unavailable-label { display: inline-flex; align-items: center; gap: 6px; }
+.result-freefrom {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(46,160,67,.08); border: 1px solid rgba(46,160,67,.3);
+  border-radius: 50px; padding: 8px 16px;
+  font-family: inherit; font-size: 13.5px; font-weight: 600; color: #1a7f37;
+  cursor: pointer; transition: var(--transition);
+}
+.result-freefrom:hover { background: rgba(46,160,67,.16); border-color: rgba(46,160,67,.55); }
+.result-freefrom strong { font-weight: 800; }
 
 /* No results */
+.contact-form__note { margin-top: 12px; font-size: 12.5px; color: var(--gray-600); text-align: center; line-height: 1.5; }
+
 .no-results { text-align: center; padding: 80px 24px; }
-.no-results__icon { font-size: 64px; margin-bottom: 16px; }
+.no-results__icon { font-size: 64px; margin-bottom: 16px; color: var(--gray-300); line-height: 1; }
+
+/* ===== LOADING SKELETONS =====
+   Shown while fetchCars() is in flight. Without them the empty state paints
+   first and tells every visitor there are no cars for their dates. */
+.result-skeleton { pointer-events: none; }
+.result-skeleton:hover { transform: none; box-shadow: none; border-color: var(--gray-200); }
+.sk-block, .sk-line {
+  background: linear-gradient(90deg, rgba(0,0,0,.06) 25%, rgba(0,0,0,.11) 37%, rgba(0,0,0,.06) 63%);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.4s ease infinite;
+  border-radius: 6px;
+}
+.sk-block { width: 100%; height: 100%; min-height: 200px; border-radius: 0; }
+.sk-line { height: 14px; margin-bottom: 12px; }
+.sk-line--title { height: 22px; width: 55%; }
+.sk-line--short { width: 35%; }
+.sk-line--btn { height: 42px; width: 190px; border-radius: 50px; margin: 0; }
+/* Dark sections (the /flotte grid) need a light shimmer, not a dark one. */
+.section-dark .sk-block, .section-dark .sk-line {
+  background-image: linear-gradient(90deg, rgba(255,255,255,.06) 25%, rgba(255,255,255,.12) 37%, rgba(255,255,255,.06) 63%);
+}
+@keyframes sk-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-block, .sk-line { animation: none; }
+}
 .no-results h3 { font-size: 24px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
 .no-results p { color: var(--gray-600); margin-bottom: 24px; }
 
@@ -941,7 +1093,7 @@ ul { list-style: none; }
 }
 .phone-modal__close:hover { background: var(--gray-200); color: var(--dark); }
 
-.phone-modal__icon { font-size: 52px; margin-bottom: 12px; }
+.phone-modal__icon { font-size: 52px; margin-bottom: 12px; color: var(--red); line-height: 1; }
 .phone-modal__title { font-size: 22px; font-weight: 800; color: var(--dark); margin-bottom: 6px; font-family: 'Playfair Display', serif; }
 .phone-modal__car { font-size: 14px; color: var(--gray-600); margin-bottom: 28px; }
 .phone-modal__car strong { color: var(--dark); }
@@ -1101,16 +1253,19 @@ ul { list-style: none; }
   text-decoration: none; transition: var(--transition);
   text-align: left;
 }
-.phone-modal__btn--disabled { background: var(--gray-100); border: 1px solid var(--gray-200); color: var(--gray-400); cursor: default; pointer-events: none; }
-.phone-modal__btn--disabled .phone-modal__btn-num { color: var(--dark); }
+/* Real, dialable number — replaces the old disabled placeholder row. */
+.phone-modal__btn--call { background: var(--gray-100); border: 1px solid var(--gray-200); color: var(--gray-600); }
+.phone-modal__btn--call .phone-modal__btn-num { color: var(--dark); }
+.phone-modal__btn--call:hover { border-color: var(--red); color: var(--red); background: rgba(230,57,70,.05); transform: translateY(-1px); }
+.phone-modal__btn--call:hover .phone-modal__btn-num { color: var(--red); }
 .phone-modal__btn--whatsapp { background: #25d366; color: #fff; }
 .phone-modal__btn--whatsapp:hover { background: #1ebe5d; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(37,211,102,.35); }
 
-.phone-modal__btn-icon { font-size: 24px; flex-shrink: 0; }
+.phone-modal__btn-icon { font-size: 24px; flex-shrink: 0; display: inline-flex; align-items: center; }
 .phone-modal__btn-label { display: block; font-size: 11px; font-weight: 600; opacity: .7; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 2px; }
 .phone-modal__btn-num { display: block; font-size: 17px; font-weight: 700; letter-spacing: .3px; }
 
-.phone-modal__hours { font-size: 12px; color: var(--gray-400); margin-bottom: 20px; }
+.phone-modal__hours { font-size: 12px; color: var(--gray-400); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 5px; justify-content: center; }
 .phone-modal__cancel {
   background: none; border: 1px solid var(--gray-200); border-radius: 50px;
   padding: 10px 28px; font-size: 14px; font-weight: 600; color: var(--gray-600);
@@ -1177,16 +1332,63 @@ ul { list-style: none; }
 @media (max-width: 1120px) {
   .nav-links { display: none; }
   .hamburger { display: flex; }
+  /* The desktop CTA would crowd the logo; the drawer carries it instead. */
+  .nav-cta { display: none; }
+
   .nav-links.open {
     display: flex; flex-direction: column; position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     height: 100vh; height: 100dvh;
-    background: #0d0d0d;
-    align-items: center; justify-content: center; gap: 24px;
-    font-size: 22px; z-index: 1100;
+    background: linear-gradient(165deg, #12121a 0%, #0d0d0d 55%);
+    align-items: stretch; justify-content: flex-start; gap: 0;
+    padding: 18px 22px calc(22px + env(safe-area-inset-bottom));
+    z-index: 1100;
     overflow-y: auto; overscroll-behavior: contain;
   }
-  .nav-links.open a { color: #fff; font-size: 20px; }
+
+  .nav-links.open .nav-drawer__top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 22px; margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,.09);
+  }
+
+  /* Left-aligned rows with a real tap target, instead of centred text. */
+  .nav-links.open li { list-style: none; }
+  .nav-links.open .nav-link {
+    display: flex; align-items: center; justify-content: flex-start;
+    color: rgba(255,255,255,.9); font-size: 18px; font-weight: 600;
+    padding: 16px 4px 16px 16px; border-radius: 0;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .nav-links.open .nav-link:hover, .nav-links.open .nav-link:active { background: transparent; color: #fff; }
+  .nav-links.open .nav-link.active { color: var(--red); }
+  /* The centred desktop underline makes no sense on a full-width row. */
+  .nav-links.open .nav-link::after { display: none; }
+  /* Absolute so the marker can't push the label off to the right. */
+  .nav-links.open .nav-link.active::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    width: 3px; height: 20px; border-radius: 2px; background: var(--red);
+  }
+
+  .nav-links.open .nav-drawer__foot { display: block; margin-top: auto; padding-top: 26px; }
+  .nav-links.open .nav-drawer__foot a.btn { margin-bottom: 12px; }
+  .nav-drawer__contact { display: flex; gap: 10px; flex-wrap: wrap; }
+  .nav-drawer__contact-btn {
+    flex: 1 1 0; min-width: 0;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 13px 10px; border-radius: 12px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.9); font-size: 13.5px; font-weight: 600;
+    white-space: nowrap;   /* a wrapped phone number reads as two numbers */
+    transition: var(--transition);
+  }
+  .nav-drawer__contact-btn svg { flex-shrink: 0; }
+  .nav-drawer__contact-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+}
+
+/* Below 380px the WhatsApp pill and the hamburger start fighting for room. */
+@media (max-width: 380px) {
+  .nav-actions .nav-icon-btn { display: none; }
 }
 
 @media (max-width: 768px) {

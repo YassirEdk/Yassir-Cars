@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { moroccanCities, addDays, colorName } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { fetchCars, mergeByModel, isCarAvailable } from '../lib/cars'
+import { discounted, rateForCar } from '../lib/pricing'
 import CityWheel from './CityWheel'
 import DatePicker from './DatePicker'
 import Icon from './Icon'
@@ -26,6 +27,7 @@ const fmtDate = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
 export default function AvailabilityModal({ car, onClose, mode = 'search', initialColor = null }) {
   const overlayRef = useRef(null)
   const navigate = useNavigate()
+  const location = useLocation()
   const { settings } = useSettings()
   const minDays = settings.minRentalDays
   const today = new Date().toISOString().split('T')[0]
@@ -59,6 +61,10 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
     navigate('/reserver', {
       state: {
         nom: model.name,
+        // The page this modal was opened from, so the booking page's back link
+        // returns there rather than to an empty results page.
+        from: location.pathname,
+        carId: unit.id,
         couleur: unit.color ? colorName(unit.color) : '',
         photo: gallery[0] || '',
         photos: gallery,
@@ -72,12 +78,23 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   }
 
   // Whole fleet on the results page, carrying the ville + dates chosen here.
+  // The notice travels in router state so the results page can remind the
+  // client which car they came looking for and why it isn't in the list.
   const goAllResults = () => {
     const params = new URLSearchParams()
     params.set('lieu', form.lieu)
     params.set('depart', form.depart)
     params.set('retour', form.retour)
-    navigate(`/resultats?${params.toString()}`)
+    navigate(`/resultats?${params.toString()}`, {
+      state: {
+        unavailable: {
+          name: car.name,
+          couleur: initialColor ? colorName(initialColor) : '',
+          depart: form.depart,
+          retour: form.retour,
+        },
+      },
+    })
   }
 
   // Every category a model belongs to (falls back to its main one).
@@ -138,6 +155,26 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
     e.preventDefault()
     if (!validate()) return
 
+    // Is the exact unit the user picked on the card free? We don't silently
+    // swap to another colour — an available colour shows up as the first
+    // suggestion instead, so the change is the user's choice.
+    const units = car.units ?? [car]
+    const preferred = initialColor ? units.find(u => u.color === initialColor) : null
+    const free = preferred
+      ? (isCarAvailable(preferred, form.depart, form.retour) ? preferred : null)
+      : units.find(u => isCarAvailable(u, form.depart, form.retour))
+
+    // Taken → say so here, before sending anyone anywhere. Both modes run this
+    // check: "Vérifier la disponibilité" used to redirect straight to the
+    // results page and leave the client to work out that the car was booked.
+    if (!free) {
+      setChecking(true)
+      await loadSuggestions()
+      setChecking(false)
+      setStep('unavailable')
+      return
+    }
+
     if (mode === 'search') {
       const params = new URLSearchParams()
       params.set('lieu', form.lieu)
@@ -148,21 +185,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
       return
     }
 
-    // mode="reserve": is the exact unit the user picked on the card free? We
-    // don't silently swap to another colour — an available colour shows up as
-    // the first suggestion instead, so the change is the user's choice.
-    const units = car.units ?? [car]
-    const preferred = initialColor ? units.find(u => u.color === initialColor) : null
-    const free = preferred
-      ? (isCarAvailable(preferred, form.depart, form.retour) ? preferred : null)
-      : units.find(u => isCarAvailable(u, form.depart, form.retour))
-
-    if (free) { goReserve(car, free); return }
-
-    setChecking(true)
-    await loadSuggestions()
-    setChecking(false)
-    setStep('unavailable')
+    goReserve(car, free)
   }
 
   const isWide = step === 'unavailable'
@@ -170,7 +193,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   // Header preview: the colour the user was looking at on the card.
   const heroUnit = (car.units ?? [car]).find(u => u.color === initialColor) ?? car
   const heroPhoto = galleryOf(heroUnit)[0]
-  const promo = Math.round(heroUnit.price * 0.7)
+  const promo = discounted(heroUnit.price, rateForCar(heroUnit.id, settings))
   // Live recap once both dates are set.
   const days = (form.depart && form.retour)
     ? Math.max(1, Math.round((new Date(form.retour) - new Date(form.depart)) / 86_400_000))
@@ -310,7 +333,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                             {unit.fuel} · {unit.transmission} · {unit.seats} places
                           </span>
                           <span className="avail-sugg__price">
-                            {Math.round(unit.price * 0.7).toLocaleString('fr-FR')} {unit.currency} <small>/ jour</small>
+                            {discounted(unit.price, rateForCar(unit.id, settings)).toLocaleString('fr-FR')} {unit.currency} <small>/ jour</small>
                           </span>
                         </span>
                         <span className="avail-sugg__go">→</span>

@@ -680,6 +680,67 @@
 .admin-form label { display: flex; flex-direction: column; gap: .3rem; font-size: .8rem; font-weight: 600; color: #374151; }
 .admin-hint { font-weight: 400; color: #9ca3af; font-size: .72rem; }
 
+/* ── Promotion block in the settings modal ──────────────────────────────────
+   Switch + rate + per-car picker. The promotion is off unless the switch, a
+   non-zero rate and at least one car all agree, so the UI shows all three. */
+.promo-box {
+  display: block !important;
+  border: 1px solid #e5e7eb; border-radius: 12px;
+  padding: .85rem .9rem; background: #fbfcfd;
+}
+.promo-box__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
+.promo-box__title { display: block; font-size: .82rem; font-weight: 700; color: #374151; margin-bottom: .15rem; }
+.promo-box__head .admin-hint { display: block; max-width: 34ch; line-height: 1.45; }
+
+.promo-switch {
+  flex-shrink: 0; position: relative; width: 46px; height: 26px;
+  border-radius: 50px; border: none; background: #cbd5e1;
+  cursor: pointer; transition: background .2s; padding: 0;
+}
+.promo-switch.is-on { background: #16a34a; }
+.promo-switch__knob {
+  position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+  transition: transform .2s;
+}
+.promo-switch.is-on .promo-switch__knob { transform: translateX(20px); }
+
+.promo-box__rate { margin-top: .85rem; }
+.promo-rate-wrap { position: relative; max-width: 140px; }
+.promo-rate-wrap input { width: 100%; box-sizing: border-box; padding-right: 1.9rem !important; }
+.promo-rate-suffix {
+  position: absolute; right: .65rem; top: 50%; transform: translateY(-50%);
+  font-size: .82rem; font-weight: 600; color: #9ca3af; pointer-events: none;
+}
+
+.promo-cars { margin-top: .95rem; }
+.promo-cars__head { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-bottom: .5rem; }
+.promo-cars__label { font-size: .78rem; font-weight: 700; color: #374151; }
+.promo-cars__count { display: block; font-style: normal; font-weight: 400; font-size: .72rem; color: #9ca3af; }
+.promo-cars__list {
+  max-height: 220px; overflow-y: auto;
+  border: 1px solid #e5e7eb; border-radius: 10px; background: #fff;
+}
+.promo-car {
+  display: flex !important; flex-direction: row !important; align-items: center; gap: .55rem;
+  padding: .5rem .65rem; border-bottom: 1px solid #f3f4f6;
+  font-size: .8rem !important; font-weight: 500 !important; cursor: pointer;
+  transition: background .15s;
+}
+.promo-car:last-child { border-bottom: none; }
+.promo-car:hover { background: #f9fafb; }
+.promo-car.is-on { background: rgba(22,163,74,.06); }
+.promo-car input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: #16a34a; flex-shrink: 0; }
+.promo-car__dot { width: 12px; height: 12px; border-radius: 50%; border: 1px solid rgba(0,0,0,.18); flex-shrink: 0; }
+.promo-car__name { flex: 1; min-width: 0; color: #374151; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.promo-car__name em { font-style: normal; color: #9ca3af; font-weight: 400; }
+.promo-car__price { flex-shrink: 0; font-size: .75rem; color: #9ca3af; font-variant-numeric: tabular-nums; }
+.promo-car__price strong { color: #16a34a; font-weight: 700; }
+
+.promo-cars__empty, .promo-cars__note { display: block; padding: .5rem .1rem 0; }
+.promo-cars__warn { display: block; padding: .5rem .1rem 0; color: #b45309 !important; }
+
 /* Multi-category picker (chips) — spans both grid columns */
 .admin-cats-field { grid-column: 1 / -1; display: flex; flex-direction: column; gap: .45rem; font-size: .8rem; font-weight: 600; color: #374151; }
 .admin-cats-pick { display: flex; flex-wrap: wrap; gap: .5rem; }
