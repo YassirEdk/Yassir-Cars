@@ -36,7 +36,7 @@ if (!url) {
     '\n  build-seo: VITE_SITE_URL is not set — build stopped.\n\n' +
     '  Locally : add it to .env\n' +
     '  Vercel  : Settings → Environment Variables → add VITE_SITE_URL\n\n' +
-    '  Example : VITE_SITE_URL=https://votre-domaine.ma   (no trailing slash)\n'
+    '  Example : VITE_SITE_URL=https://yassir-cars.vercel.app   (no trailing slash)\n'
   )
   process.exit(1)
 }
