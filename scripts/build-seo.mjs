@@ -1,43 +1,27 @@
-// Generate public/robots.txt and public/sitemap.xml from VITE_SITE_URL.
+// Generate public/robots.txt and public/sitemap.xml for the current domain.
 //
 // Files under public/ are copied to the build verbatim — Vite does not
-// substitute env vars inside them the way it does in index.html. So they are
+// substitute variables inside them the way it does in index.html. So they are
 // written here instead, and `npm run build` runs this first (see the "prebuild"
-// script in package.json). Set the domain ONCE in .env; nothing else hardcodes
-// it.
+// script in package.json).
+//
+// The domain comes from scripts/site-url.mjs, the same resolver vite.config.js
+// uses for index.html, so the two can never disagree.
 //
 // Usage: node scripts/build-seo.mjs
-import { writeFile, readFile } from 'node:fs/promises'
+import { writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { resolveSiteUrl, SITE_URL_HELP } from './site-url.mjs'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
-// Minimal .env reader — this runs before Vite, so import.meta.env isn't
-// available and we don't want a dotenv dependency for four lines of parsing.
-async function siteUrl() {
-  if (process.env.VITE_SITE_URL) return process.env.VITE_SITE_URL.replace(/\/+$/, '')
-  try {
-    const env = await readFile(join(root, '.env'), 'utf8')
-    const line = env.split(/\r?\n/).find(l => l.trim().startsWith('VITE_SITE_URL='))
-    if (line) {
-      const v = line.slice(line.indexOf('=') + 1).trim().replace(/^["']|["']$/g, '')
-      if (v) return v.replace(/\/+$/, '')
-    }
-  } catch { /* no .env — fall through */ }
-  return null
-}
-
-const url = await siteUrl()
+const url = resolveSiteUrl()
 if (!url) {
-  // Fail the build rather than ship a canonical tag pointing at the wrong host
-  // or a literal "%VITE_SITE_URL%" — both are silent and hard to notice.
-  console.error(
-    '\n  build-seo: VITE_SITE_URL is not set — build stopped.\n\n' +
-    '  Locally : add it to .env\n' +
-    '  Vercel  : Settings → Environment Variables → add VITE_SITE_URL\n\n' +
-    '  Example : VITE_SITE_URL=https://yassir-cars.vercel.app   (no trailing slash)\n'
-  )
+  // Only reachable when there is no .env AND we are not on Vercel — i.e. a
+  // local build on a fresh clone. Stopping beats shipping a canonical tag that
+  // points at the wrong host, which is silent and hard to notice.
+  console.error('\n  build-seo: cannot determine the site URL — build stopped.\n\n' + SITE_URL_HELP)
   process.exit(1)
 }
 
