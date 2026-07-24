@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { scrollToSection } from '../lib/scroll'
 import { Link } from 'react-router-dom'
 import Logo from './Logo'
 import Icon from './Icon'
@@ -84,7 +85,7 @@ export default function Navbar() {
       pendingHash.current = null
       if (target) {
         requestAnimationFrame(() => {
-          document.getElementById(target.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+          scrollToSection(target.slice(1))
         })
       }
     }
@@ -101,7 +102,7 @@ export default function Navbar() {
       pendingHash.current = href
       setMenuOpen(false)
     } else {
-      document.getElementById(href.slice(1))?.scrollIntoView({ behavior: 'smooth' })
+      scrollToSection(href.slice(1))
     }
   }
   const wa = settings.whatsapp
@@ -142,7 +143,7 @@ export default function Navbar() {
           {/* Drawer-only footer: the booking CTA and a way to reach a human. */}
           <li className="nav-drawer__foot" aria-hidden={!menuOpen}>
             <Link to="/flotte" className="btn btn-accent btn-lg btn-full" onClick={close}>
-              Voir la flotte →
+              Voir notre flotte →
             </Link>
             <div className="nav-drawer__contact">
               {wa && (
@@ -177,7 +178,7 @@ export default function Navbar() {
               reached. The label matches the destination — "Réserver" pointed at
               a search form and set the wrong expectation. */}
           <Link to="/flotte" className="btn btn-accent nav-cta" onClick={close}>
-            Voir la flotte
+            Voir notre flotte
           </Link>
 
           <button

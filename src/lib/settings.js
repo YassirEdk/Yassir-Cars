@@ -18,6 +18,9 @@ export const DEFAULT_SETTINGS = {
   // Promotion. Defaults match what the site displayed before this became
   // configurable: 30% off the whole fleet.
   discountRate: 30,
+  // Headline of the promo banner. Editable so a campaign can be named
+  // ("Offre de l'été", "Black Friday") without a code change.
+  discountTitle: 'Offre Spéciale',
   discountActive: true,
   discountAllCars: true,
   discountCarIds: [],
@@ -35,6 +38,7 @@ function fromRow(row) {
     tiktokUrl: row.tiktok_url || '',
     minRentalDays: row.min_rental_days ?? DEFAULT_SETTINGS.minRentalDays,
     discountRate: row.discount_rate ?? DEFAULT_SETTINGS.discountRate,
+    discountTitle: row.discount_title || DEFAULT_SETTINGS.discountTitle,
     discountActive: row.discount_active ?? DEFAULT_SETTINGS.discountActive,
     discountAllCars: row.discount_all_cars ?? DEFAULT_SETTINGS.discountAllCars,
     // Always a list of strings — car ids are uuids and get compared as strings.
@@ -73,6 +77,7 @@ export async function updateSettings(s) {
       min_rental_days: Math.max(1, Number(s.minRentalDays) || DEFAULT_SETTINGS.minRentalDays),
       // 0 is meaningful here (no promotion), so don't fall back on falsy.
       discount_rate: Math.min(99, Math.max(0, Math.round(Number(s.discountRate) || 0))),
+      discount_title: s.discountTitle?.trim() || null,
       discount_active: !!s.discountActive,
       discount_all_cars: !!s.discountAllCars,
       discount_car_ids: (s.discountCarIds ?? []).map(String),

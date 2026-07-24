@@ -29,11 +29,15 @@ export default function Fleet() {
         </div>
 
         <div className="cars-grid">
-          {latest.map(car => <CarCard key={car.id} car={car} cta="reserve" />)}
+          {latest.map(car => <CarCard key={car.id} car={car} />)}
         </div>
 
         <div className="flotte-cta">
-          <Link to="/flotte" className="btn btn-outline-white">Voir toute la flotte →</Link>
+          {/* `back` travels with the visitor: the fleet page's "Retour à
+              l'accueil" then returns to this very section, not to the top. */}
+          <Link to="/flotte" state={{ back: 'flotte' }} className="btn btn-outline-white">
+            Voir toute la flotte →
+          </Link>
         </div>
       </div>
     </section>

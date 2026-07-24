@@ -1,0 +1,204 @@
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { Link } from 'react-router-dom'
+import FeaturePills from './FeaturePills'
+import Icon from './Icon'
+import SocialIcon from './SocialIcon'
+import { moroccanCities, addDays, colorName } from '../data'
+import { isCarAvailable } from '../lib/cars'
+import { useSettings } from '../lib/SettingsContext'
+import { useCurrency } from '../lib/CurrencyContext'
+import { formatMoney } from '../lib/currency'
+import { waLink } from '../lib/contact'
+import { discounted, discountLabel, rateForCar } from '../lib/pricing'
+import './reservedrawer.css'
+
+// Kept in step with the slide-out animation in reservedrawer.css.
+const CLOSE_MS = 260
+
+function fmtFr(iso) {
+  if (!iso) return ''
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
+/* Day of the week under each date ("vendredi"), so a picked date is never just
+   three numbers. */
+function weekday(iso) {
+  if (!iso) return ''
+  const d = new Date(`${iso}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('fr-FR', { weekday: 'long' })
+}
+
+/* The unit (colour) the drawer shows by default: the first one still free for
+   the chosen dates, so the visitor never lands on a colour they can't book. */
+function defaultUnit(car, depart, retour) {
+  const units = car?.units?.length ? car.units : [car]
+  return units.find(u => isCarAvailable(u, depart, retour)) ?? units[0] ?? car
+}
+
+export default function ReserveDrawer({ cars, index, depart, retour, lieu, onClose }) {
+  const { settings } = useSettings()
+  const { currency } = useCurrency()
+  const minDays = settings.minRentalDays
+  const todayISO = new Date().toISOString().slice(0, 10)
+
+  const car = cars[index]
+  // Colour picked inside the drawer; reset whenever the visitor moves to
+  // another vehicle.
+  const [selColor, setSelColor] = useState(null)
+  const [curPhoto, setCurPhoto] = useState(0)
+  const [form, setForm] = useState({ fullName: '', lieu: lieu || '', depart: depart || '', retour: retour || '' })
+  const [error, setError] = useState('')
+  const [sent, setSent] = useState(null)   // { url, text }
+  const [copied, setCopied] = useState(false)
+
+  /* Closing is animated, so the panel can't simply unmount on click: it plays
+     the slide-out first and only then tells the page to drop it. */
+  const [closing, setClosing] = useState(false)
+  const closeTimer = useRef(0)
+  const requestClose = useCallback(() => {
+    if (closeTimer.current) return          // already on the way out
+    setClosing(true)
+    closeTimer.current = setTimeout(onClose, CLOSE_MS)
+  }, [onClose])
+  useEffect(() => () => clearTimeout(closeTimer.current), [])
+
+  useEffect(() => {
+    setSelColor(null); setCurPhoto(0); setSent(null); setError('')
+  }, [car?.id])
+
+  /* The drawer starts just below the top nav and the mini search bar instead of
+     covering them, so the city and the dates stay reachable while it is open.
+     The mini search scrolls away and the nav is sticky, so the offset is
+     measured live rather than hard-coded. */
+  const [topOffset, setTopOffset] = useState(0)
+  useEffect(() => {
+    let frame = 0
+    let last = -1
+    const read = () => {
+      frame = 0
+      const bottoms = ['.results-nav', '.mini-search']
+        .map(sel => document.querySelector(sel)?.getBoundingClientRect().bottom ?? 0)
+      // Rounded + compared: a re-render per scroll event (several per frame)
+      // made the panel judder against the page as it moved.
+      const next = Math.round(Math.max(0, ...bottoms))
+      if (next !== last) { last = next; setTopOffset(next) }
+    }
+    // One measurement per animation frame, whatever the scroll event rate.
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(read) }
+    read()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
+  }, [])
+
+  // Escape closes. The page behind stays scrollable on purpose — the drawer is
+  // a side panel, not a modal: the visitor keeps browsing the results while it
+  // is open.
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') requestClose() }
+    document.addEventListener('keydown', onKey)
+    document.body.classList.add('drawer-open')
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.classList.remove('drawer-open')
+    }
+  }, [requestClose])
+
+  const allUnits = car?.units?.length ? car.units : (car ? [car] : [])
+  const colors = car?.colors ?? (car?.color ? [car.color] : [])
+  const active = useMemo(() => {
+    if (!car) return null
+    if (selColor) return allUnits.find(u => u.color === selColor) ?? car
+    return defaultUnit(car, depart, retour)
+  }, [car, selColor, depart, retour])
+
+  const gallery = useMemo(() => {
+    if (!active) return []
+    return active.photos?.length ? active.photos : (active.photo ? [active.photo] : [])
+  }, [active])
+
+  if (!car || !active) return null
+
+  const effColor = active.color ?? selColor ?? null
+  const available = isCarAvailable(active, form.depart, form.retour)
+
+  const rate = rateForCar(active.id, settings)
+  const promoPrice = discounted(active.price, rate)
+  const promoLabel = discountLabel(rate)
+
+  const days = (() => {
+    if (!form.depart || !form.retour) return null
+    const diff = (new Date(form.retour) - new Date(form.depart)) / 86_400_000
+    return diff > 0 ? Math.ceil(diff) : null
+  })()
+
+  const pickColor = (hex) => {
+    const unit = allUnits.find(u => u.color === hex)
+    setSelColor(hex)
+    setCurPhoto(0)
+    if (unit) setError('')
+  }
+
+  const buildMessage = () => [
+    `Bonjour YASSIR CARS`,
+    ``,
+    `Je souhaite réserver le véhicule suivant :`,
+    `Voiture : *${car.name}*${effColor ? ` — ${colorName(effColor)}` : ''}`,
+    ``,
+    `Nom complet : ${form.fullName.trim()}`,
+    form.lieu   ? `Lieu : ${form.lieu}` : '',
+    form.depart ? `Date de début : ${fmtFr(form.depart)}` : '',
+    form.retour ? `Date de fin : ${fmtFr(form.retour)}` : '',
+    days        ? `Durée : ${days === 1 ? '1 jour' : `${days} jours`}` : '',
+    (promoPrice && days)
+      ? `Prix estimé : ${formatMoney(promoPrice * days, currency)}${currency !== 'MAD' ? ` (≈ ${(promoPrice * days).toLocaleString('fr-FR')} MAD)` : ''}`
+      : '',
+    ``,
+    `Merci !`,
+  ].filter(Boolean).join('\n')
+
+  const handleWhatsApp = () => {
+    if (!form.fullName.trim()) return setError('Veuillez entrer votre nom complet.')
+    if (!form.lieu)   return setError('Veuillez choisir le lieu de prise en charge.')
+    if (!form.depart) return setError('Veuillez choisir la date de départ.')
+    if (!form.retour) return setError('Veuillez choisir la date de retour.')
+    if (form.retour < addDays(form.depart, minDays))
+      return setError(`La location doit durer au moins ${minDays} jours.`)
+    setError('')
+
+    const text = buildMessage()
+    const url = waLink(settings.whatsapp, text)
+    window.open(url, '_blank', 'noopener,noreferrer')
+    setSent({ url, text })
+    setCopied(false)
+  }
+
+  const copyMessage = async () => {
+    try {
+      await navigator.clipboard.writeText(sent.text)
+      setCopied(true)
+    } catch { setCopied(false) }
+  }
+
+  // State handed to the full /reserver page, so "voir la page complète" opens
+  // exactly the car and colour shown here.
+  const fullPageState = {
+    nom: car.name,
+    from: '/resultats',
+    carId: active.id,
+    couleur: effColor ? colorName(effColor) : '',
+    photo: gallery[curPhoto] || '',
+    photos: gallery,
+    features: active.features,
+    prix: active.price,
+    depart: form.depart,
+    retour: form.retour,
+    lieu: form.lieu,
+  }
+

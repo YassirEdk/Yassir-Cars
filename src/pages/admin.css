@@ -707,6 +707,9 @@
 .promo-switch.is-on .promo-switch__knob { transform: translateX(20px); }
 
 .promo-box__rate { margin-top: .85rem; }
+/* Free-text headline of the promo banner. */
+.promo-box__title-field { display: block; margin-top: .85rem; }
+.promo-box__title-field input { width: 100%; box-sizing: border-box; }
 .promo-rate-wrap { position: relative; max-width: 140px; }
 .promo-rate-wrap input { width: 100%; box-sizing: border-box; padding-right: 1.9rem !important; }
 .promo-rate-suffix {

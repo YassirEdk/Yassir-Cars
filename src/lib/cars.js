@@ -205,17 +205,32 @@ export function fetchCars() {
   return carsPromise
 }
 
+/* The public listing is two plain GETs against Supabase's REST endpoint rather
+   than the SDK. Reading a table needs no auth, no realtime and no storage — the
+   parts that make the client library heavy — and this keeps ~100 kB of
+   JavaScript out of every first visit. The SDK is still used everywhere it
+   earns its weight (admin, auth, uploads). */
+async function restSelect(path) {
+  const url = import.meta.env.VITE_SUPABASE_URL
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+  try {
+    const res = await fetch(`${url}/rest/v1/${path}`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    })
+    if (!res.ok) return { data: null, error: new Error(`${res.status} ${res.statusText}`) }
+    return { data: await res.json(), error: null }
+  } catch (err) {
+    return { data: null, error: err }
+  }
+}
+
 async function fetchCarsUncached() {
   if (!isSupabaseConfigured) {
     return staticCars.map(c => ({ ...c, unavailable: [] }))
   }
   const [carsRes, availRes] = await Promise.all([
-    supabase
-      .from('cars')
-      .select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true }),
-    supabase.from('car_availability').select('*'),
+    restSelect('cars?select=*&order=sort_order.asc,created_at.asc'),
+    restSelect('car_availability?select=*'),
   ])
 
   if (carsRes.error) {

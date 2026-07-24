@@ -3,7 +3,7 @@ import './selectmenu.css'
 
 /* Styled dropdown — simple click to open & pick. Replaces native <select>.
    Props: value, onChange(value), options [{ value, label }], ariaLabel. */
-export default function SelectMenu({ value, onChange, options, ariaLabel }) {
+export default function SelectMenu({ value, onChange, options, ariaLabel, className = '' }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
   const current = options.find(o => o.value === value)
@@ -23,7 +23,7 @@ export default function SelectMenu({ value, onChange, options, ariaLabel }) {
   const pick = (v) => { onChange(v); setOpen(false) }
 
   return (
-    <div className="smenu" ref={ref}>
+    <div className={`smenu ${className}`} ref={ref}>
       <button
         type="button"
         className={`smenu__btn ${open ? 'open' : ''}`}

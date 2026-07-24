@@ -5,6 +5,7 @@ import { moroccanCities, addDays, colorName } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { fetchCars, mergeByModel, isCarAvailable } from '../lib/cars'
 import { discounted, rateForCar } from '../lib/pricing'
+import { loadSearch, saveSearch } from '../lib/searchPrefs'
 import CityWheel from './CityWheel'
 import DatePicker from './DatePicker'
 import Icon from './Icon'
@@ -24,7 +25,7 @@ const fmtDate = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
     straight to the booking page; taken → an "indisponible" step listing the
     other cars of the fleet that ARE free for the same dates.
 */
-export default function AvailabilityModal({ car, onClose, mode = 'search', initialColor = null }) {
+export default function AvailabilityModal({ car, onClose, mode = 'search', initialColor = null, onReserve = null }) {
   const overlayRef = useRef(null)
   const navigate = useNavigate()
   const location = useLocation()
@@ -32,7 +33,12 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   const minDays = settings.minRentalDays
   const today = new Date().toISOString().split('T')[0]
 
-  const [form, setForm] = useState({ lieu: '', depart: '', retour: '' })
+  // Prefilled from the search the visitor already made, so this popup is a
+  // confirmation rather than a form to fill in again.
+  const [form, setForm] = useState(() => {
+    const s = loadSearch()
+    return { lieu: s?.lieu ?? '', depart: s?.depart ?? '', retour: s?.retour ?? '' }
+  })
   const [errors, setErrors] = useState({})
   const [step, setStep] = useState('form')          // 'form' | 'unavailable'
   const [checking, setChecking] = useState(false)
@@ -41,7 +47,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   const [suggestions, setSuggestions] = useState([]) // [{ model, unit }]
 
   const setField = (k) => (v) => {
-    setForm(f => ({ ...f, [k]: v }))
+    setForm(f => { const next = { ...f, [k]: v }; saveSearch(next); return next })
     if (errors[k]) setErrors(prev => ({ ...prev, [k]: '' }))
   }
 
@@ -55,8 +61,14 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
     }
   }, [onClose])
 
-  // Send the user to the booking form with everything pre-filled.
+  /* Booking. With an `onReserve` handler the caller opens the booking panel
+     right there — the visitor never leaves the page they were browsing. Without
+     one (older callers), fall back to the standalone booking page. */
   const goReserve = (model, unit) => {
+    if (onReserve) {
+      onReserve({ model, unit, depart: form.depart, retour: form.retour, lieu: form.lieu })
+      return
+    }
     const gallery = galleryOf(unit)
     navigate('/reserver', {
       state: {

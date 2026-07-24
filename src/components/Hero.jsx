@@ -5,6 +5,7 @@ import CityWheel from './CityWheel'
 import Icon from './Icon'
 import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
+import { loadSearch, saveSearch } from '../lib/searchPrefs'
 
 /* Self-hosted, responsive hero. Regenerate with `node scripts/build-hero.mjs`.
    Previously a fixed 1800px JPEG pulled from Unsplash's CDN — a third-party
@@ -21,28 +22,8 @@ const stats = [
   { num: '24/7', label: 'Assistance' },
 ]
 
-const STORAGE_KEY = 'yassir_search'
-const SAVE_TTL = 60 * 60 * 1000 // saved search expires after 1 hour
-
-function loadSaved() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return null
-    const data = JSON.parse(raw)
-    // Drop the saved search once it's older than SAVE_TTL so the fields don't
-    // stay filled forever — they clear themselves ~1h after the last search.
-    if (!data.savedAt || Date.now() - data.savedAt > SAVE_TTL) {
-      localStorage.removeItem(STORAGE_KEY)
-      return null
-    }
-    return data
-  } catch {
-    return null
-  }
-}
-
 export default function Hero() {
-  const saved = loadSaved()
+  const saved = loadSearch()
   const [form, setForm] = useState({
     lieu:      saved?.lieu      ?? '',
     depart:    saved?.depart    ?? '',
@@ -58,7 +39,7 @@ export default function Hero() {
   const minDays = settings.minRentalDays
 
   const set = (key) => (e) => {
-    setForm(f => ({ ...f, [key]: e.target.value }))
+    setForm(f => { const next = { ...f, [key]: e.target.value }; saveSearch(next); return next })
     if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }))
   }
 
@@ -90,14 +71,7 @@ export default function Hero() {
       return
     }
 
-    // Persist to localStorage before navigating
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      lieu:      form.lieu,
-      depart:    form.depart,
-      retour:    form.retour,
-      categorie: form.categorie,
-      savedAt:   Date.now(),
-    }))
+    saveSearch(form)
 
     setErrors({})
     const params = new URLSearchParams()
@@ -147,7 +121,7 @@ export default function Hero() {
                 <CityWheel
                   value={form.lieu}
                   onChange={(city) => {
-                    setForm(f => ({ ...f, lieu: city }))
+                    setForm(f => { const next = { ...f, lieu: city }; saveSearch(next); return next })
                     if (errors.lieu) setErrors(prev => ({ ...prev, lieu: '' }))
                   }}
                   cities={moroccanCities}
@@ -161,7 +135,7 @@ export default function Hero() {
                 <DatePicker
                   value={form.depart}
                   onChange={(iso) => {
-                    setForm(f => ({ ...f, depart: iso }))
+                    setForm(f => { const next = { ...f, depart: iso }; saveSearch(next); return next })
                     if (errors.depart) setErrors(prev => ({ ...prev, depart: '' }))
                     setOpenRetour(n => n + 1)
                   }}
@@ -177,7 +151,7 @@ export default function Hero() {
                 <DatePicker
                   value={form.retour}
                   onChange={(iso) => {
-                    setForm(f => ({ ...f, retour: iso }))
+                    setForm(f => { const next = { ...f, retour: iso }; saveSearch(next); return next })
                     if (errors.retour) setErrors(prev => ({ ...prev, retour: '' }))
                   }}
                   min={form.depart ? addDays(form.depart, minDays) : today}

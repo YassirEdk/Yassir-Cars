@@ -7,11 +7,13 @@ import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currenc
 import SelectMenu from '../components/SelectMenu'
 import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge, nextFreeDateForModel } from '../lib/cars'
 import Logo from '../components/Logo'
+import BackLink from '../components/BackLink'
 import CityWheel from '../components/CityWheel'
 import DatePicker from '../components/DatePicker'
 import Icon from '../components/Icon'
 import SocialIcon from '../components/SocialIcon'
 import FeaturePills from '../components/FeaturePills'
+import ReserveDrawer from '../components/ReserveDrawer'
 import { formatPhone, waLink } from '../lib/contact'
 import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 
@@ -160,7 +162,7 @@ function PhoneModal({ car, onClose }) {
 }
 
 /* ── Individual result card ── */
-function ResultCard({ car, days, available, depart, retour, lieu, availableOnly, onCall, onSearchFrom }) {
+function ResultCard({ car, days, available, depart, retour, lieu, availableOnly, onCall, onSearchFrom, onReserve, isOpen }) {
   const { currency } = useCurrency()
   const { settings } = useSettings()
   const [logoFailed, setLogoFailed] = useState(false)
@@ -208,7 +210,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
   const oldTotal = active.price * days
 
   return (
-    <div className={`result-card ${activeAvailable ? '' : 'result-card--unavailable'}`}>
+    <div className={`result-card ${activeAvailable ? '' : 'result-card--unavailable'} ${isOpen ? 'result-card--open' : ''}`}>
       <div className="result-card__img" style={{ background: shownPhoto && !photoFailed ? '#fff' : active.brandColor }}>
         {shownPhoto && !photoFailed ? (
           <img
@@ -332,29 +334,16 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
 
         <div className="result-card__footer">
           {available ? (
-            <Link
+            /* Opens the booking drawer on the right instead of navigating away,
+               so the rest of the results stay on screen. */
+            <button
+              type="button"
               className="result-reserve result-reserve--btn"
-              to="/reserver"
-              state={{
-                nom: car.name,
-                // Lets the booking page send the visitor back to THIS search
-                // instead of a parameterless one.
-                from: '/resultats',
-                // Carried so the booking page can resolve the promotion itself
-                // rather than trusting a price computed on this screen.
-                carId: active.id,
-                couleur: effColor ? colorName(effColor) : '',
-                photo: shownPhoto || '',
-                photos: gallery,
-                features: active.features,
-                prix: active.price,
-                depart: depart || '',
-                retour: retour || '',
-                lieu,
-              }}
+              onClick={() => onReserve(car)}
+              aria-expanded={isOpen}
             >
-              Réserver maintenant <span className="result-reserve__arrow">→</span>
-            </Link>
+              <span className="result-reserve__arrow">Réserver maintenant </span>
+            </button>
           ) : (
             /* Rather than dead-ending, offer the first date this model frees up
                — the blocked ranges are already loaded on the card. */
@@ -562,6 +551,17 @@ export default function SearchResults() {
 
   const availableCount = results.filter(c => c.available).length
 
+  /* Booking drawer. The open car is tracked by id (not index) so filtering or
+     sorting while the drawer is open keeps the right vehicle on screen. */
+  const [openCarId, setOpenCarId] = useState(null)
+  const drawerIndex = openCarId == null
+    ? -1
+    : results.findIndex(c => String(c.id) === String(openCarId))
+  // The car dropped out of the current filter → close rather than show a stale one.
+  useEffect(() => {
+    if (openCarId != null && drawerIndex === -1) setOpenCarId(null)
+  }, [openCarId, drawerIndex])
+
   // "Libre à partir du X" → re-run the same search from that date, keeping the
   // trip the same length as the one the visitor originally asked for.
   const handleSearchFrom = (isoStart) => {
@@ -588,14 +588,25 @@ export default function SearchResults() {
   }
 
   return (
-    <div className="results-page">
+    <div className={`results-page ${drawerIndex > -1 ? 'results-page--drawer' : ''}`}>
       {/* Top nav */}
       <header className="results-nav">
         <div className="container results-nav__inner">
           <Link to="/" style={{ textDecoration: 'none' }}>
             <Logo size={36} animated={false} />
           </Link>
-          <Link to="/" className="btn btn-outline-white btn-sm">← Retour à l'accueil</Link>
+          <div className="results-nav__actions">
+            {/* A global preference, not a filter — so it lives in the header
+                instead of adding a fifth control to the toolbar. */}
+            <SelectMenu
+              value={currency}
+              onChange={setCurrency}
+              options={currencyOptions}
+              ariaLabel="Devise"
+              className="results-nav__currency"
+            />
+            <BackLink to="/" className="btn btn-outline-white btn-sm">← Retour à l'accueil</BackLink>
+          </div>
         </div>
       </header>
 
@@ -691,12 +702,6 @@ export default function SearchResults() {
               <span className="sort-label">Trier par</span>
               <SelectMenu value={sort} onChange={setSort} options={SORT_OPTIONS} ariaLabel="Trier par" />
             </div>
-
-            {/* Currency */}
-            <div className="sort-wrap">
-              <span className="sort-label">Devise</span>
-              <SelectMenu value={currency} onChange={setCurrency} options={currencyOptions} ariaLabel="Devise" />
-            </div>
           </div>
         </div>
       </div>
@@ -718,12 +723,36 @@ export default function SearchResults() {
           ) : (
             <div className="result-list">
               {results.map(car => (
-                <ResultCard key={car.id} car={car} days={days} available={car.available} depart={depart} retour={retour} lieu={lieu} availableOnly={filterDispo} onCall={setCallingCar} onSearchFrom={handleSearchFrom} />
+                <ResultCard
+                  key={car.id}
+                  car={car}
+                  days={days}
+                  available={car.available}
+                  depart={depart}
+                  retour={retour}
+                  lieu={lieu}
+                  availableOnly={filterDispo}
+                  onCall={setCallingCar}
+                  onSearchFrom={handleSearchFrom}
+                  onReserve={c => setOpenCarId(c.id)}
+                  isOpen={String(car.id) === String(openCarId)}
+                />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Side booking panel — replaces the jump to /reserver */}
+      {drawerIndex > -1 && (
+        <ReserveDrawer
+          car={results[drawerIndex]}
+          depart={depart}
+          retour={retour}
+          lieu={lieu}
+          onClose={() => setOpenCarId(null)}
+        />
+      )}
 
       {/* "The car you came for is booked" popup */}
       {notice && <UnavailableNotice info={notice} onClose={() => setNotice(null)} />}

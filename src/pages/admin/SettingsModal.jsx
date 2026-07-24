@@ -18,6 +18,7 @@ export default function SettingsModal({ onClose }) {
     tiktokUrl: settings.tiktokUrl || '',
     minRentalDays: settings.minRentalDays || 3,
     discountRate: settings.discountRate ?? 30,
+    discountTitle: settings.discountTitle ?? 'Offre Spéciale',
     discountActive: settings.discountActive ?? true,
     discountAllCars: settings.discountAllCars ?? true,
     discountCarIds: settings.discountCarIds ?? [],
@@ -179,6 +180,19 @@ export default function SettingsModal({ onClose }) {
 
             {form.discountActive && (
               <>
+                <label className="promo-box__title-field">Titre affiché sur le site
+                  <input
+                    type="text"
+                    maxLength={60}
+                    placeholder="Offre Spéciale"
+                    value={form.discountTitle}
+                    onChange={e => setForm(f => ({ ...f, discountTitle: e.target.value }))}
+                  />
+                  <small className="admin-hint">
+                    Le titre de la bannière promotionnelle, ex. « Offre de l’été ».
+                  </small>
+                </label>
+
                 <label className="promo-box__rate">Pourcentage de remise
                   <div className="promo-rate-wrap">
                     <input

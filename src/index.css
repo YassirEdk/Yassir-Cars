@@ -187,7 +187,13 @@ ul { list-style: none; }
 /* Fixed header would otherwise cover the top of every anchor target. Not just
    `section[id]`: #reserver is the booking card, a div, and it was landing flush
    under the navbar with its heading hidden. */
-section[id], .booking-card[id] { scroll-margin-top: 84px; }
+/* Sections land flush under the navbar — it measures 61px once the page has
+   scrolled (it shrinks from 70px). The old shared 84px value left a stripe of
+   the previous section visible under the header. The booking card keeps a
+   bigger offset: it is a card, and needs air for its heading. */
+section[id] { scroll-margin-top: 61px; }
+@media (max-width: 768px) { section[id] { scroll-margin-top: 57px; } }
+.booking-card[id] { scroll-margin-top: 84px; }
 
 /* ===== HERO ===== */
 .hero { min-height: 100vh; display: flex; align-items: center; position: relative; padding: 96px 0 96px; }
@@ -443,7 +449,6 @@ section[id], .booking-card[id] { scroll-margin-top: 84px; }
 .card-featured h3 { color: #fff; }
 .card-featured p { color: rgba(255,255,255,.7); }
 .card-featured .service-list li { color: rgba(255,255,255,.8); }
-.card-featured .service-link { color: var(--gold); }
 .service-icon { font-size: 40px; margin-bottom: 16px; display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; color: var(--red); }
 .service-icon svg { width: 40px; height: 40px; }
 .service-card h3 { font-size: 20px; font-weight: 700; color: var(--dark); margin-bottom: 12px; }
@@ -451,8 +456,6 @@ section[id], .booking-card[id] { scroll-margin-top: 84px; }
 .service-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
 .service-list li { font-size: 13px; color: var(--gray-600); font-weight: 500; display: flex; align-items: center; gap: 8px; }
 .service-list li svg { width: 14px; height: 14px; color: #27ae60; flex-shrink: 0; }
-.service-link { font-size: 13px; font-weight: 700; color: var(--red); display: inline-flex; align-items: center; gap: 4px; transition: var(--transition); }
-.service-link:hover { gap: 8px; }
 
 /* Recommended card — white with red accent */
 /* The top gradient is painted as a CARD BACKGROUND layer (not a pseudo bar), so
@@ -505,7 +508,10 @@ section[id], .booking-card[id] { scroll-margin-top: 84px; }
 .cars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; margin-bottom: 48px; }
 
 /* Car Card */
-.car-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); overflow: hidden; transition: var(--transition); position: relative; }
+/* Column layout + `margin-top:auto` on the footer: every card's price row sits
+   on the same baseline across a row, whatever the equipment list or promo line
+   above it costs in height. */
+.car-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); overflow: hidden; transition: var(--transition); position: relative; display: flex; flex-direction: column; height: 100%; }
 .car-card:hover { border-color: rgba(230,57,70,.45); transform: translateY(-5px); box-shadow: 0 24px 64px rgba(0,0,0,.5); }
 .car-badge { position: absolute; top: 16px; left: 16px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 50px; letter-spacing: .5px; z-index: 2; }
 .badge-blue { background: #2d9cdb !important; }
@@ -588,21 +594,52 @@ section[id], .booking-card[id] { scroll-margin-top: 84px; }
   font-family: 'Playfair Display', serif;
 }
 
-.car-info { padding: 24px; }
+.car-info { padding: 24px; flex: 1; display: flex; flex-direction: column; }
 .car-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 7px; gap: 12px; }
 .car-header h3 { font-size: 20px; font-weight: 700; color: #fff; }
 .car-category { font-size: 12px; color: rgba(255,255,255,.4); white-space: nowrap; background: rgba(255,255,255,.08); padding: 3px 10px; border-radius: 50px; text-transform: capitalize; }
 .car-specs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
 .car-specs span { font-size: 12px; color: rgba(255,255,255,.55); background: rgba(255,255,255,.06); padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; }
 .car-specs span svg { width: 13px; height: 13px; color: rgba(255,255,255,.72); flex-shrink: 0; }
-.car-footer { display: flex; align-items: center; justify-content: space-between; }
-.car-price { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
-.price { font-size: 26px; font-weight: 800; color: #fff; }
-.price small { font-size: 14px; font-weight: 600; color: var(--red); }
-.price-period { font-size: 13px; color: rgba(255,255,255,.4); }
-.price-old-row { width: 100%; display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+.car-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 4px; }
+/* Compact CTA so "5 000 MAD / jour" and the button share one line even in the
+   narrowest card of the grid. */
+.car-footer .btn { flex-shrink: 0; font-size: 12.5px; padding: 9px 14px; white-space: nowrap; }
+/* A block, not a flex row: the amount, the currency and "/ jour" are one
+   unbreakable line, and the promo line above it keeps its own row. */
+.car-price { display: block; min-width: 0; white-space: nowrap; }
+.price { font-size: 23px; font-weight: 800; color: #fff; }
+.price small { font-size: 13px; font-weight: 600; color: var(--red); }
+.price-period { font-size: 12.5px; color: rgba(255,255,255,.4); }
+.price-old-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .price-old { font-size: 14px; color: rgba(255,255,255,.45); text-decoration: line-through; }
 .price-discount { font-size: 11px; font-weight: 800; color: #fff; background: var(--red); padding: 1px 7px; border-radius: 50px; }
+/* Fleet page opened on the promotion: a proper banner-style strip saying what
+   is filtered, with the way back to the whole fleet. */
+.promo-only-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px 20px; flex-wrap: wrap;
+  margin: 0 0 28px; padding: 16px 22px;
+  background: linear-gradient(120deg, rgba(230,57,70,.22), rgba(230,57,70,.08));
+  border: 1px solid rgba(230,57,70,.35);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px -18px rgba(230,57,70,.7);
+}
+.promo-only-bar__txt {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-size: 14.5px; font-weight: 600; color: #fff;
+}
+.promo-only-bar__txt svg {
+  width: 20px; height: 20px; flex-shrink: 0; color: #ffb3ba;
+}
+.promo-only-bar .btn { flex-shrink: 0; }
+
+@media (max-width: 600px) {
+  .promo-only-bar { padding: 14px 16px; }
+  .promo-only-bar__txt { font-size: 13px; }
+  .promo-only-bar .btn { width: 100%; justify-content: center; }
+}
+
 .flotte-cta { text-align: center; }
 
 /* ===== STEPS ===== */
@@ -718,6 +755,20 @@ section[id], .booking-card[id] { scroll-margin-top: 84px; }
 /* Top nav */
 .results-nav { background: var(--dark); height: var(--results-nav-h); display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
 .results-nav__inner { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+/* Currency lives here now: it is a global preference, not one more filter to
+   scan past in the toolbar. Dark styling to sit on the black header. */
+.results-nav__actions { display: flex; align-items: center; gap: 12px; }
+.results-nav__currency { min-width: 132px; }
+.results-nav__currency .smenu__btn {
+  background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16);
+  color: #fff; font-size: 13px; padding: 8px 12px;
+}
+.results-nav__currency .smenu__btn:hover { border-color: rgba(255,255,255,.35); }
+.results-nav__currency .smenu__chev { color: rgba(255,255,255,.6); }
+@media (max-width: 640px) {
+  .results-nav__currency { min-width: 104px; }
+  .results-nav__currency .smenu__btn { font-size: 12px; padding: 7px 10px; }
+}
 
 /* Mini search */
 .mini-search { background: linear-gradient(135deg, var(--dark-2) 0%, var(--dark-3) 100%); padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
@@ -950,28 +1001,40 @@ section[id], .booking-card[id] { scroll-margin-top: 84px; }
 .car-equip .equip-pill--more { color: #fff; background: rgba(230,57,70,.25); border-color: rgba(230,57,70,.4); }
 .car-equip .equip-pill__icon { width: 14px; height: 14px; color: #ff7a85; }
 
-.result-card__footer { display: flex; align-items: center; gap: 20px; margin-top: auto; flex-wrap: wrap; }
+/* Footer: secondary actions on the left, the reserve CTA pinned bottom-right */
+.result-card__footer {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 20px; margin-top: auto; flex-wrap: wrap;
+}
+.result-card__footer .result-phone,
+.result-card__footer .result-unavailable { margin-right: auto; }
 
-/* "Réserver maintenant" — styled link acting as a button */
+/* "Réserver maintenant" — solid primary button, last in the footer */
 .result-reserve {
+  order: 2;
   display: inline-flex; align-items: center; gap: 8px;
-  font-size: 15px; font-weight: 700; color: var(--dark);
-  cursor: pointer; position: relative; padding-bottom: 2px;
-  text-decoration: none;
-  background: linear-gradient(var(--red), var(--red)) no-repeat left bottom;
-  background-size: 0% 2px;
-  transition: background-size .35s ease, color .25s ease, gap .25s ease;
+  font-family: inherit; font-size: 15px; font-weight: 700;
+  color: #fff; background: var(--red); border: none;
+  padding: 11px 22px; border-radius: 50px;
+  cursor: pointer; text-decoration: none;
+  box-shadow: 0 8px 20px rgba(230,57,70,.28);
+  transition: background .25s ease, transform .2s ease, box-shadow .25s ease, gap .25s ease;
 }
 .result-reserve:hover {
-  color: var(--red);
-  background-size: 100% 2px;
-  gap: 14px;
+  background: #c92c39;
+  gap: 12px;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(230,57,70,.34);
 }
+.result-reserve:active { transform: translateY(0); }
 .result-reserve__arrow {
   display: inline-block;
   transition: transform .3s ease;
 }
-.result-reserve:hover .result-reserve__arrow { transform: translateX(5px); }
+.result-reserve:hover .result-reserve__arrow { transform: translateX(4px); }
+
+/* Card whose booking drawer is currently open */
+.result-card--open { border-color: var(--red); box-shadow: 0 0 0 2px rgba(230,57,70,.18); }
 
 .result-unavailable-label { font-size: 13px; font-weight: 600; color: var(--red); }
 

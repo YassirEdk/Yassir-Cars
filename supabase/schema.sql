@@ -115,6 +115,7 @@ create table if not exists public.app_settings (
   tiktok_url      text,
   min_rental_days integer not null default 3,
   discount_rate     integer not null default 30,    -- % off the daily rate
+  discount_title    text,                            -- promo banner headline (NULL → « Offre Spéciale »)
   discount_active   boolean not null default true,  -- master promotion switch
   discount_all_cars boolean not null default true,  -- false → only discount_car_ids
   discount_car_ids  text[]  not null default '{}',  -- cars the promotion applies to
@@ -165,6 +166,10 @@ alter table public.app_settings add column if not exists address       text;
 -- Promotional discount, whole percent off the daily rate (0 = no promotion).
 -- Defaults to 30 to preserve what the site displayed when this was hardcoded.
 alter table public.app_settings add column if not exists discount_rate integer not null default 30;
+
+-- Headline of the promo banner, editable from « Réglages ». NULL keeps the
+-- built-in « Offre Spéciale », so existing databases need no data migration.
+alter table public.app_settings add column if not exists discount_title text;
 
 -- Promotion switch and scope.
 --   discount_active   : master on/off, independent of the rate.

@@ -23,7 +23,6 @@ function ServiceCard({ service, index }) {
       <ul className="service-list">
         {service.features.map(f => <li key={f}><Icon name="check" /> {f}</li>)}
       </ul>
-      <a href="#reserver" className="service-link">En savoir plus →</a>
     </div>
   )
 }

@@ -1,26 +1,40 @@
 import { useState, useEffect, useMemo } from 'react'
-import { effectiveBadge } from '../lib/cars'
+import { effectiveBadge, isCarAvailable } from '../lib/cars'
 import { colorName, featureLabel, featureIcon } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import AvailabilityModal from './AvailabilityModal'
+import ReserveDrawer from './ReserveDrawer'
 import Icon from './Icon'
 import { useSettings } from '../lib/SettingsContext'
 import { discounted, discountLabel, rateForCar } from '../lib/pricing'
+import { completeSearch } from '../lib/searchPrefs'
 
-// cta: 'availability' (default) shows "Vérifier la disponibilité" + popup,
-//      'reserve' shows the simple "Réserver" link to the booking form.
-export default function CarCard({ car, cta = 'availability' }) {
+/* Both variants behave the same now: the button books straight away when the
+   visitor's search already answers "where and when", and falls back to the
+   availability popup otherwise. */
+export default function CarCard({ car, preferPromo = false }) {
   const ref = useScrollReveal()
   const { settings } = useSettings()
   const [logoFailed, setLogoFailed] = useState(false)
   const [photoFailed, setPhotoFailed] = useState(false)
   const [showAvail, setShowAvail] = useState(false)
+  // Set once the availability popup has the dates: opens the booking panel.
+  const [booking, setBooking] = useState(null)
 
   // A merged card carries every physical unit; picking a colour selects the
   // unit, and the whole card (photos, price, specs) follows that unit.
   const units = car.units ?? [car]
   const colors = car.colors ?? (car.color ? [car.color] : [])
-  const [selColor, setSelColor] = useState(colors[0] ?? null)
+  /* On the promotion view, open on a colour that actually carries the discount
+     — otherwise a card could land on its one non-discounted colour and look
+     like it doesn't belong in the list. */
+  const [selColor, setSelColor] = useState(() => {
+    if (preferPromo) {
+      const discounted = units.find(u => rateForCar(u.id, settings) > 0)
+      if (discounted?.color) return discounted.color
+    }
+    return colors[0] ?? null
+  })
   const active = units.find(u => u.color === selColor) ?? car
 
   // Photo gallery of the selected unit.
@@ -58,6 +72,24 @@ export default function CarCard({ car, cta = 'availability' }) {
   const pickColor = (hex) => (e) => {
     e.preventDefault(); e.stopPropagation()
     setSelColor(hex); setIdx(0); setPhotoFailed(false)
+  }
+
+  /* The visitor has already told the search bar where and when, so the card
+     doesn't ask a second time: it opens the booking panel straight away on the
+     colour they are looking at. Only when there is no usable search — or the
+     car is taken for those dates — does the availability popup appear, since
+     that is where the alternatives live. */
+  const ready = completeSearch()
+  const freeForSearch = ready ? isCarAvailable(active, ready.depart, ready.retour) : false
+
+  const bookNow = Boolean(ready && freeForSearch)
+
+  const openBooking = () => {
+    if (bookNow) {
+      setBooking({ car, color: selColor, depart: ready.depart, retour: ready.retour, lieu: ready.lieu })
+      return
+    }
+    setShowAvail(true)
   }
 
   const badge = effectiveBadge(active)
@@ -161,18 +193,40 @@ export default function CarCard({ car, cta = 'availability' }) {
             <span className="price">{discounted(active.price, promoRate).toLocaleString('fr-FR')} <small>{active.currency}</small></span>
             <span className="price-period">/ jour</span>
           </div>
-          <button className="btn btn-primary btn-sm" onClick={() => setShowAvail(true)}>
-            {cta === 'reserve' ? 'Réserver' : 'Vérifier la disponibilité'}
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={openBooking}
+            title="Indiquez vos dates : nous vérifions immédiatement si ce véhicule est libre"
+          >
+            Vérifier la disponibilité
           </button>
         </div>
       </div>
 
       {showAvail && (
-        cta === 'reserve'
-          // Home page: check THIS car for the chosen dates, then book it or
-          // propose the cars that are free instead.
-          ? <AvailabilityModal car={car} mode="reserve" initialColor={selColor} onClose={() => setShowAvail(false)} />
-          : <AvailabilityModal car={active} onClose={() => setShowAvail(false)} />
+        <AvailabilityModal
+          car={car}
+          mode="reserve"
+          initialColor={selColor}
+          onClose={() => setShowAvail(false)}
+          /* Booking stays on this page: the popup hands its dates to the side
+             panel instead of navigating away. */
+          onReserve={({ model, unit, depart, retour, lieu }) => {
+            setShowAvail(false)
+            setBooking({ car: model, color: unit.color ?? null, depart, retour, lieu })
+          }}
+        />
+      )}
+
+      {booking && (
+        <ReserveDrawer
+          car={booking.car}
+          initialColor={booking.color}
+          depart={booking.depart}
+          retour={booking.retour}
+          lieu={booking.lieu}
+          onClose={() => setBooking(null)}
+        />
       )}
     </div>
   )
