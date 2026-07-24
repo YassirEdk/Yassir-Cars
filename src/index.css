@@ -601,10 +601,14 @@ section[id] { scroll-margin-top: 61px; }
 .car-specs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
 .car-specs span { font-size: 12px; color: rgba(255,255,255,.55); background: rgba(255,255,255,.06); padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; }
 .car-specs span svg { width: 13px; height: 13px; color: rgba(255,255,255,.72); flex-shrink: 0; }
-.car-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 4px; }
+/* `flex-end`, not `center`: a card with a promo line has a taller price block,
+   and centring pushed its button up out of line with the neighbours. Aligned on
+   the bottom edge, every button sits on the same line as its price — and on the
+   same line across the whole row. */
+.car-footer { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 4px; }
 /* Compact CTA so "5 000 MAD / jour" and the button share one line even in the
    narrowest card of the grid. */
-.car-footer .btn { flex-shrink: 0; font-size: 12.5px; padding: 9px 14px; white-space: nowrap; }
+.car-footer .btn { flex-shrink: 0; font-size: 12.5px; padding: 9px 14px; white-space: nowrap; margin-bottom: 1px; }
 /* A block, not a flex row: the amount, the currency and "/ jour" are one
    unbreakable line, and the promo line above it keeps its own row. */
 .car-price { display: block; min-width: 0; white-space: nowrap; }
