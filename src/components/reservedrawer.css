@@ -100,6 +100,21 @@
 }
 .rd-top__close:hover { background: #fff5f5; border-color: var(--rd-accent); color: var(--rd-accent); }
 
+/* Small currency switcher sitting right beside the car name (not floated to the
+   centre/right — the close button below takes the right edge via its own auto
+   margin). Reuses the shared SelectMenu, trimmed to a compact top-bar size.
+   Changing it re-renders every price in the panel live. */
+.rd-top .rd-currency { flex-shrink: 0; }
+.rd-top .rd-currency .smenu__btn {
+  min-width: 0; gap: 5px;
+  min-height: 36px; padding: 6px 10px;
+  font-size: 12.5px; font-weight: 800;
+  border-radius: 10px; box-shadow: none;
+  background: var(--rd-bg); border-color: var(--rd-line); color: var(--rd-ink);
+}
+.rd-top .rd-currency .smenu__btn:hover { border-color: var(--rd-accent); }
+.rd-top .rd-currency .smenu__chev { color: var(--rd-mute); }
+
 /* ── Scrolling content ──
    `overscroll-behavior: contain` stops the gesture jumping to the page behind
    when the panel reaches its end. */
@@ -417,6 +432,31 @@
   background: var(--rd-bg); border-radius: 14px; padding: 12px 14px; margin: 0 0 14px;
 }
 .rd-sent__actions { display: flex; gap: 10px; margin-top: 12px; }
+
+/* On a phone the drawer fills the screen and the "date de fin" field sits low,
+   so a calendar anchored under the field opened downward and was clipped by the
+   bottom edge — only the first two weeks showed. Detach it from the field and
+   centre it in the viewport instead, where the whole month is always visible.
+   Both selectors are overridden: the base one and the last-child edge-anchor. */
+@media (max-width: 700px) {
+  .rd-date .datepicker__pop,
+  .rd-dates .rd-date:last-child .datepicker__pop {
+    position: fixed;
+    top: 50%; left: 50%; right: auto; bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(320px, calc(100vw - 32px)); max-width: none;
+    padding: 16px;
+    z-index: 960;
+    animation: none;                 /* dpFade's translateY would fight the centring */
+    box-shadow: 0 24px 60px rgba(16, 20, 28, .32);
+  }
+  /* Bigger, thumb-friendly cells now that there's room to centre. */
+  .rd-date .datepicker__title { font-size: 15px; }
+  .rd-date .datepicker__nav { width: 30px; height: 30px; font-size: 18px; }
+  .rd-date .datepicker__wd { font-size: 11px; }
+  .rd-date .datepicker__day { font-size: 14px; }
+  .rd-date .datepicker__grid { gap: 3px; }
+}
 
 /* ── Narrow phones ── */
 @media (max-width: 400px) {

@@ -5,11 +5,12 @@ import DatePicker from './DatePicker'
 import FeaturePills from './FeaturePills'
 import Icon from './Icon'
 import SocialIcon from './SocialIcon'
+import SelectMenu from './SelectMenu'
 import { moroccanCities, addDays, colorName } from '../data'
 import { isCarAvailable } from '../lib/cars'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
-import { formatMoney } from '../lib/currency'
+import { formatMoney, CURRENCIES, CURRENCY_CODES } from '../lib/currency'
 import { waLink } from '../lib/contact'
 import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 import './reservedrawer.css'
@@ -44,7 +45,8 @@ function defaultUnit(car, depart, retour) {
    leaves the page the visitor is on. */
 export default function ReserveDrawer({ car, depart, retour, lieu, initialColor = null, onClose }) {
   const { settings } = useSettings()
-  const { currency } = useCurrency()
+  const { currency, setCurrency } = useCurrency()
+  const currencyOptions = CURRENCY_CODES.map(code => ({ value: code, label: CURRENCIES[code].label }))
   const minDays = settings.minRentalDays
   const todayISO = new Date().toISOString().slice(0, 10)
 
@@ -243,6 +245,14 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
             <span className="rd-top__eyebrow">Réservation</span>
             <span className="rd-top__name">{car.name}</span>
           </div>
+          {/* Small currency switcher — all prices in the panel update live. */}
+          <SelectMenu
+            value={currency}
+            onChange={setCurrency}
+            options={currencyOptions}
+            ariaLabel="Devise"
+            className="rd-currency"
+          />
           <button type="button" className="rd-top__close" onClick={requestClose} aria-label="Fermer">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
               strokeLinecap="round" width="17" height="17"><path d="M18 6 6 18M6 6l12 12" /></svg>

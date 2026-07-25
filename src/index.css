@@ -642,6 +642,11 @@ section[id] { scroll-margin-top: 61px; }
   .promo-only-bar { padding: 14px 16px; }
   .promo-only-bar__txt { font-size: 13px; }
   .promo-only-bar .btn { width: 100%; justify-content: center; }
+
+  /* On a phone the price and CTA no longer fit side by side without cramping,
+     so stack them: price on its own line, button full-width below it. */
+  .car-footer { flex-direction: column; align-items: stretch; gap: 12px; }
+  .car-footer .btn { width: 100%; justify-content: center; }
 }
 
 .flotte-cta { text-align: center; }
@@ -754,7 +759,7 @@ section[id] { scroll-margin-top: 61px; }
 .toast-visible { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* ===== SEARCH RESULTS PAGE ===== */
-.results-page { min-height: 100vh; background: var(--gray-100); display: flex; flex-direction: column; }
+.results-page { min-height: 100vh; background: var(--gray-100); display: flex; flex-direction: column; overflow-x: clip; }
 
 /* Top nav */
 .results-nav { background: var(--dark); height: var(--results-nav-h); display: flex; align-items: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.3); }
@@ -762,16 +767,23 @@ section[id] { scroll-margin-top: 61px; }
 /* Currency lives here now: it is a global preference, not one more filter to
    scan past in the toolbar. Dark styling to sit on the black header. */
 .results-nav__actions { display: flex; align-items: center; gap: 12px; }
-.results-nav__currency { min-width: 132px; }
+/* Currency no longer lives in the top nav — it moved into the toolbar controls
+   row (see .results-toolbar__currency). Kept in the DOM but hidden here. */
+.results-nav__currency { display: none; min-width: 132px; }
 .results-nav__currency .smenu__btn {
   background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16);
   color: #fff; font-size: 13px; padding: 8px 12px;
 }
 .results-nav__currency .smenu__btn:hover { border-color: rgba(255,255,255,.35); }
 .results-nav__currency .smenu__chev { color: rgba(255,255,255,.6); }
+.results-nav__back { white-space: nowrap; }
 @media (max-width: 640px) {
   .results-nav__currency { min-width: 104px; }
   .results-nav__currency .smenu__btn { font-size: 12px; padding: 7px 10px; }
+  /* The full "à l'accueil" tail is what pushed the nav past the screen edge on a
+     phone — drop it so the row reads "← Retour" and fits. */
+  .results-nav__back-long { display: none; }
+  .results-nav__actions { gap: 8px; }
 }
 
 /* Mini search */
@@ -841,6 +853,9 @@ section[id] { scroll-margin-top: 61px; }
 .results-cat-btn.active { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 0 8px 18px -7px rgba(230,57,70,.6); }
 /* Controls row sits under the search, right-aligned */
 .results-toolbar__controls { align-self: flex-end; }
+/* Currency lives in the controls row (moved out of the top nav), to the right
+   of "Trier par" on every screen (it's the last item in the DOM order). */
+.results-toolbar__currency { display: block; }
 
 /* Enhanced search bar with leading icon */
 .results-search-wrap {
@@ -1246,6 +1261,34 @@ a.result-phone { text-decoration: none; }
 .avail-modal .citywheel-field.is-placeholder .citywheel-field__txt { color: var(--gray-600); }
 .avail-modal .citywheel-field.input-error { border-color: #ff4444; background: rgba(255,80,80,.06); }
 @media (max-width: 480px) { .avail-modal__dates { grid-template-columns: 1fr; } }
+/* On a phone the "date de fin" field sits low in the modal, so a calendar
+   anchored under it opened downward and was clipped by the bottom edge. Detach
+   it from the field, centre it in the viewport, and shrink it as far as it will
+   comfortably go so the whole month always fits. Both selectors are overridden:
+   the base one and the last-child right-anchor. */
+@media (max-width: 600px) {
+  /* iOS Safari auto-zooms the page when a focused field's text is under 16px.
+     Pin the date inputs to 16px so tapping "date de début/fin" never zooms. */
+  .avail-modal .datepicker__input { font-size: 16px; }
+  .avail-modal .datepicker__pop,
+  .avail-modal__dates .form-group:last-child .datepicker__pop {
+    position: fixed;
+    top: 50%; left: 50%; right: auto; bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(268px, calc(100vw - 48px)); max-width: none;
+    padding: 12px;
+    z-index: 2010;                   /* above the overlay (2000) */
+    animation: none;                 /* dpFade's translateY would fight the centring */
+    box-shadow: 0 24px 60px rgba(0,0,0,.34);
+  }
+  .avail-modal .datepicker__head { margin-bottom: 6px; }
+  .avail-modal .datepicker__title { font-size: 13px; }
+  .avail-modal .datepicker__nav { width: 26px; height: 26px; font-size: 15px; }
+  .avail-modal .datepicker__grid { gap: 1px; }
+  .avail-modal .datepicker__grid--days { margin-bottom: 2px; }
+  .avail-modal .datepicker__wd { font-size: 9.5px; padding: 2px 0; }
+  .avail-modal .datepicker__day { font-size: 12px; border-radius: 7px; }
+}
 
 /* "Non disponible" step: message + suggested cars */
 .avail-overlay--wide { align-items: flex-start; overflow-y: auto; padding: 32px 16px; }
@@ -1355,7 +1398,29 @@ a.result-phone { text-decoration: none; }
   .results-toolbar__inner { flex-direction: column; align-items: stretch; gap: 12px; }
   .results-toolbar__top { flex-direction: column; align-items: stretch; gap: 12px; }
   .results-search-wrap { width: 100%; }
-  .results-toolbar__controls { align-self: stretch; justify-content: space-between; gap: 10px; }
+  /* Move the currency out of the cramped top nav and into the controls row,
+     to the right of "Trier par". */
+  /* Dispo toggle stays left; sort + currency group together on the right so
+     "MAD" sits directly to the right of "Trier par". */
+  .results-toolbar__controls { align-self: stretch; justify-content: flex-start; gap: 10px; }
+  .results-toolbar__controls .sort-wrap { margin-left: auto; }
+
+  /* Scroll down → collapse this row out of the way; scroll up → bring it back.
+     Animated via max-height/opacity; the negative margin swallows the parent's
+     12px column gap so no empty band is left behind. */
+  .results-toolbar__controls {
+    overflow: hidden;
+    max-height: 200px;
+    transition: max-height .28s ease, opacity .2s ease,
+                margin .28s ease, padding .28s ease, border-width .28s ease;
+  }
+  .results-toolbar__controls.is-hidden {
+    max-height: 0; opacity: 0;
+    margin-top: -12px;
+    padding-top: 0; padding-bottom: 0;
+    border-width: 0;
+    pointer-events: none;
+  }
 
   .results-summary { padding: 18px 0; }
   .results-summary__inner { flex-direction: column; align-items: flex-start; gap: 14px; }
@@ -1509,4 +1574,66 @@ a.result-phone { text-decoration: none; }
   .promo-text p { font-size: 14px; }
   .why-car-image { transform: scale(1.85); }
   .stars svg { width: 24px; height: 24px; }
+}
+
+/* ============================================================================
+   MOBILE INTERACTION POLISH
+   A senior pass on how the phone build *feels* — no colours, copy, or layout
+   intent changed. Only touch ergonomics: instant tap response, no "stuck"
+   hover states, comfortable targets, and momentum scrolling.
+   ========================================================================== */
+
+/* Kill the grey iOS/Android tap flash and the 300ms click delay on every
+   interactive element, and stop text-selection lag on repeated taps. */
+button, a, label, .btn, .smenu__btn, .results-cat-btn,
+.car-color-dot, .gallery-nav, .dispo-toggle {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn, .smenu__btn, .results-cat-btn, .dispo-toggle {
+  -webkit-user-select: none; user-select: none;
+}
+
+/* Touch devices latch the :hover state after a tap and hold it until the next
+   tap elsewhere — so a lifted/shadowed button looks stuck. Neutralise the lift
+   wherever there's no real hover pointer; the :active feedback below replaces it. */
+@media (hover: none) {
+  .btn-primary:hover, .btn-accent:hover, .btn-outline-white:hover,
+  .btn-white:hover, .btn:hover { transform: none; }
+  .car-card:hover, .result-card:hover { transform: none; }
+  .car-card:hover .car-photo,
+  .car-card:hover .car-brand-logo { transform: none; }
+  .car-card:hover .car-img-wrap { filter: none; }
+}
+
+/* Tactile press feedback — a quick, honest "push" on every button. Snappier
+   than the .3s hover transition so it reads as a real press, not an animation.
+   Declared AFTER the hover reset so, on touch (where a tap fires :hover and
+   :active together), the press scale wins over the neutralised hover. */
+.btn:active { transform: scale(.96); transition-duration: .06s; }
+.smenu__btn:active,
+.results-cat-btn:active { transform: scale(.94); transition-duration: .06s; }
+/* Keep the vertical-centring translate; only add the press scale on top of it. */
+.gallery-nav:active { transform: translateY(-50%) scale(.9); transition-duration: .06s; }
+
+/* Horizontal strips (category tabs, trust badges) scroll with momentum and
+   settle on a tab edge instead of stopping mid-pill. */
+.results-cats,
+.results-summary__meta {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 4px;
+}
+.results-cat-btn { scroll-snap-align: start; }
+
+/* Comfortable, thumb-sized targets on phones — a few controls sat under the
+   ~44px guideline. Sizes only; nothing repositioned. */
+@media (max-width: 768px) {
+  .btn-sm { min-height: 42px; }
+  .results-cat-btn { min-height: 40px; display: inline-flex; align-items: center; }
+  .smenu__btn { min-height: 42px; }
+  .gallery-nav { width: 40px; height: 40px; }
+  /* The primary search CTA reads better as a solid full-width bar than a
+     floating pill once the fields stack. */
+  .mini-search-form .btn-accent { width: 100%; justify-content: center; min-height: 50px; }
 }

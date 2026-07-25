@@ -482,6 +482,29 @@ export default function SearchResults() {
   const [callingCar,  setCallingCar]  = useState(null)
   const [nameQuery,   setNameQuery]   = useState('')   // text search by model
 
+  // On phones, tuck the "Disponibles seulement / Trier par" row away while the
+  // visitor scrolls down through the results, and bring it back on scroll up —
+  // it frees vertical space for the cars without losing the filters.
+  const [hideControls, setHideControls] = useState(false)
+  useEffect(() => {
+    let lastY = window.scrollY
+    let ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      requestAnimationFrame(() => {
+        const y = window.scrollY
+        if (y < 160) setHideControls(false)          // always shown near the top
+        else if (y > lastY + 6) setHideControls(true)  // scrolling down → hide
+        else if (y < lastY - 6) setHideControls(false) // scrolling up → reveal
+        lastY = y
+        ticking = false
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   const days = daysBetween(depart, retour)
 
   const [cars, setCars] = useState([])
@@ -605,7 +628,7 @@ export default function SearchResults() {
               ariaLabel="Devise"
               className="results-nav__currency"
             />
-            <BackLink to="/" className="btn btn-outline-white btn-sm">← Retour à l'accueil</BackLink>
+            <BackLink to="/" className="btn btn-outline-white btn-sm results-nav__back">← Retour<span className="results-nav__back-long"> à l'accueil</span></BackLink>
           </div>
         </div>
       </header>
@@ -677,7 +700,7 @@ export default function SearchResults() {
           </div>
 
           {/* Second line: filters + sort, aligned under the search */}
-          <div className="results-toolbar__controls">
+          <div className={`results-toolbar__controls ${hideControls ? 'is-hidden' : ''}`}>
             {/* Dispo filter */}
             <label className="dispo-toggle">
               <input
@@ -702,6 +725,17 @@ export default function SearchResults() {
               <span className="sort-label">Trier par</span>
               <SelectMenu value={sort} onChange={setSort} options={SORT_OPTIONS} ariaLabel="Trier par" />
             </div>
+
+            {/* Currency — on a phone it moves out of the cramped top nav and
+                sits here, to the right of "Trier par". Hidden on wider screens
+                where the nav copy is shown instead. */}
+            <SelectMenu
+              value={currency}
+              onChange={setCurrency}
+              options={currencyOptions}
+              ariaLabel="Devise"
+              className="results-toolbar__currency"
+            />
           </div>
         </div>
       </div>

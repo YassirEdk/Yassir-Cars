@@ -480,6 +480,32 @@
     margin-top: -2.5rem;   /* overlap the image bottom */
   }
   .rv-dates { grid-template-columns: 1fr; }
+
+  /* iOS Safari zooms the page when a focused field's text is under 16px — pin
+     the date inputs to 16px so tapping "Départ"/"Retour" never zooms. */
+  .datepicker__input.rv-datepicker { font-size: 16px; }
+  /* Detach the calendar from the field and centre it in the viewport, shrunk as
+     far as it comfortably goes, so the whole month always fits on a phone. Both
+     selectors overridden: the base one and the last-child right-anchor. */
+  .rv-dates .datepicker__pop,
+  .rv-dates .rv-field:last-child .datepicker__pop {
+    position: fixed;
+    top: 50%; left: 50%; right: auto; bottom: auto;
+    transform: translate(-50%, -50%);
+    width: min(268px, calc(100vw - 48px));
+    padding: 12px;
+    z-index: 3000;
+    animation: none;                 /* dpFade's translateY would fight the centring */
+    box-shadow: 0 24px 60px rgba(16, 20, 28, .32);
+  }
+  .rv-dates .datepicker__head { margin-bottom: 6px; }
+  .rv-dates .datepicker__title { font-size: 13px; }
+  .rv-dates .datepicker__nav { width: 26px; height: 26px; font-size: 15px; }
+  .rv-dates .datepicker__grid { gap: 1px; }
+  .rv-dates .datepicker__grid--days { margin-bottom: 2px; }
+  .rv-dates .datepicker__wd { font-size: 9.5px; padding: 2px 0; }
+  .rv-dates .datepicker__day { font-size: 12px; border-radius: 7px; }
+
   .rv-card__title { font-size: 1.2rem; }
   .rv-guarantees { gap: .5rem .9rem; }
   .rv-sent__actions { flex-direction: column; }
