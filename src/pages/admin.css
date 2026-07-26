@@ -369,6 +369,9 @@
 .admin-resa-detail {
   width: 100%; max-width: 400px; background: #fff; border-radius: 16px;
   padding: 1.5rem; box-shadow: 0 24px 70px rgba(0,0,0,.3);
+  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .admin-resa-detail__head {
   display: flex; justify-content: space-between; align-items: center;
@@ -557,6 +560,11 @@
   width: 100%; max-width: 480px;
   background: #fff; border-radius: 16px; padding: 1.6rem;
   box-shadow: 0 24px 70px rgba(0,0,0,.3);
+  /* Cap to the viewport and scroll inside the card — without this the tail of a
+     long form (last fields + action buttons) overflows outside the white box. */
+  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .admin-resa-popup__head {
   display: flex; justify-content: space-between; align-items: center; gap: 1rem;
@@ -600,6 +608,9 @@
   background: #fff; border-radius: 16px; padding: 1.5rem;
   box-shadow: 0 24px 70px rgba(0,0,0,.4);
   border-top: 4px solid #f97316;
+  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
 }
 .admin-conflict-popup__head {
   display: flex; align-items: center; gap: .6rem;
@@ -671,7 +682,12 @@
   padding: 1.5rem; z-index: 1000; overflow-y: auto; overscroll-behavior: contain;
 }
 .admin-modal__inner { width: 100%; max-width: 640px; }
-.admin-form { background: #fff; border-radius: 18px; padding: 1.8rem; box-shadow: 0 24px 70px rgba(0,0,0,.3); }
+.admin-form {
+  background: #fff; border-radius: 18px; padding: 1.8rem; box-shadow: 0 24px 70px rgba(0,0,0,.3);
+  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
+  overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
 .admin-form__head { margin-bottom: 1.4rem; padding-bottom: 1rem; border-bottom: 1px solid #eef0f3; }
 .admin-form__head h3 { margin: 0 0 .25rem; font-size: 1.25rem; }
 .admin-form__head .admin-muted { margin: 0; }
@@ -884,10 +900,15 @@
   .admin-modal { padding: .75rem; }
   .admin-list-modal { padding: 1rem; border-radius: 12px; max-height: 92vh; }
   .admin-list-modal--wide { max-width: 100%; }
-  .admin-resa-popup { padding: 1.1rem; border-radius: 12px; }
-  .admin-resa-detail { padding: 1.1rem; border-radius: 12px; }
-  .admin-conflict-popup { padding: 1.1rem; border-radius: 12px; }
-  .admin-form { padding: 1.1rem; border-radius: 12px; }
+  /* Overlay padding drops to .75rem here, so the cards may grow accordingly */
+  .admin-resa-popup,
+  .admin-resa-detail,
+  .admin-conflict-popup,
+  .admin-form {
+    padding: 1.1rem; border-radius: 12px;
+    max-height: calc(100vh - 1.5rem);
+    max-height: calc(100dvh - 1.5rem);
+  }
   .admin-modal__inner { max-width: 100%; }
 
   /* Filters in list modals */
@@ -1064,8 +1085,11 @@
   .admin-modal .admin-list-modal,
   .admin-modal .admin-resa-popup,
   .admin-modal .admin-resa-detail,
-  .admin-modal .admin-conflict-popup {
+  .admin-modal .admin-conflict-popup,
+  .admin-modal .admin-form {
     max-height: 90vh;
+    max-height: min(90dvh, calc(100dvh - 1.5rem));
+    overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
   }
   /* History modal: needs more vertical space for 8-field cards */
   .admin-modal .admin-list-modal--wide { max-height: 92vh; }
