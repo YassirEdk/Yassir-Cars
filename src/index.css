@@ -1637,3 +1637,60 @@ button, a, label, .btn, .smenu__btn, .results-cat-btn,
      floating pill once the fields stack. */
   .mini-search-form .btn-accent { width: 100%; justify-content: center; min-height: 50px; }
 }
+
+/* ── Error pages (404 / 403 / 405) ─────────────────────────────────────────── */
+.error-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 24px 80px;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(230,57,70,.08), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(244,162,97,.06), transparent 45%),
+    var(--dark);
+  color: #fff;
+  text-align: center;
+}
+.error-shell { max-width: 640px; margin: 0 auto; }
+.error-code {
+  font-family: 'Inter', sans-serif;
+  font-weight: 900;
+  font-size: clamp(120px, 22vw, 220px);
+  line-height: 1;
+  letter-spacing: -6px;
+  background: linear-gradient(135deg, var(--red) 0%, var(--gold) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 8px;
+}
+.error-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 800;
+  margin: 0 0 12px;
+  color: #fff;
+}
+.error-tagline {
+  font-size: 18px;
+  color: var(--gold);
+  margin: 0 0 20px;
+  font-weight: 600;
+}
+.error-message {
+  font-size: 16px;
+  color: rgba(255,255,255,.75);
+  margin: 0 auto 36px;
+  max-width: 480px;
+  line-height: 1.7;
+}
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+.error-actions .btn { min-width: 180px; justify-content: center; }
+@media (max-width: 520px) {
+  .error-actions .btn { width: 100%; }
+}

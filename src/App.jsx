@@ -12,6 +12,7 @@ const SearchResults = lazy(() => import('./pages/SearchResults'))
 const AllCars = lazy(() => import('./pages/AllCars'))
 const Reserver = lazy(() => import('./pages/Reserver'))
 const Admin = lazy(() => import('./pages/Admin'))
+const ErrorPage = lazy(() => import('./pages/ErrorPage'))
 
 const Loading = () => (
   <div style={{ minHeight: '100vh', background: 'var(--dark)' }} aria-busy="true" />
@@ -106,6 +107,10 @@ export default function App() {
         <Route path="/flotte" element={<AllCars />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/reserver" element={<Reserver />} />
+        <Route path="/403" element={<ErrorPage code={403} />} />
+        <Route path="/405" element={<ErrorPage code={405} />} />
+        <Route path="/404" element={<ErrorPage code={404} />} />
+        <Route path="*" element={<ErrorPage code={404} />} />
       </Routes>
     </Suspense>
   )

@@ -316,41 +316,45 @@ create policy "car photos admin delete"
 --    '#1A1A1A', false, 1800, 'MAD', 'Essence', 'Auto', 5, 'Full option', 'Prestige', 'gold', 6);
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 9. (OPTIONAL) HARDENING — lock all writes to a SINGLE admin account.
+-- 9. HARDENING — lock all writes (and PII reads) to a SINGLE admin account.
 --
---    By default every write policy above is `to authenticated ... using (true)`,
---    meaning ANY logged-in user can write and read client PII. That is safe ONLY
---    if exactly one account exists. To be safe even if another account is ever
---    created, restrict writes to your specific admin email.
+--    Without this block every `to authenticated ... using (true)` policy above
+--    grants full access to ANY logged-in user — including read of client PII in
+--    unavailable_periods. Restrict every policy to the admin email below.
 --
---    ⚠️ FIRST, in the Supabase dashboard: Authentication → Providers → Email →
+--    ⚠️ ALSO in the Supabase dashboard: Authentication → Providers → Email →
 --       turn OFF "Allow new users to sign up" (stops public signups entirely).
---
---    Then replace the four write policies. Set YOUR admin email below and run:
--- ----------------------------------------------------------------------------
--- do $$
--- declare admin_email text := 'admin@yassir-cars.ma';   -- ← your admin login
--- begin
---   -- cars
---   drop policy if exists "cars admin write" on public.cars;
---   execute format($p$create policy "cars admin write" on public.cars for all
---     to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
---   -- unavailable_periods
---   drop policy if exists "periods admin write" on public.unavailable_periods;
---   execute format($p$create policy "periods admin write" on public.unavailable_periods for all
---     to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
---   -- car_services
---   drop policy if exists "services admin all" on public.car_services;
---   execute format($p$create policy "services admin all" on public.car_services for all
---     to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
---   -- app_settings
---   drop policy if exists "settings admin write" on public.app_settings;
---   execute format($p$create policy "settings admin write" on public.app_settings for all
---     to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
--- end $$;
--- ----------------------------------------------------------------------------
--- (Storage writes to 'car-photos' stay `to authenticated`; lock them the same
---  way if needed by adding `and (auth.jwt()->>'email' = '...')` to those policies.)
+-- ════════════════════════════════════════════════════════════════════════════
+do $$
+declare admin_email text := 'yassireddakhouche@gmail.com';
+begin
+  -- cars
+  drop policy if exists "cars admin write" on public.cars;
+  execute format($p$create policy "cars admin write" on public.cars for all
+    to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
+  -- unavailable_periods
+  drop policy if exists "periods admin write" on public.unavailable_periods;
+  execute format($p$create policy "periods admin write" on public.unavailable_periods for all
+    to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
+  -- car_services
+  drop policy if exists "services admin all" on public.car_services;
+  execute format($p$create policy "services admin all" on public.car_services for all
+    to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
+  -- app_settings
+  drop policy if exists "settings admin write" on public.app_settings;
+  execute format($p$create policy "settings admin write" on public.app_settings for all
+    to authenticated using (auth.jwt()->>'email' = %L) with check (auth.jwt()->>'email' = %L)$p$, admin_email, admin_email);
+  -- storage: car-photos bucket writes
+  drop policy if exists "car photos admin write"  on storage.objects;
+  drop policy if exists "car photos admin update" on storage.objects;
+  drop policy if exists "car photos admin delete" on storage.objects;
+  execute format($p$create policy "car photos admin write" on storage.objects for insert
+    to authenticated with check (bucket_id = 'car-photos' and auth.jwt()->>'email' = %L)$p$, admin_email);
+  execute format($p$create policy "car photos admin update" on storage.objects for update
+    to authenticated using (bucket_id = 'car-photos' and auth.jwt()->>'email' = %L)$p$, admin_email);
+  execute format($p$create policy "car photos admin delete" on storage.objects for delete
+    to authenticated using (bucket_id = 'car-photos' and auth.jwt()->>'email' = %L)$p$, admin_email);
+end $$;
 
 -- ============================================================================
 -- DONE.
