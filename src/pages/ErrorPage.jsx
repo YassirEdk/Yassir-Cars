@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import Icon from '../components/Icon'
 
 const PRESETS = {
   404: {
@@ -42,10 +41,10 @@ export default function ErrorPage({ code = 404 }) {
           <p className="error-message">{preset.message}</p>
           <div className="error-actions">
             <Link to="/" className="btn btn-primary">
-              <Icon name="road" /> Retour à l’accueil
+              <span aria-hidden="true">←</span> Retour à l’accueil
             </Link>
             <Link to="/flotte" className="btn btn-white">
-              <Icon name="car" /> Voir la flotte
+              Voir la flotte <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
