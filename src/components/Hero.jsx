@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DatePicker from './DatePicker'
 import CityWheel from './CityWheel'
+import SelectMenu from './SelectMenu'
 import Icon from './Icon'
 import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
@@ -14,6 +15,7 @@ const HERO_SRCSET = '/hero/hero-800.webp 800w, /hero/hero-1400.webp 1400w, /hero
 const HERO_FALLBACK = '/hero/hero-1400.jpg'
 
 const categories = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
+const categoryOptions = categories.map((c, i) => ({ value: i === 0 ? '' : c, label: c }))
 
 const stats = [
   { num: '500+', label: 'Véhicules' },
@@ -37,11 +39,6 @@ export default function Hero() {
   const navigate = useNavigate()
   const { settings } = useSettings()
   const minDays = settings.minRentalDays
-
-  const set = (key) => (e) => {
-    setForm(f => { const next = { ...f, [key]: e.target.value }; saveSearch(next); return next })
-    if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }))
-  }
 
   const today = new Date().toISOString().split('T')[0]
 
@@ -165,17 +162,23 @@ export default function Hero() {
 
               <div className="form-group">
                 <label><Icon name="car" /> Catégorie</label>
-                <select
-                  value={form.categorie}
-                  onChange={set('categorie')}
-                >
-                  {categories.map(c => <option key={c}>{c}</option>)}
-                </select>
+                <SelectMenu
+                  value={form.categorie === categories[0] ? '' : form.categorie}
+                  onChange={(v) => setForm(f => { const next = { ...f, categorie: v }; saveSearch(next); return next })}
+                  options={categoryOptions}
+                  ariaLabel="Catégorie"
+                />
               </div>
 
             </div>
             <button type="submit" className="btn btn-accent btn-lg">
-              Rechercher un véhicule →
+              Rechercher un véhicule
+              <span className="btn-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                  strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </span>
             </button>
           </form>
         </div>
