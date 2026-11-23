@@ -21,6 +21,16 @@ const PRESETS = {
   },
 }
 
+function Arrow({ back = false }) {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
+      strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"
+      style={back ? { transform: 'scaleX(-1)' } : undefined} focusable="false">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  )
+}
+
 export default function ErrorPage({ code = 404 }) {
   const preset = PRESETS[code] ?? PRESETS[404]
 
@@ -41,12 +51,12 @@ export default function ErrorPage({ code = 404 }) {
           <p className="error-message">{preset.message}</p>
           <div className="error-actions">
             <Link to="/" className="error-btn error-btn--primary">
-              <span className="error-btn__arrow error-btn__arrow--back" aria-hidden="true">←</span>
+              <span className="error-btn__arrow error-btn__arrow--back" aria-hidden="true"><Arrow back /></span>
               Retour à l’accueil
             </Link>
             <Link to="/flotte" className="error-btn error-btn--ghost">
               Voir la flotte
-              <span className="error-btn__arrow" aria-hidden="true">→</span>
+              <span className="error-btn__arrow" aria-hidden="true"><Arrow /></span>
             </Link>
           </div>
         </div>

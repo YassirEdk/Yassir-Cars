@@ -1704,7 +1704,20 @@ button, a, label, .btn, .smenu__btn, .results-cat-btn,
   text-decoration: none;
   transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease, color .25s ease;
 }
-.error-btn__arrow { display: inline-block; font-size: 18px; line-height: 1; transition: transform .25s ease; }
+.error-btn__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: transform .25s ease, background .25s ease, border-color .25s ease;
+}
+.error-btn--primary .error-btn__arrow { background: rgba(255,255,255,.2); margin-left: -12px; }
+.error-btn--primary:hover .error-btn__arrow { background: rgba(255,255,255,.3); }
+.error-btn--ghost .error-btn__arrow { border: 1.5px solid rgba(255,255,255,.3); margin-right: -12px; }
+.error-btn--ghost:hover .error-btn__arrow { border-color: var(--gold); }
 .error-btn--primary {
   background: linear-gradient(135deg, var(--red) 0%, #ff6b35 100%);
   color: #fff;
