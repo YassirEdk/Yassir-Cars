@@ -1097,6 +1097,7 @@
 
 /* ── Analytics dashboard ─────────────────────────────────────────────────── */
 .admin-dash, .admin-detail { padding: 1.6rem 2rem; }
+.admin-rtabs.admin-dash__periods { padding: 0 0 1rem; }
 
 /* Summary stat tiles */
 .admin-stats-row {

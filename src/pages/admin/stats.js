@@ -103,6 +103,83 @@ export function monthlySeries(cars, months = 8) {
   }))
 }
 
+// ── Period filtering (dashboard "Aujourd'hui / Ce mois / Cette année / Tout") ──
+const pad = (n) => String(n).padStart(2, '0')
+const dayKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+
+// Inclusive [from, to] range of YYYY-MM-DD keys for a period; null = all time.
+export function periodRange(period, now = new Date()) {
+  const y = now.getFullYear(), m = now.getMonth()
+  if (period === 'day')   return { from: dayKey(now), to: dayKey(now) }
+  if (period === 'month') return { from: dayKey(new Date(y, m, 1)), to: dayKey(new Date(y, m + 1, 0)) }
+  if (period === 'year')  return { from: `${y}-01-01`, to: `${y}-12-31` }
+  return null
+}
+
+// Copy of the fleet with each car's reservations limited to the period:
+//  · finished rentals → counted on their end (return) date
+//  · upcoming reservations → counted on their start (pickup) date
+//  · ongoing rentals → always kept (they're live, happening right now)
+export function scopeCars(cars, range) {
+  if (!range) return cars
+  const inRange = (d) => !!d && d >= range.from && d <= range.to
+  return cars.map(car => ({
+    ...car,
+    unavailable: (car.unavailable ?? []).filter(r => {
+      const st = r.status ?? 'reservee'
+      if (st === 'en_cours') return true
+      if (st === 'terminee') return inRange(r.end || r.start)
+      return inRange(r.start)
+    }),
+  }))
+}
+
+// Revenue + rental count per day between two YYYY-MM-DD keys (inclusive).
+export function dailySeries(cars, from, to) {
+  const map = new Map()
+  for (const car of cars) {
+    for (const r of car.unavailable ?? []) {
+      if (r.status !== 'terminee') continue
+      const key = (r.end || r.start || '').slice(0, 10)
+      if (key < from || key > to) continue
+      if (!map.has(key)) map.set(key, { revenue: 0, rentals: 0 })
+      map.get(key).revenue += rentalRevenue(car, r)
+      map.get(key).rentals += 1
+    }
+  }
+  const out = []
+  const [fy, fm, fd] = from.split('-').map(Number)
+  for (let d = new Date(fy, fm - 1, fd); dayKey(d) <= to; d.setDate(d.getDate() + 1)) {
+    const k = dayKey(d)
+    out.push({
+      month: k,
+      label: d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+      revenue: map.get(k)?.revenue ?? 0,
+      rentals: map.get(k)?.rentals ?? 0,
+    })
+  }
+  return out
+}
+
+// Revenue + rental count per month of the given year (Jan → Dec).
+export function yearSeries(cars, year) {
+  const map = new Map()
+  for (const car of cars) {
+    for (const r of car.unavailable ?? []) {
+      if (r.status !== 'terminee') continue
+      const key = (r.end || r.start || '').slice(0, 7)
+      if (!key.startsWith(`${year}-`)) continue
+      if (!map.has(key)) map.set(key, { revenue: 0, rentals: 0 })
+      map.get(key).revenue += rentalRevenue(car, r)
+      map.get(key).rentals += 1
+    }
+  }
+  return Array.from({ length: 12 }, (_, i) => {
+    const k = `${year}-${pad(i + 1)}`
+    return { month: k, label: monthLabel(k), revenue: map.get(k)?.revenue ?? 0, rentals: map.get(k)?.rentals ?? 0 }
+  })
+}
+
 // Cars ranked by a numeric stat (rentals or km), highest first, top `limit`.
 // Used by the "Rentals per car" and "Km per car" bar charts.
 export function ranking(cars, pick, limit = 8) {
