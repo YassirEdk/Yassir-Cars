@@ -16,7 +16,7 @@ const links = [
   { href: '#contact', label: 'Contact' },
 ]
 
-export default function Navbar() {
+export default function Navbar({ minimal = false }) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [active, setActive] = useState('#accueil')
@@ -116,6 +116,7 @@ export default function Navbar() {
           <Logo size={38} animated />
         </a>
 
+        {!minimal && (
         <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
           {/* Drawer-only header: without it the open menu is six links adrift
               in a black rectangle, with no branding and no way back. */}
@@ -159,6 +160,7 @@ export default function Navbar() {
             </div>
           </li>
         </ul>
+        )}
 
         {/* Persistent actions, outside the drawer */}
         <div className="nav-actions">
@@ -181,14 +183,16 @@ export default function Navbar() {
             Voir notre flotte
           </Link>
 
-          <button
-            className={`hamburger ${menuOpen ? 'active' : ''}`}
-            onClick={() => setMenuOpen(v => !v)}
-            aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
-            aria-expanded={menuOpen}
-          >
-            <span /><span /><span />
-          </button>
+          {!minimal && (
+            <button
+              className={`hamburger ${menuOpen ? 'active' : ''}`}
+              onClick={() => setMenuOpen(v => !v)}
+              aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={menuOpen}
+            >
+              <span /><span /><span />
+            </button>
+          )}
         </div>
       </div>
     </nav>

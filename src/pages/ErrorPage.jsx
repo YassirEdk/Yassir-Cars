@@ -32,7 +32,7 @@ export default function ErrorPage({ code = 404 }) {
 
   return (
     <>
-      <Navbar />
+      <Navbar minimal />
       <main className="error-page">
         <div className="error-shell">
           <div className="error-code" aria-hidden="true">{code}</div>
