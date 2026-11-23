@@ -40,11 +40,13 @@ export default function ErrorPage({ code = 404 }) {
           <p className="error-tagline">{preset.tagline}</p>
           <p className="error-message">{preset.message}</p>
           <div className="error-actions">
-            <Link to="/" className="btn btn-primary">
-              <span aria-hidden="true">←</span> Retour à l’accueil
+            <Link to="/" className="error-btn error-btn--primary">
+              <span className="error-btn__arrow error-btn__arrow--back" aria-hidden="true">←</span>
+              Retour à l’accueil
             </Link>
-            <Link to="/flotte" className="btn btn-white">
-              Voir la flotte <span aria-hidden="true">→</span>
+            <Link to="/flotte" className="error-btn error-btn--ghost">
+              Voir la flotte
+              <span className="error-btn__arrow" aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
