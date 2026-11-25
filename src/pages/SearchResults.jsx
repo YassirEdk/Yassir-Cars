@@ -489,20 +489,43 @@ export default function SearchResults() {
   useEffect(() => {
     let lastY = window.scrollY
     let ticking = false
+    let hidden = false
+    /* Collapsing the row resizes the sticky toolbar, and the page moves with it
+       (scroll anchoring, or clamping at the bottom of the page). Those moves fire
+       scroll events of their own; read as a gesture, they flipped the row back
+       and forth. So scroll is ignored until the 0.28s collapse has finished. */
+    let locked = false
+    let unlockTimer = 0
+    const toggle = (next) => {
+      if (next === hidden) return
+      hidden = next
+      setHideControls(next)
+      locked = true
+      clearTimeout(unlockTimer)
+      unlockTimer = setTimeout(() => {
+        locked = false
+        lastY = window.scrollY
+        if (lastY < 160) toggle(false)
+      }, 400)
+    }
     const onScroll = () => {
       if (ticking) return
       ticking = true
       requestAnimationFrame(() => {
-        const y = window.scrollY
-        if (y < 160) setHideControls(false)          // always shown near the top
-        else if (y > lastY + 6) setHideControls(true)  // scrolling down → hide
-        else if (y < lastY - 6) setHideControls(false) // scrolling up → reveal
-        lastY = y
         ticking = false
+        if (locked) return
+        const y = window.scrollY
+        if (y < 160) toggle(false)              // always shown near the top
+        else if (y > lastY + 6) toggle(true)    // scrolling down → hide
+        else if (y < lastY - 6) toggle(false)   // scrolling up → reveal
+        lastY = y
       })
     }
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      clearTimeout(unlockTimer)
+    }
   }, [])
 
   const days = daysBetween(depart, retour)

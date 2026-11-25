@@ -928,6 +928,9 @@ section[id] { scroll-margin-top: 61px; }
 .dispo-toggle input:checked { background: var(--red); }
 .dispo-toggle input:checked::after { transform: translateX(16px); }
 .sort-wrap { display: flex; align-items: center; gap: 8px; padding-left: 14px; border-left: 1px solid var(--gray-200); }
+/* Both menus sit at the right end of the row: open their lists leftwards so a
+   long option never runs off the edge of a phone screen. */
+.results-toolbar__controls .smenu__list { left: auto; right: 0; }
 .sort-label { font-size: 13px; color: var(--gray-500); white-space: nowrap; }
 .sort-select {
   padding: 8px 36px 8px 14px; border: 1px solid var(--gray-200); border-radius: 50px;
@@ -1445,13 +1448,15 @@ a.result-phone { text-decoration: none; }
   /* Scroll down → collapse this row out of the way; scroll up → bring it back.
      Animated via max-height/opacity; the negative margin swallows the parent's
      12px column gap so no empty band is left behind. */
+  /* overflow: hidden only while collapsed — always on, it clipped the
+     "Trier par" and currency dropdown lists that open below this row. */
   .results-toolbar__controls {
-    overflow: hidden;
     max-height: 200px;
     transition: max-height .28s ease, opacity .2s ease,
                 margin .28s ease, padding .28s ease, border-width .28s ease;
   }
   .results-toolbar__controls.is-hidden {
+    overflow: hidden;
     max-height: 0; opacity: 0;
     margin-top: -12px;
     padding-top: 0; padding-bottom: 0;
