@@ -302,11 +302,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
           <>
             <div className="avail-nope">
               <span className="avail-nope__ico" aria-hidden>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-                  strokeLinecap="round" width="26" height="26">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="m15 9-6 6M9 9l6 6" />
-                </svg>
+                <Icon name="calendarX" />
               </span>
               <div>
                 <h3 className="avail-nope__title">Véhicule non disponible</h3>

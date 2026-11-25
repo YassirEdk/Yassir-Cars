@@ -209,7 +209,7 @@
 }
 .rd-tag--ok { background: rgba(22, 163, 74, .92); }
 .rd-tag--no { background: rgba(75, 85, 99, .92); }
-.rd-tag svg { width: 1em; height: 1em; }
+.rd-tag svg { width: 1.3em; height: 1.3em; }
 
 /* ── Car head ── */
 .rd-carhead {

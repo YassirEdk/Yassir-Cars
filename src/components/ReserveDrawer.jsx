@@ -316,8 +316,8 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
 
                 <span className={`rd-tag ${available ? 'rd-tag--ok' : 'rd-tag--no'}`}>
                   {available
-                    ? <><Icon name="checkCircle" /> Disponible</>
-                    : <><Icon name="clock" /> Non disponible</>}
+                    ? <><Icon name="calendarCheck" size="1.3em" /> Disponible</>
+                    : <><Icon name="calendarX" size="1.3em" /> Non disponible</>}
                 </span>
 
                 {gallery.length > 1 && (
@@ -493,7 +493,7 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
 
               {!available && (
                 <p className="rd-alert rd-alert--warn">
-                  <Icon name="clock" />
+                  <Icon name="calendarX" />
                   Cette couleur est déjà réservée pour ces dates — choisissez une autre couleur,
                   d’autres dates ou un autre véhicule.
                 </p>
