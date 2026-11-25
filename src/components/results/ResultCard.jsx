@@ -42,7 +42,7 @@ export default function ResultCard({ car, days, depart, retour, showOk, onCall, 
   const promo = discountLabel(rate)
 
   return (
-    <article className={`result-card ${activeFree ? '' : 'result-card--unavailable'} ${isOpen ? 'result-card--open' : ''}`}>
+    <article className={`result-card ${activeFree ? '' : 'result-card--unavailable'} ${isOpen ? 'result-card--open' : ''}`} style={{ viewTransitionName: `result-${car.id}` }}>
       <div className="rc-media stage">
         <PhotoRail
           key={active.id}

@@ -2,6 +2,7 @@ import { startTransition, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { Router, UNSAFE_createBrowserHistory as createBrowserHistory } from 'react-router-dom'
 import { pageOf, pathOf, prepareRoute } from '../routes'
+import { isGliding } from './glide'
 
 /* BrowserRouter, plus a transition when the visitor goes from one page to another.
 
@@ -57,9 +58,11 @@ export default function TransitionRouter({ children }) {
     window.addEventListener('popstate', onPop, true)
 
     // As BrowserRouter does it: the old page stays until the new one can render.
+    // Inside a glide (lib/glide.js), at once: the browser is waiting for the change.
     const plain = (next) => {
       shown.current = next.location
-      startTransition(() => setState(next))
+      if (isGliding()) setState(next)
+      else startTransition(() => setState(next))
     }
 
     const turn = (next, back) => {

@@ -377,14 +377,14 @@ main > .section:last-child { padding-bottom: calc(var(--section) + var(--rise));
 .filter-btn { flex-shrink: 0; min-height: 44px; padding: 10px 20px; border-radius: 50px; border: 1px solid var(--gray-300); background: #fff; color: var(--gray-700); font-size: 14.5px; font-weight: 500; cursor: pointer; transition: var(--transition); font-family: inherit; }
 .filter-btn.active { background: var(--dark); color: #fff; border-color: var(--dark); }
 @media (hover: hover) { .filter-btn:not(.active):hover { color: var(--dark); border-color: var(--dark); } }
-/* Cards gliding to their new places (lib/glide.js). */
+/* Cards gliding to their new places (lib/glide.js): the fleet and the results. */
 ::view-transition-group(*) { animation-duration: .38s; animation-timing-function: cubic-bezier(.2,.75,.25,1); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .22s; }
 
 /* Page to page (lib/TransitionRouter.jsx). The page being left lifts away as it
    fades; the next one rises into place a beat later. Going back, both move the
    other way. The cards ride with their page here instead of gliding on their own. */
-html.vt-page .car-card { view-transition-name: none !important; }
+html.vt-page :is(.car-card, .result-card) { view-transition-name: none !important; }
 html.vt-page::view-transition { background: var(--page); }
 html.vt-page::view-transition-old(root) { animation: vt-leave .2s cubic-bezier(.4,0,1,1) both; }
 html.vt-page::view-transition-new(root) { animation: vt-enter .46s cubic-bezier(.2,.75,.25,1) .06s both; }

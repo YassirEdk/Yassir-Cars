@@ -23,6 +23,7 @@ import ReserveDrawer from '../components/ReserveDrawer'
 import SearchBar from '../components/results/SearchBar'
 import ResultTools from '../components/results/Filters'
 import ResultCard, { ResultSkeleton } from '../components/results/ResultCard'
+import { glide } from '../lib/glide'
 import './results.css'
 
 /* ── Phone modal ── */
@@ -143,9 +144,10 @@ export default function SearchResults() {
   const [query, setQuery] = useState('')
   const activeCount = activeFilterCount(filters, query)
 
-  // `keepScroll`: App scrolls to the top on a new page, and this isn't one.
-  const setFilters = (patch) =>
-    setSearchParams(writeFilters(searchParams, { ...filters, ...patch }), { replace: true, state: { keepScroll: true } })
+  // `keepScroll`: App scrolls to the top on a new page, and this isn't one. The
+  // cards glide to their new places, as on the fleet page.
+  const setFilters = (patch) => glide(() =>
+    setSearchParams(writeFilters(searchParams, { ...filters, ...patch }), { replace: true, state: { keepScroll: true } }))
   const resetFilters = () => { setQuery(''); setFilters({ ...NO_FILTERS, categorie: filters.categorie }) }
   const resetAll = () => { setQuery(''); setFilters(NO_FILTERS) }
 
