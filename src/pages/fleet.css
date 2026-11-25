@@ -1,0 +1,39 @@
+/* ── Fleet page ───────────────────────────────────────────────────────────── */
+/* Title on dark, cars on light, the cut of the hero between them. */
+.fleet-head { position: relative; isolation: isolate; overflow: hidden; background: #E3E6EB; }
+.fleet-head::before {
+  content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: -20%; right: 56%;
+  background: linear-gradient(160deg, #2b2f37 40%, #16181d 100%);
+  border-right: 4px solid var(--red); transform: skewX(calc(-1 * var(--slash)));
+}
+.fleet-head__inner { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: center; gap: 24px; min-height: 244px; padding-block: 34px; }
+.fleet-head .section-title { color: #fff; }
+.fleet-head .section-subtitle { margin-top: 12px; max-width: 34ch; color: rgba(255,255,255,.8); }
+/* Parked one behind the other. */
+.fleet-head__cars { display: flex; align-items: flex-end; justify-content: flex-end; }
+.fleet-head__cars img { width: 44%; height: auto; animation: fleetCar .8s cubic-bezier(.16,.84,.3,1) backwards; }
+.fleet-head__cars img + img { margin-left: -15%; animation-delay: .1s; }
+.fleet-head__cars img + img + img { animation-delay: .2s; }
+@keyframes fleetCar { from { opacity: 0; transform: translateX(-60px); } }
+
+.fleet-page .results-tools .smenu__list { min-width: 190px; }
+.fleet-list { padding: 28px 0 calc(var(--section) + var(--rise)); }
+.fleet-list .cars-grid { margin-bottom: 0; }
+
+@media (max-width: 860px) {
+  .fleet-head { background: var(--dark-bg); }
+  .fleet-head::before {
+    left: 0; right: 0; top: auto; height: 34px; transform: none; border: 0;
+    background: var(--red); clip-path: polygon(0 100%, 100% 0, 100% 10px, 10% 100%);
+  }
+  .fleet-head::after { content: ''; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; height: 30px; background: #fff; clip-path: polygon(0 100%, 100% 0, 100% 100%); }
+  .fleet-head__inner { grid-template-columns: minmax(0, 1fr); min-height: 0; padding-block: 34px 52px; }
+  .fleet-head__cars { display: none; }
+}
+@media (max-width: 768px) {
+  .fleet-list { padding-top: 18px; }
+  .fleet-page .results-bar__inner { gap: 10px; min-height: 62px; }
+  .fleet-page .results-cats { margin-left: -18px; padding-left: 18px; scroll-padding-left: 18px; }
+}
+@media (max-width: 480px) { .fleet-page .results-cats { margin-left: -14px; padding-left: 14px; scroll-padding-left: 14px; } }
+@media (prefers-reduced-motion: reduce) { .fleet-head__cars img { animation: none; } }

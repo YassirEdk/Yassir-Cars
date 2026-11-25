@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import Icon from '../components/Icon'
 import Login from './admin/Login'
 import Dashboard from './admin/Dashboard'
+import { Ico } from './admin/Icons'
 import './admin.css'
 
 /* ── Page entry: gates on Supabase config + auth session ──────────────────── */
@@ -23,13 +25,13 @@ export default function Admin() {
     return (
       <div className="admin-login">
         <div className="admin-login__card">
-          <h1>⚙️ Configuration requise</h1>
+          <h1><Ico name="settings" /> Configuration requise</h1>
           <p className="admin-login__sub">
             Supabase n’est pas encore configuré. Renseignez <code>VITE_SUPABASE_URL</code> et
             <code> VITE_SUPABASE_ANON_KEY</code> dans le fichier <code>.env</code>, puis relancez
             <code> npm run dev</code>. Voir <code>SETUP-SUPABASE.md</code>.
           </p>
-          <Link to="/" className="admin-login__back">← Retour au site</Link>
+          <Link to="/" className="admin-login__back"><Icon name="arrowLeft" /> Retour au site</Link>
         </div>
       </div>
     )

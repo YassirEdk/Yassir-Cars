@@ -1,11 +1,14 @@
 import { createClient } from '@supabase/supabase-js'
+import { isSupabaseConfigured } from './db'
+
+/* The full client: auth, writes, storage. Only the admin imports this module
+   directly; everything else goes through getSupabase() in ./db, so the public
+   pages never download the library. */
 
 const url = import.meta.env.VITE_SUPABASE_URL
 const key = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// True only when both env vars are present. Lets the rest of the app
-// gracefully fall back to the static src/data.js cars during setup.
-export const isSupabaseConfigured = Boolean(url && key)
+export { isSupabaseConfigured }
 
 // Auth session lives in sessionStorage, not localStorage: it survives page
 // reloads within the same tab (so a tab left open 24/7 stays logged in, with

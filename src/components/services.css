@@ -1,0 +1,78 @@
+/* ── Services: the main one on dark, the others in a list ─────────────────── */
+.services__grid { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 24px; align-items: stretch; }
+
+.svc-main {
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 24px;
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 34px 34px 0; background: var(--dark-bg); color: #fff;
+}
+/* The cut of the hero, then light on the floor for the car to stand on. */
+.svc-main::before {
+  content: ''; position: absolute; z-index: -2; top: 0; bottom: 0; left: 62%; right: -40%;
+  background: rgba(255,255,255,.07); transform: skewX(calc(-1 * var(--slash)));
+}
+.svc-main::after {
+  content: ''; position: absolute; z-index: -1; left: -10%; right: -10%; bottom: -70px; height: 220px;
+  background: radial-gradient(50% 50%, rgba(226,230,238,.42), rgba(226,230,238,.16) 46%, transparent);
+}
+.svc-main__badge {
+  display: inline-flex; align-items: center; gap: 7px; margin-bottom: 18px; padding: 6px 13px; border-radius: 50px;
+  background: var(--red); font-size: 12.5px; font-weight: 600; line-height: 1.35;
+}
+.svc-main__badge svg { width: 14px; height: 14px; }
+.svc-main h3 { font-family: var(--title-font); font-stretch: 118%; font-size: clamp(22px, 2.1vw, 28px); font-weight: 800; letter-spacing: -.02em; line-height: 1.18; text-wrap: balance; }
+.svc-main__text { margin-top: 12px; max-width: 42ch; font-size: 15.5px; line-height: 1.65; color: rgba(255,255,255,.8); }
+.svc-main__list { display: flex; flex-direction: column; gap: 9px; margin-top: 20px; font-size: 15px; font-weight: 500; line-height: 1.4; }
+.svc-main__list li { display: flex; align-items: center; gap: 10px; }
+.svc-main__list svg { width: 16px; height: 16px; flex-shrink: 0; color: var(--red-light); }
+.svc-main__cta { margin-top: 26px; }
+.svc-main__car { display: block; width: min(100%, 470px); height: auto; margin: auto -6px 24px auto; padding-top: 26px; }
+
+.svc-list { display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 1px solid var(--gray-200); border-radius: 24px; }
+.svc-item { flex: 1; display: flex; }
+.svc-item + .svc-item { border-top: 1px solid var(--gray-200); }
+.svc-row {
+  flex: 1; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-content: center; align-items: center; gap: 0 20px;
+  padding: 18px 24px; transition: background .25s;
+}
+.svc-row__icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; background: var(--soft); color: var(--dark); font-size: 26px; transition: background .25s, color .25s; }
+.svc-row__text { display: flex; flex-direction: column; gap: 3px; }
+.svc-row__text strong { font-size: 17px; font-weight: 700; line-height: 1.3; color: var(--dark); }
+.svc-row__text span { font-size: 14.5px; line-height: 1.5; color: var(--gray-600); }
+.svc-row__list { grid-column: 2 / -1; display: flex; flex-wrap: wrap; gap: 3px 18px; margin-top: 8px; font-size: 13.5px; font-weight: 500; line-height: 1.5; color: var(--gray-700); }
+.svc-row__list > span { display: inline-flex; align-items: center; gap: 6px; }
+.svc-row__list svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--gray-500); }
+.svc-row__go { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--gray-300); color: var(--dark); font-size: 15px; transition: background .25s, color .25s, border-color .25s, transform .25s; }
+@media (hover: hover) {
+  a.svc-row:hover { background: var(--gray-100); }
+  a.svc-row:hover .svc-row__icon { background: var(--dark); color: #fff; }
+  a.svc-row:hover .svc-row__go { background: var(--dark); border-color: var(--dark); color: #fff; transform: translateX(4px); }
+}
+a.svc-row:focus-visible { outline-offset: -4px; border-radius: 20px; }
+
+@media (max-width: 1100px) {
+  .services__grid { grid-template-columns: minmax(0, 1fr); }
+  .svc-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; padding-bottom: 34px; }
+  .svc-main > * { grid-column: 1; justify-self: start; }
+  .svc-main__car { grid-column: 2; grid-row: 1 / span 5; align-self: end; width: 100%; margin: 0; padding: 0; }
+}
+@media (max-width: 640px) {
+  .services__grid { gap: 16px; }
+  .svc-main { display: flex; padding: 24px 22px 0; border-radius: 20px; }
+  .svc-main__text { font-size: 15px; line-height: 1.6; }
+  .svc-main__list { display: none; }        /* said by the text */
+  .svc-main__cta { margin-top: 20px; }
+  .svc-main__car { width: 92%; margin: 0 0 14px auto; padding-top: 14px; }
+  .svc-list { border-radius: 20px; }
+  .svc-row { gap: 0 14px; padding: 14px 14px 14px 16px; }
+  .svc-row__icon { width: 44px; height: 44px; border-radius: 12px; font-size: 22px; }
+  .svc-row__text strong { font-size: 16px; }
+  /* The features alone, on one or two lines. */
+  .svc-row__text span { display: none; }
+  .svc-row__list { grid-column: 2; display: block; margin-top: 2px; font-weight: 400; color: var(--gray-600); }
+  .svc-row__list > span { display: inline; }
+  .svc-row__list > span:not(:last-child)::after { content: ' · '; }
+  .svc-row__list svg { display: none; }
+  .svc-row__icon, .svc-row__go { grid-row: 1 / span 2; }
+  .svc-row__go { grid-column: 3; width: 36px; height: 36px; font-size: 13px; }
+}

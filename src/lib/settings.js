@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from './supabase'
+import { isSupabaseConfigured, restSelect, getSupabase } from './db'
 import { MIN_RENTAL_DAYS } from '../data'
 
 // Values used before the settings load, when Supabase isn't configured, or if
@@ -48,19 +48,19 @@ function fromRow(row) {
 
 // Public read. Throws when the read fails, so the caller can tell "no settings
 // yet" apart from the real ones; a missing row means defaults.
+// A plain REST GET (see ./db): every page needs this, so it must not cost the
+// visitor the Supabase library.
 export async function fetchSettings() {
   if (!isSupabaseConfigured) return { ...DEFAULT_SETTINGS }
-  const { data, error } = await supabase
-    .from('app_settings')
-    .select('*')
-    .eq('id', 1)
-    .maybeSingle()
+  const { data, error } = await restSelect('app_settings?select=*&id=eq.1')
   if (error) throw error
-  return data ? fromRow(data) : { ...DEFAULT_SETTINGS }
+  const row = Array.isArray(data) ? data[0] : null
+  return row ? fromRow(row) : { ...DEFAULT_SETTINGS }
 }
 
 // Admin write — upserts the single row (id = 1). Throws on error.
 export async function updateSettings(s) {
+  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('app_settings')
     .upsert({

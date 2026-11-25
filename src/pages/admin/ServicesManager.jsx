@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { showError, confirmAsync } from '../../components/AdminDialog'
+import Icon from '../../components/Icon'
 import { fetchCarServices, addCarService, deleteCarService } from '../../lib/cars'
 import { Ico } from './Icons'
 import { formatKm, formatDate } from './format'
@@ -29,8 +30,8 @@ function ServicesModal({ services, onClose, onRemove }) {
     <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
       <div className="admin-list-modal admin-list-modal--wide">
         <div className="admin-list-modal__head">
-          <h3>🔧 Tous les services ({services.length})</h3>
-          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+          <h3><Ico name="wrench" /> Tous les services ({services.length})</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
         </div>
         <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="Type de service, note…" />
         <div className="admin-list-modal__body">
@@ -117,12 +118,12 @@ export default function ServicesManager({ car, onKmUpdate }) {
   return (
     <div className="admin-services">
       <div className="admin-services__head">
-        <button className="admin-services__toggle" onClick={toggle}>
-          <Ico name="wrench" /> Services voiture{services ? ` (${count})` : ''} <span className="admin-services__chev">{expanded ? '▲' : '▼'}</span>
+        <button className="admin-services__toggle" onClick={toggle} aria-expanded={expanded}>
+          <Ico name="wrench" /> Services voiture{services ? ` (${count})` : ''} <span className="admin-services__chev"><Icon name="caretDown" /></span>
         </button>
         {expanded && (
           <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => setOpen(true)}>
-            ➕ Ajouter un service
+            <Ico name="plus" /> Ajouter un service
           </button>
         )}
       </div>
@@ -166,7 +167,7 @@ export default function ServicesManager({ car, onKmUpdate }) {
 
               {count >= 4 && (
                 <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setModalOpen(true)}>
-                  🔧 Voir tous les services ({count})
+                  <Ico name="wrench" /> Voir tous les services ({count})
                 </button>
               )}
 
@@ -182,8 +183,8 @@ export default function ServicesManager({ car, onKmUpdate }) {
                 <div className="admin-modal" style={{ zIndex: 1200 }} onClick={e => { if (e.target.classList.contains('admin-modal')) { setOpen(false); setForm(EMPTY_SERVICE) } }}>
                   <div className="admin-resa-popup">
                     <div className="admin-resa-popup__head">
-                      <h3>🔧 Nouveau service — {car.name}</h3>
-                      <button className="phone-modal__close" onClick={() => { setOpen(false); setForm(EMPTY_SERVICE) }} aria-label="Fermer">✕</button>
+                      <h3><Ico name="wrench" /> Nouveau service — {car.name}</h3>
+                      <button className="phone-modal__close" onClick={() => { setOpen(false); setForm(EMPTY_SERVICE) }} aria-label="Fermer"><Icon name="close" /></button>
                     </div>
                     <div className="admin-resa-grid">
                       <label className="resa-full">Type de service *

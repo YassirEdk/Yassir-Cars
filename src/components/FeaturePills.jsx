@@ -1,59 +1,53 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Icon from './Icon'
-import { featureLabel, featureIcon } from '../data'
+import { PHONE, useMediaQuery } from '../hooks/useMediaQuery'
+import { featureLabel, featureShort, featureIcon, highlightsFirst } from '../data'
 
-// Equipment/feature pills. On mobile the list is capped to `mobileLimit` pills
-// plus a tappable "+N de plus" that reveals the rest (and "Voir moins" to
-// collapse again). On desktop every feature is shown.
+/* Equipment pills. Capped to `limit` pills (`mobileLimit` on phones) plus a "+N"
+   that reveals the rest. No `limit` → everything shows on desktop.
+   `short`: card version — short labels, the most compared options first.
+   `compact`: the "+N" says its number only, to hold on one line. */
 export default function FeaturePills({
   features,
   className = 'result-card__equip',
   pillClass = 'equip-pill',
+  limit = Infinity,
   mobileLimit = 5,
+  short = false,
+  compact = false,
 }) {
   const [expanded, setExpanded] = useState(false)
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
-  )
-
-  useEffect(() => {
-    const mq = window.matchMedia('(max-width: 768px)')
-    const onChange = (e) => setIsMobile(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
+  const isMobile = useMediaQuery(PHONE)
 
   if (!features?.length) return null
 
-  const collapsed = isMobile && !expanded
-  const shown = collapsed ? features.slice(0, mobileLimit) : features
-  const hidden = features.length - shown.length
+  const list = short ? highlightsFirst(features) : features
+  const max = isMobile ? mobileLimit : limit
+  // A lone hidden pill takes no more room than the "+1" that would hide it.
+  const collapsible = list.length > max + 1
+  const shown = collapsible && !expanded ? list.slice(0, max) : list
+  const hidden = list.length - shown.length
 
   return (
     <div className={className}>
       {shown.map((f) => (
         <span className={pillClass} key={f}>
-          <Icon name={featureIcon(f)} className={`${pillClass}__icon`} /> {featureLabel(f)}
+          <Icon name={featureIcon(f)} className={`${pillClass}__icon`} /> {short && !expanded ? featureShort(f) : featureLabel(f)}
         </span>
       ))}
 
-      {hidden > 0 && (
+      {collapsible && (
         <button
           type="button"
           className={`${pillClass} ${pillClass}--more`}
-          onClick={() => setExpanded(true)}
+          onClick={() => setExpanded(v => !v)}
+          aria-expanded={expanded}
         >
-          +{hidden} de plus
-        </button>
-      )}
-
-      {isMobile && expanded && features.length > mobileLimit && (
-        <button
-          type="button"
-          className={`${pillClass} ${pillClass}--more`}
-          onClick={() => setExpanded(false)}
-        >
-          Voir moins
+          {expanded
+            ? 'Voir moins'
+            : short
+              ? <span>+{hidden}<span className={compact || isMobile ? 'sr-only' : undefined}> équipements</span></span>
+              : `+${hidden} de plus`}
         </button>
       )}
     </div>

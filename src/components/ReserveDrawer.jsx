@@ -1,28 +1,26 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import CarPhoto from './CarPhoto'
 import DatePicker from './DatePicker'
 import FeaturePills from './FeaturePills'
 import Icon from './Icon'
 import SocialIcon from './SocialIcon'
 import SelectMenu from './SelectMenu'
-import { moroccanCities, addDays, colorName } from '../data'
+import PlaceOptions from './PlaceOptions'
+import { addDays, colorName, categoryLabel } from '../data'
+import { bookingDays, bookingErrors, bookingMessage, focusField, jours } from '../lib/booking'
 import { isCarAvailable, unitForColor } from '../lib/cars'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { formatMoney, CURRENCIES, CURRENCY_CODES } from '../lib/currency'
 import { waLink } from '../lib/contact'
+import { loadSearch } from '../lib/searchPrefs'
 import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 import './reservedrawer.css'
 
 // Kept in step with the slide-out animation in reservedrawer.css.
 const CLOSE_MS = 260
-
-function fmtFr(iso) {
-  if (!iso) return ''
-  const [y, m, d] = iso.split('-')
-  return `${d}/${m}/${y}`
-}
 
 /* Day of the week under each date ("vendredi"), so a picked date is never just
    three numbers. */
@@ -43,19 +41,26 @@ function defaultUnit(car, depart, retour) {
 /* Booking panel. Opened from a result card, and from the car cards on the home
    page / fleet once the availability popup has the dates — so booking never
    leaves the page the visitor is on. */
-export default function ReserveDrawer({ car, depart, retour, lieu, initialColor = null, onClose }) {
+export default function ReserveDrawer({ car, depart, retour, lieu, lieuRetour, initialColor = null, onClose }) {
+  // The page the panel is open on: the full booking page's "back" returns there.
+  const { pathname } = useLocation()
   const { settings, reload } = useSettings()
   const { currency, setCurrency } = useCurrency()
   const currencyOptions = CURRENCY_CODES.map(code => ({ value: code, label: CURRENCIES[code].label }))
   const minDays = settings.minRentalDays
-  const todayISO = new Date().toISOString().slice(0, 10)
 
   // Colour picked inside the drawer; reset whenever the visitor moves to
   // another vehicle.
   const [selColor, setSelColor] = useState(initialColor)
   const [curPhoto, setCurPhoto] = useState(0)
-  const [form, setForm] = useState({ fullName: '', lieu: lieu || '', depart: depart || '', retour: retour || '' })
-  const [error, setError] = useState('')
+  const [form, setForm] = useState(() => ({
+    fullName: '', lieu: lieu || '', depart: depart || '', retour: retour || '',
+    // '' = back where it was picked up. The cards of the home page don't pass it:
+    // their search is the saved one.
+    lieuRetour: lieuRetour ?? loadSearch()?.lieuRetour ?? '',
+  }))
+  const [errors, setErrors] = useState({})     // by field
+  const [error, setError] = useState('')       // about the sending itself
   const [sent, setSent] = useState(null)   // { url, text }
   const [copied, setCopied] = useState(false)
   // Bumped once the start date is picked, to pop the end calendar open.
@@ -88,7 +93,7 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
   useEffect(() => () => clearTimeout(closeTimer.current), [])
 
   useEffect(() => {
-    setSelColor(initialColor); setCurPhoto(0); setSent(null); setError('')
+    setSelColor(initialColor); setCurPhoto(0); setSent(null); setError(''); setErrors({})
   }, [car?.id])
 
   /* The drawer starts just below the top nav and the mini search bar instead of
@@ -134,7 +139,6 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
     }
   }, [requestClose])
 
-  const allUnits = car?.units?.length ? car.units : (car ? [car] : [])
   const colors = car?.colors ?? (car?.color ? [car.color] : [])
   const active = useMemo(() => {
     if (!car) return null
@@ -161,11 +165,13 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
   const promoPrice = discounted(active.price, rate)
   const promoLabel = discountLabel(rate)
 
-  const days = (() => {
-    if (!form.depart || !form.retour) return null
-    const diff = (new Date(form.retour) - new Date(form.depart)) / 86_400_000
-    return diff > 0 ? Math.ceil(diff) : null
-  })()
+  const days = bookingDays(form.depart, form.retour)
+
+  // Keeps what was typed, and drops the errors of the fields it touches.
+  const update = (patch) => {
+    setForm(f => ({ ...f, ...patch }))
+    setErrors(prev => Object.fromEntries(Object.entries(prev).filter(([key]) => !(key in patch))))
+  }
 
   const pickColor = (hex) => {
     setSelColor(hex)
@@ -173,40 +179,19 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
     setError('')
   }
 
-  const buildMessage = () => [
-    `Bonjour YASSIR CARS`,
-    ``,
-    `Je souhaite réserver le véhicule suivant :`,
-    `Voiture : *${car.name}*${effColor ? ` — ${colorName(effColor)}` : ''}`,
-    ``,
-    `Nom complet : ${form.fullName.trim()}`,
-    form.lieu   ? `Lieu : ${form.lieu}` : '',
-    form.depart ? `Date de début : ${fmtFr(form.depart)}` : '',
-    form.retour ? `Date de fin : ${fmtFr(form.retour)}` : '',
-    days        ? `Durée : ${days === 1 ? '1 jour' : `${days} jours`}` : '',
-    (promoPrice && days)
-      ? `Prix estimé : ${formatMoney(promoPrice * days, currency)}${currency !== 'MAD' ? ` (≈ ${(promoPrice * days).toLocaleString('fr-FR')} MAD)` : ''}`
-      : '',
-    ``,
-    `Merci !`,
-  ].filter(Boolean).join('\n')
-
   const handleWhatsApp = () => {
-    if (!form.fullName.trim()) return setError('Veuillez entrer votre nom complet.')
-    if (!form.lieu)   return setError('Veuillez choisir le lieu de prise en charge.')
-    if (!form.depart) return setError('Veuillez choisir la date de départ.')
-    if (!form.retour) return setError('Veuillez choisir la date de retour.')
-    if (form.retour < addDays(form.depart, minDays))
-      return setError(`La location doit durer au moins ${minDays} jours.`)
-    if (!available)
-      return setError('Ce véhicule est déjà réservé pour ces dates.')
+    setError('')
+    const found = bookingErrors(form, minDays)
+    setErrors(found)
+    if (Object.keys(found).length) return focusField(scrollRef.current, found)
     if (!settings.whatsapp) {
       reload()
       return setError('Envoi momentanément impossible. Vérifiez votre connexion et réessayez.')
     }
-    setError('')
 
-    const text = buildMessage()
+    const text = bookingMessage({
+      carName: car.name, color: effColor ? colorName(effColor) : '', form, dayPrice: promoPrice, currency,
+    })
     const url = waLink(settings.whatsapp, text)
     window.open(url, '_blank', 'noopener,noreferrer')
     setSent({ url, text })
@@ -224,16 +209,21 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
   // exactly the car and colour shown here.
   const fullPageState = {
     nom: car.name,
-    from: '/resultats',
+    from: pathname,
     carId: active.id,
     couleur: effColor ? colorName(effColor) : '',
     photo: gallery[curPhoto] || '',
     photos: gallery,
     features: active.features,
+    categorie: active.category,
+    fuel: active.fuel,
+    transmission: active.transmission,
+    seats: active.seats,
     prix: active.price,
     depart: form.depart,
     retour: form.retour,
     lieu: form.lieu,
+    lieuRetour: form.lieuRetour,
   }
 
   /* Rendered on <body>: a car card is inside animated/transformed wrappers,
@@ -264,8 +254,7 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
             className="rd-currency"
           />
           <button type="button" className="rd-top__close" onClick={requestClose} aria-label="Fermer">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-              strokeLinecap="round" width="17" height="17"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            <Icon name="close" size={15} />
           </button>
         </header>
 
@@ -287,25 +276,22 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
               </a>
               <div className="rd-sent__actions">
                 <button type="button" className="rd-btn rd-btn--ghost" onClick={copyMessage}>
-                  {copied ? 'Message copié ✓' : 'Copier le message'}
+                  {copied ? <><Icon name="check" /> Message copié</> : 'Copier le message'}
                 </button>
                 <button type="button" className="rd-btn rd-btn--ghost" onClick={() => setSent(null)}>
                   Modifier ma demande
                 </button>
               </div>
               <button type="button" className="rd-textlink" onClick={requestClose}>
-                ← Continuer à parcourir les véhicules
+                <Icon name="arrowLeft" /> Continuer à parcourir les véhicules
               </button>
             </section>
           ) : (
             <>
               {/* ── The car ── */}
-              <figure className="rd-hero">
+              <figure className="rd-hero stage">
                 {gallery[curPhoto] ? (
-                  <>
-                    <div className="rd-hero__blur" style={{ backgroundImage: `url(${gallery[curPhoto]})` }} />
-                    <img key={gallery[curPhoto]} src={gallery[curPhoto]} alt={car.name} className="rd-hero__img" />
-                  </>
+                  <CarPhoto key={gallery[curPhoto]} src={gallery[curPhoto]} alt={car.name} lazy={false} className="rd-hero__img" />
                 ) : (
                   <div className="rd-hero__none" style={{ background: active.brandColor }}>
                     {active.brandLogo
@@ -324,11 +310,11 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
                   <>
                     {curPhoto > 0 && (
                       <button type="button" className="rd-hero__nav rd-hero__nav--prev"
-                        onClick={() => setCurPhoto(i => i - 1)} aria-label="Photo précédente">‹</button>
+                        onClick={() => setCurPhoto(i => i - 1)} aria-label="Photo précédente"><Icon name="caretLeft" /></button>
                     )}
                     {curPhoto < gallery.length - 1 && (
                       <button type="button" className="rd-hero__nav rd-hero__nav--next"
-                        onClick={() => setCurPhoto(i => i + 1)} aria-label="Photo suivante">›</button>
+                        onClick={() => setCurPhoto(i => i + 1)} aria-label="Photo suivante"><Icon name="caretRight" /></button>
                     )}
                     <div className="rd-hero__dots">
                       {gallery.map((_, i) => (
@@ -345,7 +331,7 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
                 <div className="rd-carhead">
                   <div>
                     <h2 className="rd-carhead__name">{car.name}</h2>
-                    <span className="rd-carhead__cat">{car.category}</span>
+                    <span className="rd-carhead__cat">{categoryLabel(car.category)}</span>
                   </div>
                   <div className="rd-carhead__price">
                     <span className="rd-carhead__amount">{formatMoney(promoPrice, currency)}</span>
@@ -398,58 +384,56 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
                 {/* Same DatePicker as the search bar and the booking page, so
                     the calendar looks and behaves identically everywhere. */}
                 <div className="rd-dates" ref={datesRef} onMouseDown={revealDates}>
-                  <div className={`rd-date ${form.depart ? 'is-set' : ''}`}>
+                  <div className={`rd-date ${form.depart ? 'is-set' : ''} ${errors.depart ? 'has-error' : ''}`} data-field="depart">
                     <span className="rd-date__label">
                       <Icon name="calendar" /> Date début <span className="rd-req">*</span>
                     </span>
                     <DatePicker
                       value={form.depart}
                       onChange={v => {
-                        setForm(f => ({
-                          ...f,
-                          depart: v,
-                          // Keep the pair coherent instead of leaving an end
-                          // date that contradicts the new start.
-                          retour: f.retour && f.retour < addDays(v, minDays) ? '' : f.retour,
-                        }))
+                        // Keep the pair coherent instead of leaving an end date
+                        // that contradicts the new start.
+                        update(form.retour && form.retour < addDays(v, minDays) ? { depart: v, retour: '' } : { depart: v })
                         // Chain straight into the end date, no second click.
                         setEndKey(k => k + 1)
                       }}
+                      ariaLabel="Date de début"
                       placeholder="Choisir…"
                       className="rd-dp"
                     />
-                    <span className="rd-date__day">{weekday(form.depart) || 'à choisir'}</span>
+                    <span className="rd-date__day">{errors.depart || weekday(form.depart) || 'à choisir'}</span>
                   </div>
 
-                  <div className={`rd-date ${form.retour ? 'is-set' : ''}`}>
+                  <div className={`rd-date ${form.retour ? 'is-set' : ''} ${errors.retour ? 'has-error' : ''}`} data-field="retour">
                     <span className="rd-date__label">
                       <Icon name="calendar" /> Date fin <span className="rd-req">*</span>
                     </span>
                     <DatePicker
                       value={form.retour}
-                      onChange={v => setForm(f => ({ ...f, retour: v }))}
+                      onChange={retour => update({ retour })}
                       min={form.depart ? addDays(form.depart, minDays) : undefined}
                       highlight={form.depart || undefined}
+                      ariaLabel="Date de fin"
                       placeholder="Choisir…"
                       className="rd-dp"
                       openKey={endKey}
                     />
-                    <span className="rd-date__day">{weekday(form.retour) || 'à choisir'}</span>
+                    <span className="rd-date__day">{errors.retour || weekday(form.retour) || 'à choisir'}</span>
                   </div>
                 </div>
 
                 <p className="rd-note">
                   <Icon name="clock" />
                   {days
-                    ? <><strong>{days} jour{days > 1 ? 's' : ''}</strong> de location</>
-                    : <>Location minimum : {minDays} jour{minDays > 1 ? 's' : ''}</>}
+                    ? <><strong>{jours(days)}</strong> de location</>
+                    : <>Location minimum : {jours(minDays)}</>}
                 </p>
 
                 {days && (
                   <div className="rd-recap">
                     <div className="rd-recap__row">
-                      <span>{formatMoney(promoPrice, currency)} × {days} jour{days > 1 ? 's' : ''}</span>
-                      <span>{formatMoney(promoPrice * days, currency)}</span>
+                      <span>{formatMoney(active.price, currency)} × {jours(days)}</span>
+                      <span>{formatMoney(active.price * days, currency)}</span>
                     </div>
                     {promoLabel && (
                       <div className="rd-recap__row rd-recap__row--save">
@@ -469,24 +453,40 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
               <section className="rd-card">
                 <h3 className="rd-card__title"><span className="rd-step">2</span> Vos coordonnées</h3>
 
-                <label className="rd-field">
+                <label className={`rd-field ${errors.fullName ? 'has-error' : ''}`} data-field="fullName">
                   <span className="rd-field__label">Nom complet <span className="rd-req">*</span></span>
                   <input
-                    type="text" className="rd-input" placeholder="Mohammed Alami"
+                    type="text" className="rd-input" placeholder="Mohammed Alami" autoComplete="name"
                     value={form.fullName}
-                    onChange={e => setForm(f => ({ ...f, fullName: e.target.value }))}
+                    onChange={e => update({ fullName: e.target.value })}
+                    aria-invalid={errors.fullName ? true : undefined}
                   />
+                  {errors.fullName && <span className="rd-field__error" role="alert">{errors.fullName}</span>}
                 </label>
 
-                <label className="rd-field">
+                <label className={`rd-field ${errors.lieu ? 'has-error' : ''}`} data-field="lieu">
                   <span className="rd-field__label">Lieu de prise en charge <span className="rd-req">*</span></span>
                   <select
                     className={`rd-input ${!form.lieu ? 'is-placeholder' : ''}`}
                     value={form.lieu}
-                    onChange={e => setForm(f => ({ ...f, lieu: e.target.value }))}
+                    onChange={e => update({ lieu: e.target.value })}
+                    aria-invalid={errors.lieu ? true : undefined}
                   >
-                    <option value="" disabled>Choisissez une ville…</option>
-                    {moroccanCities.map(city => <option key={city} value={city}>{city}</option>)}
+                    <option value="" disabled>Ville ou aéroport…</option>
+                    <PlaceOptions />
+                  </select>
+                  {errors.lieu && <span className="rd-field__error" role="alert">{errors.lieu}</span>}
+                </label>
+
+                <label className="rd-field">
+                  <span className="rd-field__label">Lieu de retour</span>
+                  <select
+                    className="rd-input"
+                    value={form.lieuRetour}
+                    onChange={e => update({ lieuRetour: e.target.value })}
+                  >
+                    <option value="">Même agence qu’au départ</option>
+                    <PlaceOptions />
                   </select>
                 </label>
               </section>
@@ -498,7 +498,6 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
                   d’autres dates ou un autre véhicule.
                 </p>
               )}
-              {error && <p className="rd-alert rd-alert--error"><Icon name="clock" /> {error}</p>}
 
               <div className="rd-trust">
                 <span><Icon name="shield" /> Assurance incluse</span>
@@ -507,7 +506,7 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
               </div>
 
               <Link to="/reserver" state={fullPageState} className="rd-textlink">
-                Ouvrir la page complète →
+                Ouvrir la page complète <Icon name="arrowRight" />
               </Link>
             </>
           )}
@@ -516,8 +515,9 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
         {/* Sticky action bar — the price and the way to book never scroll away */}
         {!sent && (
           <footer className="rd-cta">
+            {error && <p className="rd-alert rd-alert--error" role="alert">{error}</p>}
             <div className="rd-cta__price">
-              <span className="rd-cta__label">{days ? `Total · ${days} jour${days > 1 ? 's' : ''}` : 'À partir de'}</span>
+              <span className="rd-cta__label">{days ? `Total · ${jours(days)}` : 'À partir de'}</span>
               <strong className="rd-cta__amount">
                 {days ? formatMoney(promoPrice * days, currency) : `${formatMoney(promoPrice, currency)} / j`}
               </strong>

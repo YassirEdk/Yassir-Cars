@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Ico } from './Icons'
-import { formatDate, formatKm, kmDone } from './format'
+import { Ico, DateRange } from './Icons'
+import { formatKm, kmDone } from './format'
 
 const TABS = [
   { key: 'reservee', label: 'À venir',    cls: 'is-upcoming' },
@@ -87,15 +87,17 @@ export default function Reservations({ cars, onOpenCar }) {
                       </button>
                     </td>
                     <td>
-                      {r.clientName ? <strong>{r.clientName}</strong> : '—'}
-                      {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2e</span>}
+                      <div className="admin-rtable__client">
+                        {r.clientName ? <strong>{r.clientName}</strong> : '—'}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge"><Ico name="users" /> 2e</span>}
+                      </div>
                     </td>
-                    <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                    <td className="admin-hist-table__dates"><DateRange start={r.start} end={r.end} /></td>
                     <td>{r.tel || '—'}</td>
                     <td>{r.cin || '—'}</td>
                     {ongoing && <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>}
                     {history && <td className="admin-hist-table__dist">{kmDone(r) != null ? formatKm(kmDone(r)) + ' km' : '—'}</td>}
-                    {history && <td>{r.damaged ? <span className="admin-damage-badge">🛠 Endommagée</span> : <span className="admin-ok-badge">✓ OK</span>}</td>}
+                    {history && <td>{r.damaged ? <span className="admin-damage-badge"><Ico name="wrench" /> Endommagée</span> : <span className="admin-ok-badge"><Ico name="check" /> OK</span>}</td>}
                     <td>
                       <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => onOpenCar(r.carId)}>
                         <Ico name="gauge" /> Gérer

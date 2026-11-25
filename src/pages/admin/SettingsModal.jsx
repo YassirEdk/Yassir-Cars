@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { showError } from '../../components/AdminDialog'
+import Icon from '../../components/Icon'
 import { updateSettings } from '../../lib/settings'
 import { useSettings } from '../../lib/SettingsContext'
 import { fetchCarsAdmin } from '../../lib/cars'
 import { colorName } from '../../data'
+import { Ico, Arrow } from './Icons'
 
 /* ── Admin settings: phone/WhatsApp, social links, minimum rental length ───── */
 /* The form is only mounted on settings that were really read: filled in from
@@ -16,8 +18,8 @@ export default function SettingsModal({ onClose }) {
     <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
       <div className="admin-resa-popup">
         <div className="admin-resa-popup__head">
-          <h3>⚙️ Réglages du site</h3>
-          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+          <h3><Ico name="settings" /> Réglages du site</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
         </div>
         <p className="admin-muted admin-pad">
           {status === 'loading' ? 'Chargement…' : 'Impossible de charger les réglages.'}
@@ -113,8 +115,8 @@ function SettingsForm({ onClose }) {
     <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
       <div className="admin-resa-popup">
         <div className="admin-resa-popup__head">
-          <h3>⚙️ Réglages du site</h3>
-          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+          <h3><Ico name="settings" /> Réglages du site</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
         </div>
 
         <div className="admin-resa-grid">
@@ -126,7 +128,7 @@ function SettingsForm({ onClose }) {
               placeholder="212661234567"
               autoFocus
             />
-            <small className="admin-hint">Format international, sans le 0 (Maroc : 0661… → 212661…). Sert au bouton « Réserver via WhatsApp ».</small>
+            <small className="admin-hint">Format international, sans le 0 (Maroc : 0661… <Arrow say="devient" /> 212661…). Sert au bouton « Réserver via WhatsApp ».</small>
           </label>
 
           <label className="resa-full">Numéro de téléphone (appels)
@@ -194,6 +196,7 @@ function SettingsForm({ onClose }) {
               <button
                 type="button"
                 role="switch"
+                aria-label="Remise promotionnelle"
                 aria-checked={form.discountActive}
                 className={`promo-switch ${form.discountActive ? 'is-on' : ''}`}
                 onClick={() => setForm(f => ({ ...f, discountActive: !f.discountActive }))}
@@ -264,7 +267,7 @@ function SettingsForm({ onClose }) {
                           <span className="promo-car__price">
                             {Number(c.price).toLocaleString('fr-FR')} {c.currency}
                             {isPicked(c.id) && Number(form.discountRate) > 0 && (
-                              <strong> → {Math.round(Number(c.price) * (1 - Number(form.discountRate) / 100)).toLocaleString('fr-FR')}</strong>
+                              <strong> <Arrow say="devient" /> {Math.round(Number(c.price) * (1 - Number(form.discountRate) / 100)).toLocaleString('fr-FR')}</strong>
                             )}
                           </span>
                         </label>

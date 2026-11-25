@@ -17,7 +17,7 @@ export default function Sidebar({ view, onNavigate, onOpenSettings, onLogout, op
       <div className={`admin-sidebar__scrim${open ? ' is-open' : ''}`} onClick={onClose} aria-hidden />
       <aside className={`admin-sidebar${open ? ' is-open' : ''}`}>
         <div className="admin-sidebar__brand">
-          <Logo size={38} animated={false} />
+          <Logo size={38} />
           <span className="admin-sidebar__badge">Admin</span>
         </div>
 

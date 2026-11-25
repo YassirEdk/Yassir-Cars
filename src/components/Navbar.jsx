@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { scrollToSection } from '../lib/scroll'
-import { Link } from 'react-router-dom'
+import { scrollToSection, focusBooking } from '../lib/scroll'
+import { Link, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import Icon from './Icon'
 import SocialIcon from './SocialIcon'
@@ -8,24 +8,40 @@ import { useSettings } from '../lib/SettingsContext'
 import { formatPhone, waLink } from '../lib/contact'
 
 const links = [
-  { href: '#accueil', label: 'Accueil' },
-  { href: '#services', label: 'Services' },
+  // The one section already on the bar at the top of the home page (index.css).
+  { href: '#accueil', label: 'Accueil', home: true },
   { href: '#flotte', label: 'Notre Flotte' },
   { href: '#comment', label: 'Comment ça marche' },
+  { href: '#services', label: 'Services' },
   { href: '#avis', label: 'Avis' },
   { href: '#contact', label: 'Contact' },
 ]
 
+// The search card of the hero.
+const BOOK = '#reserver'
+
 export default function Navbar({ minimal = false }) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  // The menu is sliding in or out. Otherwise it changes place without a transition:
+  // turning a tablet would show it sliding away.
+  const [sliding, setSliding] = useState(false)
   const [active, setActive] = useState('#accueil')
+  // The link under the mouse: the underline previews it.
+  const [hovered, setHovered] = useState(null)
+  const listRef = useRef(null)
   // Section to jump to once the drawer has closed and the scroll lock released.
   const pendingHash = useRef(null)
-  const { settings } = useSettings()
+  const { settings, status } = useSettings()
+  const navigate = useNavigate()
+
+  const menuOpenRef = useRef(false)
+  useEffect(() => { menuOpenRef.current = menuOpen }, [menuOpen])
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 40)
+    // While the phone menu is open the page is pinned and reads as scrolled to
+    // the top: the bar keeps its state instead of sliding away behind the menu.
+    const onScroll = () => { if (!menuOpenRef.current) setScrolled(window.scrollY > 40) }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -50,6 +66,34 @@ export default function Navbar({ minimal = false }) {
     sections.forEach(s => obs.observe(s))
     return () => obs.disconnect()
   }, [])
+
+  // Where the underline goes: under the text of the link the mouse is on, else
+  // of the current section's.
+  useEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    const place = () => {
+      const link = (hovered && list.querySelector(`.nav-link[href="${hovered}"]`)) || list.querySelector('.nav-link.active')
+      // No line while the current section has no link on the bar (the hero).
+      if (!link || !link.offsetWidth) { list.style.setProperty('--ink-w', 0); return }
+      const pad = parseFloat(getComputedStyle(link).paddingLeft) || 0
+      const box = list.getBoundingClientRect()
+      const at = link.getBoundingClientRect()
+      list.style.setProperty('--ink-x', `${at.left - box.left + pad}px`)
+      list.style.setProperty('--ink-w', (at.width - pad * 2) / 100)
+    }
+    place()
+    // The links change width once the font is there.
+    document.fonts?.ready.then(place)
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [active, hovered])
+
+  useEffect(() => {
+    if (menuOpen) { setSliding(true); return }
+    const timer = setTimeout(() => setSliding(false), 400)
+    return () => clearTimeout(timer)
+  }, [menuOpen])
 
   // Close the drawer with Escape.
   useEffect(() => {
@@ -85,7 +129,8 @@ export default function Navbar({ minimal = false }) {
       pendingHash.current = null
       if (target) {
         requestAnimationFrame(() => {
-          scrollToSection(target.slice(1))
+          if (target === BOOK) focusBooking()
+          else scrollToSection(target.slice(1))
         })
       }
     }
@@ -105,50 +150,70 @@ export default function Navbar({ minimal = false }) {
       scrollToSection(href.slice(1))
     }
   }
+  const book = () => {
+    if (menuOpen) {
+      pendingHash.current = BOOK
+      setMenuOpen(false)
+    } else if (!focusBooking()) {
+      navigate('/', { state: { scrollToId: BOOK.slice(1) } })      // error pages
+    }
+  }
   const wa = settings.whatsapp
     ? waLink(settings.whatsapp, 'Bonjour YASSIR CARS, je souhaite des informations.')
     : null
 
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="container nav-inner">
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Navigation principale">
+      {/* The bar spans the screen; the container lines its content up with the page's. */}
+      <div className="container">
+      <div className="nav-inner">
         <a href="#accueil" className="nav-brand" onClick={goTo('#accueil')}>
-          <Logo size={38} animated />
+          <Logo size={38} />
         </a>
 
         {!minimal && (
-        <ul className={`nav-links ${menuOpen ? 'open' : ''}`}>
+        <ul
+          id="nav-menu"
+          className={`nav-links ${menuOpen ? 'open' : ''} ${menuOpen || sliding ? 'slides' : ''}`}
+          ref={listRef}
+          onPointerLeave={() => setHovered(null)}
+        >
           {/* Drawer-only header: without it the open menu is six links adrift
-              in a black rectangle, with no branding and no way back. */}
+              on an empty screen, with no branding and no way back. */}
           <li className="nav-drawer__top" aria-hidden={!menuOpen}>
-            <Logo size={34} animated={false} />
+            <Logo size={34} />
             <button className="menu-close" onClick={close} aria-label="Fermer le menu">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                strokeLinecap="round" width="22" height="22"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              <Icon name="close" size={18} />
             </button>
           </li>
 
-          {links.map(l => (
-            <li key={l.href}>
+          {links.map((l, i) => (
+            <li key={l.href} style={{ '--row': i }} className={l.home ? 'nav-item--home' : undefined}>
               <a
                 href={l.href}
                 className={`nav-link ${active === l.href ? 'active' : ''}`}
                 aria-current={active === l.href ? 'page' : undefined}
                 onClick={goTo(l.href)}
+                onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHovered(l.href) }}
               >
                 {l.label}
               </a>
             </li>
           ))}
 
+          <li className="nav-ink" role="presentation" />
+
           {/* Drawer-only footer: the booking CTA and a way to reach a human. */}
-          <li className="nav-drawer__foot" aria-hidden={!menuOpen}>
-            <Link to="/flotte" className="btn btn-accent btn-lg btn-full" onClick={close}>
-              Voir notre flotte →
+          <li className="nav-drawer__foot" style={{ '--row': links.length }} aria-hidden={!menuOpen}>
+            <button type="button" className="btn btn-accent btn-lg btn-full" onClick={book}>
+              Réserver une voiture
+            </button>
+            <Link to="/flotte" className="btn btn-outline btn-full" onClick={close}>
+              Voir notre flotte <Icon name="arrowRight" />
             </Link>
             <div className="nav-drawer__contact">
               {wa && (
-                <a href={wa} target="_blank" rel="noopener noreferrer" className="nav-drawer__contact-btn">
+                <a href={wa} target="_blank" rel="noopener noreferrer" className="nav-drawer__contact-btn nav-drawer__contact-btn--wa">
                   <SocialIcon name="whatsapp" /> WhatsApp
                 </a>
               )}
@@ -164,24 +229,26 @@ export default function Navbar({ minimal = false }) {
 
         {/* Persistent actions, outside the drawer */}
         <div className="nav-actions">
+          {/* Holds its place while the number loads. */}
+          {!wa && status === 'loading' && <span className="nav-icon-btn is-waiting" aria-hidden="true" />}
           {wa && (
             <a
               href={wa}
               target="_blank"
               rel="noopener noreferrer"
-              className="nav-icon-btn"
+              className="nav-icon-btn nav-icon-btn--wa"
               aria-label="Nous écrire sur WhatsApp"
               title="WhatsApp"
             >
               <SocialIcon name="whatsapp" />
             </a>
           )}
-          {/* Goes to the full fleet page, which nothing else in the header
-              reached. The label matches the destination — "Réserver" pointed at
-              a search form and set the wrong expectation. */}
-          <Link to="/flotte" className="btn btn-accent nav-cta" onClick={close}>
-            Voir notre flotte
-          </Link>
+          {/* Same action as the hero's search, not a second one competing with
+              it: goes to the search card and puts the cursor in it. The fleet
+              stays one click away in the links. */}
+          <button type="button" className="btn btn-dark nav-cta" onClick={book}>
+            Réserver <Icon name="arrowRight" className="btn__arrow" />
+          </button>
 
           {!minimal && (
             <button
@@ -189,11 +256,13 @@ export default function Navbar({ minimal = false }) {
               onClick={() => setMenuOpen(v => !v)}
               aria-label={menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
               aria-expanded={menuOpen}
+              aria-controls="nav-menu"
             >
               <span /><span /><span />
             </button>
           )}
         </div>
+      </div>
       </div>
     </nav>
   )

@@ -12,29 +12,59 @@ export default function SelectMenu({ value, onChange, options, ariaLabel, classN
   const up = useOpensUp(flip, open, ref, listRef)
   const current = options.find(o => o.value === value)
 
+  const btnRef = useRef(null)
+  // Opened with the keyboard: focus moves to the current option.
+  const focusList = useRef(false)
+
   useEffect(() => {
     if (!open) return
     const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('mousedown', onDoc)
-      document.removeEventListener('keydown', onKey)
-    }
+    return () => document.removeEventListener('mousedown', onDoc)
   }, [open])
 
-  const pick = (v) => { onChange(v); setOpen(false) }
+  useEffect(() => {
+    if (!open || !focusList.current) return
+    focusList.current = false
+    const items = [...listRef.current.querySelectorAll('[role="option"]')]
+    const at = items.find(el => el.getAttribute('aria-selected') === 'true') ?? items[0]
+    at?.focus({ preventScroll: true })
+  }, [open])
+
+  const close = () => {
+    setOpen(false)
+    btnRef.current?.focus({ preventScroll: true })
+  }
+  const pick = (v) => { onChange(v); close() }
+
+  const onKeyDown = (e) => {
+    const step = e.key === 'ArrowDown' ? 1 : e.key === 'ArrowUp' ? -1 : 0
+    if (!open) {
+      if (step) { e.preventDefault(); focusList.current = true; setOpen(true) }
+      return
+    }
+    if (e.key === 'Escape') { e.stopPropagation(); return close() }
+    if (e.key === 'Tab') return setOpen(false)
+    const items = [...listRef.current.querySelectorAll('[role="option"]')]
+    const at = items.indexOf(document.activeElement)
+    const to = e.key === 'Home' ? 0
+      : e.key === 'End' ? items.length - 1
+        : step ? Math.max(0, Math.min(items.length - 1, at + step)) : -1
+    if (to < 0) return
+    e.preventDefault()
+    items[to].focus()
+  }
 
   return (
-    <div className={`smenu ${className}`} ref={ref}>
+    <div className={`smenu ${className}`} ref={ref} onKeyDown={onKeyDown}>
       <button
         type="button"
+        ref={btnRef}
         className={`smenu__btn ${open ? 'open' : ''}`}
         onClick={() => setOpen(o => !o)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={ariaLabel}
+        aria-label={ariaLabel ? `${ariaLabel} : ${current?.label ?? ''}` : undefined}
       >
         <span className="smenu__value">{current?.label ?? ''}</span>
         <svg className="smenu__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -44,12 +74,13 @@ export default function SelectMenu({ value, onChange, options, ariaLabel, classN
       </button>
 
       {open && (
-        <ul className={`smenu__list${up ? ' smenu__list--up' : ''}`} role="listbox" ref={listRef}>
+        <ul className={`smenu__list${up ? ' smenu__list--up' : ''}`} role="listbox" aria-label={ariaLabel} ref={listRef}>
           {options.map(o => (
-            <li key={o.value}>
+            <li key={o.value} role="presentation">
               <button
                 type="button"
                 role="option"
+                tabIndex={-1}
                 aria-selected={value === o.value}
                 className={`smenu__item ${value === o.value ? 'active' : ''}`}
                 onClick={() => pick(o.value)}

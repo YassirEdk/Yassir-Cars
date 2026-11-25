@@ -14,8 +14,15 @@ const Reserver = lazy(() => import('./pages/Reserver'))
 const Admin = lazy(() => import('./pages/Admin'))
 const ErrorPage = lazy(() => import('./pages/ErrorPage'))
 
+/* A new place or new dates start the results page afresh. Its filters are in the
+   URL too, but changing one must not reload the page under the visitor. */
+function Results() {
+  const params = new URLSearchParams(useLocation().search)
+  return <SearchResults key={['lieu', 'depart', 'retour', 'car'].map(k => params.get(k) ?? '').join('|')} />
+}
+
 const Loading = () => (
-  <div style={{ minHeight: '100vh', background: 'var(--dark)' }} aria-busy="true" />
+  <div style={{ minHeight: '100vh', background: 'var(--page)' }} aria-busy="true" />
 )
 
 export default function App() {
@@ -73,18 +80,20 @@ export default function App() {
       frame = requestAnimationFrame(() => { frame = 0; persist(takeSnapshot()) })
     }
 
-    lastSnap.current = null
+    // A filter change is the same page at the same spot.
+    if (!location.state?.keepScroll) lastSnap.current = null
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
       window.removeEventListener('scroll', onScroll)
       if (frame) cancelAnimationFrame(frame)
       persist(lastSnap.current)      // last value seen while the page was up
     }
-  }, [location.key, location.pathname])
+  }, [location.key, location.pathname])   // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Restore. A new page starts at the top; coming back returns to the spot the
      visitor left. */
   useEffect(() => {
+    if (location.state?.keepScroll && navType !== 'POP') return
     const id = location.state?.scrollToId
     const snap = id
       ? { id, offset: null }                    // "Retour à l'accueil" → that section
@@ -102,8 +111,7 @@ export default function App() {
     <Suspense fallback={<Loading />}>
       <Routes>
         <Route path="/" element={<Home />} />
-        {/* key={location.search} forces a full remount when search params change */}
-        <Route path="/resultats" element={<SearchResults key={location.search} />} />
+        <Route path="/resultats" element={<Results />} />
         <Route path="/flotte" element={<AllCars />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/reserver" element={<Reserver />} />

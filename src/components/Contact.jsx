@@ -1,35 +1,94 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Icon from './Icon'
 import SocialIcon from './SocialIcon'
+import { SectionTitle } from './SectionHead'
+import { useScrollReveal } from '../hooks/useScrollReveal'
 import { useSettings } from '../lib/SettingsContext'
 import { formatPhone, waLink } from '../lib/contact'
+import './contact.css'
 
 const subjects = ['Demande de réservation', 'Renseignement sur la flotte', 'Tarifs entreprise', 'Réclamation', 'Autre']
+
+const REQUIRED = { prenom: 'Entrez votre prénom', nom: 'Entrez votre nom', email: 'Entrez votre email' }
+
+function validate(form) {
+  const errors = {}
+  for (const [key, message] of Object.entries(REQUIRED)) if (!form[key].trim()) errors[key] = message
+  if (!errors.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) errors.email = 'Cet email semble incomplet'
+  return errors
+}
+
+// Label, control and error message, tied together for screen readers.
+function Field({ id, label, error, required, as: Tag = 'input', children, ...props }) {
+  return (
+    <div className={`form-group ${error ? 'has-error' : ''}`}>
+      <label htmlFor={`contact-${id}`}>
+        {label} {required && <span className="form-req" aria-hidden="true">*</span>}
+      </label>
+      <Tag
+        id={`contact-${id}`}
+        name={id}
+        required={required}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `contact-${id}-error` : undefined}
+        {...props}
+      >
+        {children}
+      </Tag>
+      {error && <span className="form-error" id={`contact-${id}-error`} role="alert">{error}</span>}
+    </div>
+  )
+}
+
+/* Built from the admin settings, and each block is dropped when its value is blank:
+   the site never invents an address, a number or an email. */
+function ContactList({ settings }) {
+  const { address, phone, whatsapp, contactEmail } = settings
+  return (
+    <ul className="contact__list">
+      {address && (
+        <li>
+          <span className="contact__icon"><Icon name="pin" /></span>
+          <div><strong>Adresse</strong><p>{address}</p></div>
+        </li>
+      )}
+      {(phone || whatsapp) && (
+        <li>
+          <span className="contact__icon"><Icon name="phone" /></span>
+          <div>
+            <strong>Téléphone</strong>
+            {phone && <a href={`tel:+${phone}`}>{formatPhone(phone)}</a>}
+            {whatsapp && (
+              <a href={waLink(whatsapp, 'Bonjour YASSIR CARS, je souhaite des informations.')} target="_blank" rel="noopener noreferrer">
+                {formatPhone(whatsapp)} (WhatsApp)
+              </a>
+            )}
+          </div>
+        </li>
+      )}
+      {contactEmail && (
+        <li>
+          <span className="contact__icon"><Icon name="mail" /></span>
+          <div><strong>Email</strong><a href={`mailto:${contactEmail}`}>{contactEmail}</a></div>
+        </li>
+      )}
+      <li>
+        <span className="contact__icon"><Icon name="clock" /></span>
+        <div>
+          <strong>Horaires</strong>
+          <p>Lun – sam : 8h – 20h</p>
+          <p>Dimanche : 9h – 18h</p>
+        </div>
+      </li>
+    </ul>
+  )
+}
 
 export default function Contact({ onSubmit }) {
   const { settings, reload } = useSettings()
   const [error, setError] = useState('')
+  const cardRef = useScrollReveal()
 
-  // Built from the admin settings, and each block is dropped when its value is
-  // blank — the site never invents an address, a number or an email.
-  const contactItems = [
-    settings.address && {
-      icon: 'pin', title: 'Adresse', lines: [settings.address],
-    },
-    (settings.phone || settings.whatsapp) && {
-      icon: 'phone', title: 'Téléphone', lines: [
-        settings.phone && formatPhone(settings.phone),
-        settings.whatsapp && `${formatPhone(settings.whatsapp)} (WhatsApp)`,
-      ].filter(Boolean),
-    },
-    settings.contactEmail && {
-      icon: 'mail', title: 'Email', lines: [settings.contactEmail],
-    },
-    {
-      icon: 'clock', title: "Horaires d'ouverture",
-      lines: ['Lun – Sam : 8h00 – 20h00', 'Dimanche : 9h00 – 18h00'],
-    },
-  ].filter(Boolean)
   const socialLinks = [
     { key: 'facebook',  label: 'Facebook',  url: settings.facebookUrl },
     { key: 'instagram', label: 'Instagram', url: settings.instagramUrl },
@@ -38,10 +97,23 @@ export default function Contact({ onSubmit }) {
   ].filter(s => s.url)
   const [form, setForm] = useState({ prenom: '', nom: '', email: '', tel: '', sujet: subjects[0], message: '' })
 
-  const set = (key) => (e) => setForm(f => ({ ...f, [key]: e.target.value }))
+  const [errors, setErrors] = useState({})
+  const formRef = useRef(null)
+
+  const set = (key) => (e) => {
+    setForm(f => ({ ...f, [key]: e.target.value }))
+    if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }))
+  }
+  // Everything a field needs but its label.
+  const field = (key) => ({ id: key, value: form[key], onChange: set(key), error: errors[key], required: key in REQUIRED })
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    // Before WhatsApp opens, not after.
+    const found = validate(form)
+    setErrors(found)
+    const first = Object.keys(found)[0]
+    if (first) return formRef.current.elements[first].focus()
     if (!settings.whatsapp) {
       reload()
       return setError('Envoi momentanément impossible. Vérifiez votre connexion et réessayez.')
@@ -76,69 +148,41 @@ export default function Contact({ onSubmit }) {
   }
 
   return (
-    <section className="section" id="contact">
+    <section className="section contact" id="contact">
       <div className="container">
-        <div className="section-header">
-          <div className="section-badge">Contactez-nous</div>
-          <h2 className="section-title">Nous sommes à votre écoute</h2>
-          <p className="section-subtitle">Une question, une demande spéciale ? Notre équipe vous répond rapidement.</p>
-        </div>
-
-        <div className="contact-grid">
-          <div className="contact-info">
-            {contactItems.map(item => (
-              <div className="contact-item" key={item.title}>
-                <div className="contact-icon"><Icon name={item.icon} /></div>
-                <div>
-                  <strong>{item.title}</strong>
-                  {item.lines.map(l => <p key={l}>{l}</p>)}
-                </div>
+        <div className="contact__card" ref={cardRef}>
+          <div className="contact__side">
+            <SectionTitle>Nous sommes à votre écoute</SectionTitle>
+            <p>Une question, une demande spéciale ? Notre équipe vous répond rapidement.</p>
+            <ContactList settings={settings} />
+            {socialLinks.length > 0 && (
+              <div className="contact__socials">
+                {socialLinks.map(s => (
+                  <a href={s.url} key={s.key} aria-label={s.label} title={s.label} target="_blank" rel="noopener noreferrer">
+                    <SocialIcon name={s.key} />
+                  </a>
+                ))}
               </div>
-            ))}
-            <div className="social-links">
-              {socialLinks.map(s => (
-                <a href={s.url} key={s.key} className="social-btn" aria-label={s.label} title={s.label} target="_blank" rel="noopener noreferrer">
-                  <SocialIcon name={s.key} /> {s.label}
-                </a>
-              ))}
-            </div>
+            )}
           </div>
 
-          <form className="contact-form" onSubmit={handleSubmit}>
+          <form className="contact-form" onSubmit={handleSubmit} ref={formRef} noValidate>
             <div className="form-row-2">
-              <div className="form-group">
-                <label>Prénom</label>
-                <input type="text" placeholder="Votre prénom" value={form.prenom} onChange={set('prenom')} required />
-              </div>
-              <div className="form-group">
-                <label>Nom</label>
-                <input type="text" placeholder="Votre nom" value={form.nom} onChange={set('nom')} required />
-              </div>
+              <Field {...field('prenom')} label="Prénom" type="text" placeholder="Votre prénom" autoComplete="given-name" />
+              <Field {...field('nom')} label="Nom" type="text" placeholder="Votre nom" autoComplete="family-name" />
+              <Field {...field('email')} label="Email" type="email" inputMode="email" placeholder="votre@email.com" autoComplete="email" />
+              <Field {...field('tel')} label="Téléphone" type="tel" inputMode="tel" placeholder="+212 6XX XXX XXX" autoComplete="tel" />
             </div>
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" placeholder="votre@email.com" value={form.email} onChange={set('email')} required />
-            </div>
-            <div className="form-group">
-              <label>Téléphone</label>
-              <input type="tel" placeholder="+212 6XX XXX XXX" value={form.tel} onChange={set('tel')} />
-            </div>
-            <div className="form-group">
-              <label>Sujet</label>
-              <select value={form.sujet} onChange={set('sujet')}>
-                {subjects.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Message</label>
-              <textarea rows={5} placeholder="Décrivez votre besoin..." value={form.message} onChange={set('message')} />
-            </div>
+            <Field {...field('sujet')} label="Sujet" as="select">
+              {subjects.map(s => <option key={s}>{s}</option>)}
+            </Field>
+            <Field {...field('message')} label="Message" as="textarea" rows={5} placeholder="Décrivez votre besoin…" />
             {error && <p className="contact-form__error" role="alert">{error}</p>}
-            <button type="submit" className="btn btn-primary btn-lg btn-full">
+            <button type="submit" className="btn btn-wa btn-lg btn-full">
               <SocialIcon name="whatsapp" /> Envoyer via WhatsApp
             </button>
             <p className="contact-form__note">
-              Votre message s’ouvrira dans WhatsApp — il ne part qu’une fois que vous l’envoyez.
+              Votre message s’ouvrira dans WhatsApp, il ne part qu’une fois que vous l’envoyez.
             </p>
           </form>
         </div>

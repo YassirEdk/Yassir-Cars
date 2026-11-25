@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
 import { useOpensUp } from '../hooks/useOpensUp'
+import { formatFriendlyDate, formatLongDate } from '../lib/dates'
 
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -21,10 +22,14 @@ const formatDisplay = (iso) => {
 // `openKey`: bump this counter from the parent to pop the calendar open — used
 // to chain "date de début" → "date de fin" without a second click.
 // `flip`: open above the field when the calendar doesn't fit below it.
-export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight, openKey, flip = false }) {
+// `friendly`: "Sam. 28 nov." instead of "28-Nov-2026".
+export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight, openKey, ariaLabel, friendly = false, flip = false }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
   const popRef = useRef(null)
+  const inputRef = useRef(null)
+  // Day the arrow keys moved to, focused once its month is on screen.
+  const focusDay = useRef('')
   const up = useOpensUp(flip, open, wrapRef, popRef)
 
   // Which month the calendar is showing
@@ -77,17 +82,75 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
   const prevMonth = () => setView(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 })
   const nextMonth = () => setView(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 })
 
+  const isOff = (iso) => Boolean((min && iso < min) || (!allowPast && iso < todayISO) || blockedDates?.has(iso))
+
   const pick = (d) => {
     onChange(toISO(year, month, d))
     setOpen(false)
+    inputRef.current?.focus({ preventScroll: true })
+  }
+
+  // Focus the day asked for by the keyboard (every render: the month may have
+  // just changed).
+  useEffect(() => {
+    if (!open || !focusDay.current) return
+    popRef.current?.querySelector(`[data-day="${focusDay.current}"]`)?.focus({ preventScroll: true })
+    focusDay.current = ''
+  })
+
+  // Moves to `iso`, or to the next selectable day in the direction of travel.
+  const moveTo = (iso, dir) => {
+    const [y, m, d] = iso.split('-').map(Number)
+    const day = new Date(y, m - 1, d)
+    for (let i = 0; i < 400; i++) {
+      const next = toISO(day.getFullYear(), day.getMonth(), day.getDate())
+      if (!isOff(next)) {
+        focusDay.current = next
+        setView({ year: day.getFullYear(), month: day.getMonth() })
+        return
+      }
+      day.setDate(day.getDate() + dir)
+    }
+  }
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Escape' && open) {
+      e.stopPropagation()
+      setOpen(false)
+      inputRef.current?.focus({ preventScroll: true })
+      return
+    }
+    if (e.target === inputRef.current) {
+      if (!['Enter', ' ', 'ArrowDown'].includes(e.key)) return
+      e.preventDefault()                // Enter would submit the form
+      setOpen(true)
+      const from = [value, min, todayISO].find(Boolean)
+      moveTo(from, 1)
+      return
+    }
+    const day = e.target.dataset?.day
+    const jump = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7, PageUp: -30, PageDown: 30 }[e.key]
+    if (!day || !jump) return
+    e.preventDefault()
+    const [y, m, d] = day.split('-').map(Number)
+    const to = new Date(y, m - 1, d + jump)
+    const iso = toISO(to.getFullYear(), to.getMonth(), to.getDate())
+    // Backwards into days that can't be picked: stay where we are.
+    if (jump < 0 && isOff(iso)) return
+    moveTo(iso, 1)
   }
 
   return (
-    <div className="datepicker" ref={wrapRef}>
+    <div className="datepicker" ref={wrapRef} onKeyDown={onKeyDown}>
       <input
+        ref={inputRef}
         type="text"
         readOnly
-        value={formatDisplay(value)}
+        role="combobox"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-label={ariaLabel}
+        value={friendly ? formatFriendlyDate(value) : formatDisplay(value)}
         placeholder={placeholder}
         onClick={openCalendar}
         className={`datepicker__input ${className || ''}`}
@@ -95,11 +158,11 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
       <span className="datepicker__icon" onClick={openCalendar}><Icon name="calendar" /></span>
 
       {open && (
-        <div className={`datepicker__pop${up ? ' datepicker__pop--up' : ''}`} ref={popRef}>
+        <div className={`datepicker__pop${up ? ' datepicker__pop--up' : ''}`} ref={popRef} role="dialog" aria-label={ariaLabel ?? 'Choisir une date'}>
           <div className="datepicker__head">
-            <button type="button" className="datepicker__nav" onClick={prevMonth}>‹</button>
-            <span className="datepicker__title">{MONTHS[month]} {year}</span>
-            <button type="button" className="datepicker__nav" onClick={nextMonth}>›</button>
+            <button type="button" className="datepicker__nav" onClick={prevMonth} aria-label="Mois précédent"><Icon name="caretLeft" size={13} /></button>
+            <span className="datepicker__title" aria-live="polite">{MONTHS[month]} {year}</span>
+            <button type="button" className="datepicker__nav" onClick={nextMonth} aria-label="Mois suivant"><Icon name="caretRight" size={13} /></button>
           </div>
 
           <div className="datepicker__grid datepicker__grid--days">
@@ -110,7 +173,6 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
             {cells.map((d, i) => {
               if (d === null) return <span key={`b${i}`} />
               const iso = toISO(year, month, d)
-              const disabled = (min && iso < min) || (!allowPast && iso < todayISO)
               const isBlocked = blockedDates?.has(iso)
               const isSelected = iso === value
               const isToday = iso === todayISO
@@ -119,8 +181,11 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
                 <button
                   type="button"
                   key={iso}
-                  disabled={disabled || isBlocked}
+                  data-day={iso}
+                  disabled={isOff(iso)}
                   onClick={() => pick(d)}
+                  aria-label={formatLongDate(iso)}
+                  aria-pressed={isSelected}
                   title={isHighlight ? 'Date de départ' : undefined}
                   className={`datepicker__day${isSelected ? ' is-selected' : ''}${isToday ? ' is-today' : ''}${isBlocked ? ' is-blocked' : ''}${isHighlight ? ' is-highlight' : ''}`}
                 >

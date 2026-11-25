@@ -1,0 +1,51 @@
+/* ── Contact: who we are on dark, the form on white ───────────────────────── */
+.contact__card { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); overflow: hidden; background: #fff; border-radius: 28px; box-shadow: 0 30px 70px -40px rgba(var(--dark-rgb),.4); }
+
+.contact__side { --lean: 72px; position: relative; isolation: isolate; display: flex; flex-direction: column; padding: 48px 96px 44px 48px; color: #fff; }
+/* Dark half and its red line, along the cut of the hero. */
+.contact__side::before, .contact__side::after { content: ''; position: absolute; inset: 0; z-index: -1; }
+.contact__side::before { background: var(--red); clip-path: polygon(calc(100% - 30px) 0, 100% 0, calc(100% - var(--lean)) 100%, calc(100% - var(--lean) - 30px) 100%); }
+.contact__side::after { background: var(--dark-bg); clip-path: polygon(0 0, calc(100% - 4px) 0, calc(100% - var(--lean) - 4px) 100%, 0 100%); }
+.contact__side .section-title { color: #fff; font-size: clamp(26px, 2.7vw, 36px); }
+.contact__side > p { margin-top: 14px; max-width: 34ch; font-size: 15.5px; line-height: 1.65; color: rgba(255,255,255,.8); }
+
+.contact__list { display: flex; flex-direction: column; gap: 22px; margin: 34px 0 36px; }
+.contact__list > li { display: flex; gap: 16px; }
+.contact__icon { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; background: rgba(255,255,255,.1); font-size: 22px; }
+.contact__list strong { display: block; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.contact__list :is(p, a) { display: block; font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.78); overflow-wrap: anywhere; }
+.contact__list a { width: fit-content; text-decoration: underline; text-decoration-color: rgba(255,255,255,.3); text-underline-offset: 3px; transition: color .2s, text-decoration-color .2s; }
+.contact__list a:hover { color: #fff; text-decoration-color: currentColor; }
+.contact__socials { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
+.contact__socials a { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.1); color: #fff; font-size: 19px; transition: background .2s, color .2s; }
+.contact__socials a:hover { background: #fff; color: var(--dark); }
+
+.contact-form { display: flex; flex-direction: column; gap: 18px; padding: 48px 48px 40px 28px; }
+.contact-form__error { margin: 0; font-size: 14px; font-weight: 600; color: var(--red-dark); }
+.contact-form__note { font-size: 13px; line-height: 1.5; text-align: center; color: var(--gray-600); }
+.form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; }
+
+@media (max-width: 1000px) {
+  .contact__card { grid-template-columns: minmax(0, 1fr); }
+  .contact__side { padding: 44px 40px 76px; }
+  /* Turned round: the cut runs under the dark half. */
+  .contact__side::before { clip-path: polygon(0 calc(100% - 30px), 100% calc(100% - 66px), 100% calc(100% - 36px), 0 100%); }
+  .contact__side::after { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 40px), 0 calc(100% - 4px)); }
+  .contact__list { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 20px; }
+  .contact-form { padding: 28px 40px 40px; }
+}
+@media (max-width: 640px) {
+  .contact__card { border-radius: 22px; }
+  .contact__side { padding: 30px 22px 60px; }
+  .contact__list { gap: 20px 16px; margin: 24px 0 0; }
+  /* Icon and label on one line, the rest under them. */
+  .contact__list > li { display: grid; grid-template-columns: auto minmax(0, 1fr); align-content: start; align-items: center; gap: 2px 8px; }
+  .contact__list > li > div { display: contents; }
+  .contact__icon { width: auto; height: auto; background: none; font-size: 19px; }
+  .contact__list :is(p, a) { grid-column: 1 / -1; font-size: 13.5px; }
+  .contact__socials { display: none; }       /* in the footer, right below */
+  .contact-form { gap: 14px; padding: 18px 20px 24px; }
+  .contact-form .btn { padding-inline: 14px; }
+  .form-row-2 { gap: 14px 12px; }
+  .form-row-2 > :nth-child(n+3) { grid-column: 1 / -1; }
+}

@@ -1,0 +1,77 @@
+/* ── One-message pages (404, 403, 405, nothing to book) ───────────────────── */
+.notice { position: relative; isolation: isolate; overflow: hidden; background: var(--page); }
+.notice__inner {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: 24px;
+  min-height: max(600px, 100vh); min-height: max(600px, 100svh); padding-block: 104px 88px;
+}
+/* The dark half and its red line, along the cut of the hero. */
+.notice::before {
+  content: ''; position: absolute; z-index: -2; top: 0; bottom: 0; left: 55%; right: -60%;
+  background: var(--dark-bg); border-left: 5px solid var(--red);
+  transform: skewX(calc(-1 * var(--slash)));
+}
+.notice__code { font-family: var(--title-font); font-stretch: 118%; font-size: clamp(96px, 13vw, 188px); font-weight: 800; line-height: .92; letter-spacing: -.045em; color: var(--dark); margin: 0 0 22px -.04em; }
+.notice__title { max-width: 16ch; font-family: var(--title-font); font-stretch: 118%; font-size: clamp(27px, 3.2vw, 42px); font-weight: 800; line-height: 1.12; letter-spacing: -.025em; color: var(--dark); text-wrap: balance; }
+.notice__tagline { margin-top: 14px; font-size: 18px; font-weight: 600; line-height: 1.5; color: var(--gray-800); }
+.notice__message { margin-top: 8px; max-width: 44ch; font-size: 16px; line-height: 1.65; color: var(--gray-600); text-wrap: pretty; }
+.notice__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+
+.notice__car { position: relative; align-self: end; margin: 0 -70px 24px -60px; }
+.notice__car img { display: block; position: relative; width: 100%; height: auto; animation: noticeCar .9s cubic-bezier(.16,.84,.3,1) backwards; }
+@keyframes noticeCar { from { opacity: 0; transform: translateX(90px); } }
+/* Light on the floor, or the tyres would vanish into the dark. */
+.notice__car::before {
+  content: ''; position: absolute; left: 0; right: -14%; bottom: -15%; height: 56%;
+  background: radial-gradient(50% 50%, rgba(226,230,238,.36), rgba(226,230,238,.13) 48%, transparent);
+}
+
+/* Buttons */
+.error-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-width: 200px; padding: 15px 28px; border-radius: 14px;
+  font-size: 15px; font-weight: 700; letter-spacing: .2px;
+  transition: transform .25s ease, box-shadow .25s ease, background .25s ease, border-color .25s ease, color .25s ease;
+}
+.error-btn__arrow { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; transition: transform .25s ease, background .25s ease, border-color .25s ease; }
+.error-btn--primary { background: var(--red); color: #fff; }
+.error-btn--primary .error-btn__arrow { background: rgba(255,255,255,.2); }
+.error-btn--ghost { background: #fff; color: var(--dark); border: 1.5px solid rgba(var(--dark-rgb),.16); }
+.error-btn--ghost .error-btn__arrow { border: 1.5px solid rgba(var(--dark-rgb),.24); }
+.error-btn .error-btn__arrow--back { margin-left: -12px; }
+.error-btn .error-btn__arrow:not(.error-btn__arrow--back) { margin-right: -12px; }
+@media (hover: hover) {
+  .error-btn--primary:hover { background: var(--red-dark); transform: translateY(-2px); box-shadow: 0 12px 26px -10px rgba(var(--red-rgb),.5); }
+  .error-btn--primary:hover .error-btn__arrow { background: rgba(255,255,255,.3); }
+  .error-btn--ghost:hover { transform: translateY(-2px); border-color: var(--dark); }
+  .error-btn--ghost:hover .error-btn__arrow { border-color: var(--dark); }
+  .error-btn:hover .error-btn__arrow--back { transform: translateX(-4px); }
+  .error-btn:hover .error-btn__arrow:not(.error-btn__arrow--back) { transform: translateX(4px); }
+}
+.error-btn:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
+
+@media (max-width: 1100px) {
+  .notice__car { margin-left: -20px; }
+  .notice__actions { flex-direction: column; align-items: flex-start; }
+  .error-btn { min-width: 232px; }
+}
+/* Phones and upright tablets: the words, then the car on dark. */
+@media (max-width: 860px) {
+  .notice__inner { grid-template-columns: minmax(0, 1fr); gap: 34px; min-height: 0; padding-block: 112px 0; }
+  .notice::before { content: none; }
+  .notice__actions { flex-direction: row; }
+  .notice__car { isolation: isolate; margin: 0 calc(50% - 50vw); padding: 0 max(18px, calc(50vw - 270px)) calc(var(--rise) + 44px); }
+  /* The dark, from the car's windows down, 5px under the red line it starts with. */
+  .notice__car::before, .notice__car::after { content: ''; position: absolute; inset: 22% 0 0; height: auto; }
+  .notice__car::before {
+    z-index: -1; clip-path: polygon(0 49px, 100% 5px, 100% 100%, 0 100%);
+    background: radial-gradient(46% 20% at 50% 72%, rgba(226,230,238,.3), transparent), var(--dark-bg);
+  }
+  .notice__car::after { z-index: -2; background: var(--red); clip-path: polygon(0 44px, 100% 0, 100% 100%, 0 100%); }
+}
+@media (max-width: 520px) {
+  .notice__inner { padding-top: 96px; }
+  .notice__tagline { font-size: 17px; }
+  .notice__actions { flex-direction: column; align-items: stretch; margin-top: 26px; }
+  .error-btn { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .notice__car img { animation: none; } }

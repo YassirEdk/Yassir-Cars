@@ -1,0 +1,45 @@
+/* ── Car photos ───────────────────────────────────────────────────────────────
+   Two tones split by the cut of the hero, and the car standing across both. */
+.stage { position: relative; isolation: isolate; overflow: hidden; background: #EDEFF2; }
+/* Wide enough to reach the far edge whatever the lean takes off it. Always this
+   light grey, pointed at or not: it never turns dark, and no line is drawn. */
+.stage::before {
+  content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 56%; right: -40%;
+  transform: skewX(calc(-1 * var(--slash)));
+  background: #D0D5DC;
+}
+
+.car-photo { position: relative; container-type: size; display: grid; width: 100%; height: 100%; }
+.car-photo__box { position: relative; display: block; min-width: 0; min-height: 0; }
+.car-photo img { display: block; }
+/* Not placed yet: it would be seen jumping to its size. Then it fades in. */
+.car-photo--wait .car-photo__box { visibility: hidden; }
+.car-photo:not(.car-photo--wait) img { animation: photoIn .35s ease; }
+@keyframes photoIn { from { opacity: 0; } }
+/* A heavy photo on a slow line: say it is coming. */
+.car-photo--wait::after {
+  content: ''; position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%;
+  border: 2.5px solid rgba(var(--dark-rgb),.14); border-top-color: rgba(var(--dark-rgb),.55);
+  animation: photoSpin .8s linear infinite, photoIn .2s ease .4s backwards;
+}
+@keyframes photoSpin { to { transform: rotate(1turn); } }
+
+:is(.car-photo--wait, .car-photo--plain) .car-photo__box { padding: 5cqh 6cqw 9cqh; }
+:is(.car-photo--wait, .car-photo--plain) img { width: 100%; height: 100%; object-fit: contain; }
+/* A picture with its own background. */
+.car-photo--scene img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* The car alone: as wide as the frame allows, wheels on the line. */
+:is(.car-photo--cut, .car-photo--white) .car-photo__box {
+  place-self: end center; margin-bottom: 12cqh;
+  width: min(88cqw, 74cqh * var(--r)); aspect-ratio: var(--r);
+}
+:is(.car-photo--cut, .car-photo--white) img {
+  position: absolute; left: var(--left); top: var(--top); width: var(--zoom); max-width: none; height: auto;
+}
+/* Cropped by its own photo: that edge goes to the frame's. */
+.car-photo--at-left .car-photo__box { justify-self: start; }
+.car-photo--at-right .car-photo__box { justify-self: end; }
+.car-photo--at-bottom .car-photo__box { margin-bottom: 0; }
+/* Shot on white: the white takes the colour of the backdrop. */
+.car-photo--white { mix-blend-mode: multiply; }

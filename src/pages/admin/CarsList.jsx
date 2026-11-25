@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { showError, confirmAsync } from '../../components/AdminDialog'
-import { colorName } from '../../data'
+import { colorName, categoryLabel } from '../../data'
 import { deleteCar, setCarDamaged, setCarOrder } from '../../lib/cars'
 import { Ico } from './Icons'
 import { formatKm } from './format'
@@ -63,7 +63,7 @@ export default function CarsList({ cars, setCars, load, loading, loadError, onEd
 
       {loadError && (
         <div className="admin-load-error admin-pad">
-          <span>⚠ {loadError}</span>
+          <span><Ico name="warning" /> {loadError}</span>
           <button className="admin-btn admin-btn--sm" onClick={load}>Réessayer</button>
         </div>
       )}
@@ -102,11 +102,11 @@ export default function CarsList({ cars, setCars, load, loading, loadError, onEd
                 </div>
                 <div className="admin-car__main">
                   <div className="admin-car__top">
-                    <div className="admin-car__title-row" onClick={() => onOpenCar(car.id)} style={{ cursor: 'pointer', flex: 1 }}>
+                    <div className="admin-car__title-row" onClick={() => onOpenCar(car.id)}>
                       <h3>{car.name} <span className={`admin-status-pill ${meta.cls}`}>{meta.label}</span></h3>
                       <div className="admin-car__meta">
                         <span className="admin-tag admin-tag--order" title="Ordre d'affichage">#{(Number(car.sortOrder) || 0) + 1}</span>
-                        <span className="admin-tag">{car.category}</span>
+                        <span className="admin-tag">{categoryLabel(car.category)}</span>
                         {car.color && <span className="admin-dot" style={{ background: car.color }} title={colorName(car.color)} />}
                         {car.lastKm != null && <span className="admin-last-km" title="Dernier km déclaré"><Ico name="gauge" /> {formatKm(car.lastKm)} km</span>}
                         {car.immatriculation && <span className="admin-plate">{car.immatriculation}</span>}
@@ -124,18 +124,18 @@ export default function CarsList({ cars, setCars, load, loading, loadError, onEd
                               next
                                 ? `Marquer « ${car.name} » comme endommagée ? Elle ne sera plus disponible à la réservation.`
                                 : `Marquer « ${car.name} » comme disponible ? Elle redeviendra réservable.`,
-                              { confirmLabel: next ? 'Endommagée' : 'Disponible', danger: next }
+                              { confirmLabel: next ? 'Endommagée' : 'Disponible', danger: next, icon: next ? 'wrench' : 'question' }
                             )
                             if (!ok) return
                             await setCarDamaged(car.id, next)
                             load()
                           }}
                         />
-                        🛠 Endommagée
+                        <Ico name="wrench" /> Endommagée
                       </label>
                       <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => onOpenCar(car.id)}><Ico name="gauge" /> Dashboard</button>
-                      <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => onEdit(car)}>✏ Modifier</button>
-                      <button className="admin-btn admin-btn--sm admin-btn--delcar" onClick={() => remove(car)}>🗑 Supprimer</button>
+                      <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => onEdit(car)}><Ico name="pencil" /> Modifier</button>
+                      <button className="admin-btn admin-btn--sm admin-btn--delcar" onClick={() => remove(car)}><Ico name="trash" /> Supprimer</button>
                     </div>
                   </div>
                 </div>

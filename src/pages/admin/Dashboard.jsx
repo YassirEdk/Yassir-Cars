@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { DialogHost } from '../../components/AdminDialog'
+import Icon from '../../components/Icon'
 import { fetchCarsAdmin } from '../../lib/cars'
 import { Ico } from './Icons'
 import CarForm, { EMPTY_CAR } from './CarForm'
@@ -75,7 +76,7 @@ export default function Dashboard({ onLogout }) {
             <Ico name="menu" />
           </button>
           {view.type === 'car' && (
-            <button className="admin-topbar__back" onClick={() => setView({ type: 'cars' })} aria-label="Retour">←</button>
+            <button className="admin-topbar__back" onClick={() => setView({ type: 'cars' })} aria-label="Retour"><Icon name="arrowLeft" /></button>
           )}
           <div className="admin-topbar__title">
             <h1>{title.h1}</h1>

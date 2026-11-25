@@ -1,0 +1,3427 @@
+{
+  "persona": {
+    "id": "mre_telephone",
+    "goal": "Tu seras \u00e0 Casablanca du 10 au 14 d\u00e9cembre 2026. Loue la voiture la moins ch\u00e8re pour ces dates, jusqu'\u00e0 envoyer la demande. Tu t'appelles Karim Test.",
+    "prompt": "You are 34 and live in France. You are booking a car on your phone, between two\nthings, for your family holiday in Morocco. You read French well. You do not read\nparagraphs: you look for a price and for the biggest thing that moves you forward.\nYou have been overcharged by an agency before, so a price that changes, or that you\ncannot explain, makes you suspicious.\n",
+    "device": "mobile",
+    "patience_budget": 10,
+    "reading_depth": "skim",
+    "tech_literacy": "medium",
+    "trust": "low",
+    "attention_bias": [
+      "prices",
+      "large_elements",
+      "color_contrast",
+      "faces"
+    ]
+  },
+  "config": {
+    "url": "http://localhost:5998/",
+    "persona_id": "mre_telephone",
+    "trial": 0,
+    "goal": "Tu seras \u00e0 Casablanca du 10 au 14 d\u00e9cembre 2026. Loue la voiture la moins ch\u00e8re pour ces dates, jusqu'\u00e0 envoyer la demande. Tu t'appelles Karim Test.",
+    "storage_state": null,
+    "extension_dir": null,
+    "extension_storage": null,
+    "extension_inject": null,
+    "extension_ready_selector": null,
+    "state_probe": "/* Run in the page after every step; the person never sees it. It notes which\n   WhatsApp message the site prepared, since none of them may really be sent. */\n() => {\n  const box = (window.__foveal ||= { sent: [] })\n  if (!box.on) {\n    box.on = true\n    const note = (url) => {\n      const u = String(url ?? '')\n      if (/wa\\.me|whatsapp/.test(u)) box.sent.push(new URL(u).searchParams.get('text') ?? '')\n    }\n    const open = window.open\n    window.open = (url, ...rest) => { note(url); return open.call(window, url, ...rest) }\n    addEventListener('click', (e) => note(e.target.closest?.('a[href*=\"wa.me\"]')?.href), true)\n  }\n  const message = box.sent.filter(t => t.includes('Je souhaite r\u00e9server le v\u00e9hicule')).pop() ?? ''\n  const line = (name) => message.match(new RegExp(`^${name} : (.*)$`, 'm'))?.[1] ?? ''\n  return {\n    path: location.pathname,\n    searched: location.pathname === '/resultats',\n    form_open: !!document.querySelector('.rd-top') || location.pathname === '/reserver',\n    sent: !!message,\n    car: line('Voiture'),\n    pickup: line('Lieu'),\n    dropoff: line('Lieu de retour'),\n    start: line('Date de d\u00e9but'),\n    end: line('Date de fin'),\n    whatsapp_clicks: box.sent.length,\n  }\n}",
+    "block_hosts": "wa.me,*.wa.me,whatsapp.com,*.whatsapp.com",
+    "map_hosts": null,
+    "success_url": null,
+    "success_text": null,
+    "success_selector": null,
+    "question": null,
+    "expect": null,
+    "max_steps": 30,
+    "max_saccades_per_state": 12,
+    "persona_model": "assistant",
+    "actuator_model": "assistant",
+    "base_url": "http://127.0.0.1:5981",
+    "api_key": null,
+    "local_mode": "json",
+    "temperature": 0.5,
+    "seed": null,
+    "model_max_edge": 1400,
+    "history_verbatim_steps": 6,
+    "gaze": "computed",
+    "search_radius_px": 60,
+    "headless": true,
+    "slow_mo_ms": 0,
+    "nav_timeout_ms": 30000,
+    "settle_ms": 600,
+    "out_dir": "results\\tour-1\\runs",
+    "save_raw_frames": true,
+    "client": null,
+    "redact": "",
+    "no_store_frames": false,
+    "profile_version": "perception-v1",
+    "px_per_deg": 35,
+    "zones": [
+      [
+        2.0,
+        0.0
+      ],
+      [
+        5.0,
+        2.0
+      ],
+      [
+        10.0,
+        6.0
+      ],
+      [
+        20.0,
+        11.0
+      ],
+      [
+        999.0,
+        16.0
+      ]
+    ],
+    "gist_sigma_at_1440": 12.0
+  },
+  "profile_version": "perception-v1",
+  "started": 1795635581.6560278,
+  "duration_s": 270.28,
+  "outcome": "goal_achieved_unverified",
+  "steps": 15,
+  "states": [
+    {
+      "index": 0,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 8.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 332.0,
+            "top": 9.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "Voir la flotte",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 342.65625,
+            "width": 128.453125,
+            "height": 52
+          }
+        },
+        {
+          "text": "R\u00e9server sur WhatsApp",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 150.453125,
+            "top": 342.65625,
+            "width": 225.546875,
+            "height": 52
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 740.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Ville ou a\u00e9roport",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Ville ou a\u00e9roport",
+          "rect": {
+            "left": 29.0,
+            "top": 779.609375,
+            "width": 332,
+            "height": 64
+          }
+        }
+      ],
+      "raw_path": "frames\\state000_raw.png"
+    },
+    {
+      "index": 1,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Ville ou a\u00e9roport",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Ville ou a\u00e9roport",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 26 nov.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state001_raw.png"
+    },
+    {
+      "index": 2,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Ville ou a\u00e9roport",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Ville ou a\u00e9roport",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 26 nov.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state002_raw.png"
+    },
+    {
+      "index": 3,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Ville ou a\u00e9roport",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Ville ou a\u00e9roport",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Rechercher une ville ou un a\u00e9roport",
+          "rect": {
+            "left": 38.0,
+            "top": 225.609375,
+            "width": 314,
+            "height": 40
+          }
+        },
+        {
+          "text": "Casablanca",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 302.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Mohammed VCasablanca",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 339.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "Marrakech",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 376.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "Rabat",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 413.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "Tanger",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 450.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "Agadir",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 487.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "F\u00e8s",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 524.0,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Marrakech-M\u00e9nara",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 591.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Agadir-Al Massira",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 628.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Rabat-Sal\u00e9",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 665.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Tanger Ibn Battouta",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 702.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport F\u00e8s-Sa\u00efss",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 739.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Oujda-Angads",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 776.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "A\u00e9roport Nador-El Aroui",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 38.0,
+            "top": 813.390625,
+            "width": 314,
+            "height": 37
+          }
+        },
+        {
+          "text": "Jeu. 26 nov.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state003_raw.png"
+    },
+    {
+      "index": 4,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Casablanca",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Casablanca",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 26 nov.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state004_raw.png"
+    },
+    {
+      "index": 5,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Casablanca",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Casablanca",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 26 nov.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Mois pr\u00e9c\u00e9dent",
+          "rect": {
+            "left": 44.0,
+            "top": 307.609375,
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Mois suivant",
+          "rect": {
+            "left": 274.0,
+            "top": 307.609375,
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "text": "1",
+          "tag": "BUTTON",
+          "label": "1 novembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "2",
+          "tag": "BUTTON",
+          "label": "2 novembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "3",
+          "tag": "BUTTON",
+          "label": "3 novembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "4",
+          "tag": "BUTTON",
+          "label": "4 novembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "5",
+          "tag": "BUTTON",
+          "label": "5 novembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "6",
+          "tag": "BUTTON",
+          "label": "6 novembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "7",
+          "tag": "BUTTON",
+          "label": "7 novembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "8",
+          "tag": "BUTTON",
+          "label": "8 novembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "9",
+          "tag": "BUTTON",
+          "label": "9 novembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "10",
+          "tag": "BUTTON",
+          "label": "10 novembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "11",
+          "tag": "BUTTON",
+          "label": "11 novembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "12",
+          "tag": "BUTTON",
+          "label": "12 novembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "13",
+          "tag": "BUTTON",
+          "label": "13 novembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "14",
+          "tag": "BUTTON",
+          "label": "14 novembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "15",
+          "tag": "BUTTON",
+          "label": "15 novembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "16",
+          "tag": "BUTTON",
+          "label": "16 novembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "17",
+          "tag": "BUTTON",
+          "label": "17 novembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "18",
+          "tag": "BUTTON",
+          "label": "18 novembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "19",
+          "tag": "BUTTON",
+          "label": "19 novembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "20",
+          "tag": "BUTTON",
+          "label": "20 novembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "21",
+          "tag": "BUTTON",
+          "label": "21 novembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "22",
+          "tag": "BUTTON",
+          "label": "22 novembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "23",
+          "tag": "BUTTON",
+          "label": "23 novembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "24",
+          "tag": "BUTTON",
+          "label": "24 novembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "25",
+          "tag": "BUTTON",
+          "label": "25 novembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "26",
+          "tag": "BUTTON",
+          "label": "26 novembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "27",
+          "tag": "BUTTON",
+          "label": "27 novembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "28",
+          "tag": "BUTTON",
+          "label": "28 novembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "29",
+          "tag": "BUTTON",
+          "label": "29 novembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "30",
+          "tag": "BUTTON",
+          "label": "30 novembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 564.390625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state005_raw.png"
+    },
+    {
+      "index": 6,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Casablanca",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Casablanca",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 26 nov.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Mois pr\u00e9c\u00e9dent",
+          "rect": {
+            "left": 44.0,
+            "top": 307.609375,
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Mois suivant",
+          "rect": {
+            "left": 274.0,
+            "top": 307.609375,
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "text": "1",
+          "tag": "BUTTON",
+          "label": "1 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "2",
+          "tag": "BUTTON",
+          "label": "2 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "3",
+          "tag": "BUTTON",
+          "label": "3 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "4",
+          "tag": "BUTTON",
+          "label": "4 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "5",
+          "tag": "BUTTON",
+          "label": "5 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "6",
+          "tag": "BUTTON",
+          "label": "6 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 377.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "7",
+          "tag": "BUTTON",
+          "label": "7 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "8",
+          "tag": "BUTTON",
+          "label": "8 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "9",
+          "tag": "BUTTON",
+          "label": "9 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "10",
+          "tag": "BUTTON",
+          "label": "10 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "11",
+          "tag": "BUTTON",
+          "label": "11 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "12",
+          "tag": "BUTTON",
+          "label": "12 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "13",
+          "tag": "BUTTON",
+          "label": "13 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 414.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "14",
+          "tag": "BUTTON",
+          "label": "14 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "15",
+          "tag": "BUTTON",
+          "label": "15 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "16",
+          "tag": "BUTTON",
+          "label": "16 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "17",
+          "tag": "BUTTON",
+          "label": "17 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "18",
+          "tag": "BUTTON",
+          "label": "18 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "19",
+          "tag": "BUTTON",
+          "label": "19 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "20",
+          "tag": "BUTTON",
+          "label": "20 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 452.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "21",
+          "tag": "BUTTON",
+          "label": "21 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "22",
+          "tag": "BUTTON",
+          "label": "22 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "23",
+          "tag": "BUTTON",
+          "label": "23 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "24",
+          "tag": "BUTTON",
+          "label": "24 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "25",
+          "tag": "BUTTON",
+          "label": "25 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "26",
+          "tag": "BUTTON",
+          "label": "26 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "27",
+          "tag": "BUTTON",
+          "label": "27 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 489.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "28",
+          "tag": "BUTTON",
+          "label": "28 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "29",
+          "tag": "BUTTON",
+          "label": "29 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "30",
+          "tag": "BUTTON",
+          "label": "30 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "31",
+          "tag": "BUTTON",
+          "label": "31 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 526.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state006_raw.png"
+    },
+    {
+      "index": 7,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Casablanca",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Casablanca",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 10 d\u00e9c.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Mois pr\u00e9c\u00e9dent",
+          "rect": {
+            "left": 44.0,
+            "top": 381.609375,
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Mois suivant",
+          "rect": {
+            "left": 274.0,
+            "top": 381.609375,
+            "width": 30,
+            "height": 30
+          }
+        },
+        {
+          "text": "1",
+          "tag": "BUTTON",
+          "label": "1 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 451.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "2",
+          "tag": "BUTTON",
+          "label": "2 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 451.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "3",
+          "tag": "BUTTON",
+          "label": "3 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 451.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "4",
+          "tag": "BUTTON",
+          "label": "4 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 451.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "5",
+          "tag": "BUTTON",
+          "label": "5 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 451.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "6",
+          "tag": "BUTTON",
+          "label": "6 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 451.203125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "7",
+          "tag": "BUTTON",
+          "label": "7 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "8",
+          "tag": "BUTTON",
+          "label": "8 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "9",
+          "tag": "BUTTON",
+          "label": "9 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "10",
+          "tag": "BUTTON",
+          "label": "10 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "11",
+          "tag": "BUTTON",
+          "label": "11 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "12",
+          "tag": "BUTTON",
+          "label": "12 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "13",
+          "tag": "BUTTON",
+          "label": "13 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 488.640625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "14",
+          "tag": "BUTTON",
+          "label": "14 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "15",
+          "tag": "BUTTON",
+          "label": "15 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "16",
+          "tag": "BUTTON",
+          "label": "16 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "17",
+          "tag": "BUTTON",
+          "label": "17 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "18",
+          "tag": "BUTTON",
+          "label": "18 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "19",
+          "tag": "BUTTON",
+          "label": "19 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "20",
+          "tag": "BUTTON",
+          "label": "20 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 526.078125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "21",
+          "tag": "BUTTON",
+          "label": "21 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "22",
+          "tag": "BUTTON",
+          "label": "22 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "23",
+          "tag": "BUTTON",
+          "label": "23 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "24",
+          "tag": "BUTTON",
+          "label": "24 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "25",
+          "tag": "BUTTON",
+          "label": "25 d\u00e9cembre 2026",
+          "rect": {
+            "left": 193.75,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "26",
+          "tag": "BUTTON",
+          "label": "26 d\u00e9cembre 2026",
+          "rect": {
+            "left": 231.1875,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "27",
+          "tag": "BUTTON",
+          "label": "27 d\u00e9cembre 2026",
+          "rect": {
+            "left": 268.625,
+            "top": 563.515625,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "28",
+          "tag": "BUTTON",
+          "label": "28 d\u00e9cembre 2026",
+          "rect": {
+            "left": 44.0,
+            "top": 600.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "29",
+          "tag": "BUTTON",
+          "label": "29 d\u00e9cembre 2026",
+          "rect": {
+            "left": 81.4375,
+            "top": 600.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "30",
+          "tag": "BUTTON",
+          "label": "30 d\u00e9cembre 2026",
+          "rect": {
+            "left": 118.875,
+            "top": 600.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "31",
+          "tag": "BUTTON",
+          "label": "31 d\u00e9cembre 2026",
+          "rect": {
+            "left": 156.3125,
+            "top": 600.953125,
+            "width": 35.4375,
+            "height": 35.4375
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state007_raw.png"
+    },
+    {
+      "index": 8,
+      "url": "http://localhost:5998/",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 4.5,
+            "width": 192.453125,
+            "height": 46
+          }
+        },
+        {
+          "text": "",
+          "tag": "A",
+          "label": "Nous \u00e9crire sur WhatsApp",
+          "rect": {
+            "left": 278.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Ouvrir le menu",
+          "rect": {
+            "left": 332.0,
+            "top": 5.5,
+            "width": 44,
+            "height": 44
+          }
+        },
+        {
+          "text": "on",
+          "tag": "INPUT",
+          "label": null,
+          "rect": {
+            "left": 30.0,
+            "top": 107.609375,
+            "width": 36,
+            "height": 20
+          }
+        },
+        {
+          "text": "Casablanca",
+          "tag": "BUTTON",
+          "label": "Lieu de prise en charge : Casablanca",
+          "rect": {
+            "left": 29.0,
+            "top": 146.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Jeu. 10 d\u00e9c.",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 29.0,
+            "top": 220.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Lun. 14 d\u00e9c.",
+          "tag": "INPUT",
+          "label": "Date de retour",
+          "rect": {
+            "left": 29.0,
+            "top": 294.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Toutes cat\u00e9gories",
+          "tag": "BUTTON",
+          "label": "Cat\u00e9gorie : Toutes cat\u00e9gories",
+          "rect": {
+            "left": 29.0,
+            "top": 368.609375,
+            "width": 332,
+            "height": 64
+          }
+        },
+        {
+          "text": "Rechercher un v\u00e9hicule",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 459.609375,
+            "width": 334,
+            "height": 56
+          }
+        }
+      ],
+      "raw_path": "frames\\state008_raw.png"
+    },
+    {
+      "index": 9,
+      "url": "http://localhost:5998/resultats?lieu=Casablanca&depart=2026-12-10&retour=2026-12-14",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": "YASSIR CARS, accueil",
+          "rect": {
+            "left": 14.0,
+            "top": 11.5,
+            "width": 190.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "Retour",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 269.296875,
+            "top": 7.5,
+            "width": 106.703125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Casablanca\n10 d\u00e9c.\n14 d\u00e9c.\n4 jours\nModifier",
+          "tag": "BUTTON",
+          "label": "Modifier la recherche",
+          "rect": {
+            "left": 14.0,
+            "top": 68.0,
+            "width": 362,
+            "height": 54
+          }
+        },
+        {
+          "text": "Filtres",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 189.09375,
+            "top": 139.0,
+            "width": 94.4375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Trier",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 291.53125,
+            "top": 139.0,
+            "width": 84.46875,
+            "height": 44
+          }
+        },
+        {
+          "text": "Tous\n8",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 199.0,
+            "width": 80.578125,
+            "height": 44
+          }
+        },
+        {
+          "text": "\u00c9conomique\n3",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 102.578125,
+            "top": 199.0,
+            "width": 129.859375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Citadine\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 240.4375,
+            "top": 199.0,
+            "width": 102.828125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Berline\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 351.265625,
+            "top": 199.0,
+            "width": 94.328125,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Blanc",
+          "rect": {
+            "left": 29.350000381469727,
+            "top": 527.3812255859375,
+            "width": 25.30000114440918,
+            "height": 25.300048828125
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Noir",
+          "rect": {
+            "left": 75.0,
+            "top": 529.03125,
+            "width": 22,
+            "height": 22
+          }
+        },
+        {
+          "text": "+8\n\u00e9quipements",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 244.53125,
+            "top": 603.421875,
+            "width": 39.765625,
+            "height": 25
+          }
+        },
+        {
+          "text": "R\u00e9server maintenant",
+          "tag": "BUTTON",
+          "label": "R\u00e9server maintenant : Dacia Logan",
+          "rect": {
+            "left": 91.0,
+            "top": 642.421875,
+            "width": 268,
+            "height": 50
+          }
+        },
+        {
+          "text": "Appeler",
+          "tag": "BUTTON",
+          "label": "Appeler pour la Dacia Logan",
+          "rect": {
+            "left": 31.0,
+            "top": 642.421875,
+            "width": 50,
+            "height": 50
+          }
+        }
+      ],
+      "raw_path": "frames\\state009_raw.png"
+    },
+    {
+      "index": 10,
+      "url": "http://localhost:5998/resultats?lieu=Casablanca&depart=2026-12-10&retour=2026-12-14",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": "YASSIR CARS, accueil",
+          "rect": {
+            "left": 14.0,
+            "top": 11.5,
+            "width": 190.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "Retour",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 269.296875,
+            "top": 7.5,
+            "width": 106.703125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Casablanca\n10 d\u00e9c.\n14 d\u00e9c.\n4 jours\nModifier",
+          "tag": "BUTTON",
+          "label": "Modifier la recherche",
+          "rect": {
+            "left": 14.0,
+            "top": 68.0,
+            "width": 362,
+            "height": 54
+          }
+        },
+        {
+          "text": "Filtres",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 189.09375,
+            "top": 139.0,
+            "width": 94.4375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Trier",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 291.53125,
+            "top": 139.0,
+            "width": 84.46875,
+            "height": 44
+          }
+        },
+        {
+          "text": "Tous\n8",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 199.0,
+            "width": 80.578125,
+            "height": 44
+          }
+        },
+        {
+          "text": "\u00c9conomique\n3",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 102.578125,
+            "top": 199.0,
+            "width": 129.859375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Citadine\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 240.4375,
+            "top": 199.0,
+            "width": 102.828125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Berline\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 351.265625,
+            "top": 199.0,
+            "width": 94.328125,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Blanc",
+          "rect": {
+            "left": 29.350000381469727,
+            "top": 527.3812255859375,
+            "width": 25.30000114440918,
+            "height": 25.300048828125
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Noir",
+          "rect": {
+            "left": 75.0,
+            "top": 529.03125,
+            "width": 22,
+            "height": 22
+          }
+        },
+        {
+          "text": "+8\n\u00e9quipements",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 244.53125,
+            "top": 603.421875,
+            "width": 39.765625,
+            "height": 25
+          }
+        },
+        {
+          "text": "R\u00e9server maintenant",
+          "tag": "BUTTON",
+          "label": "R\u00e9server maintenant : Dacia Logan",
+          "rect": {
+            "left": 91.0,
+            "top": 642.421875,
+            "width": 268,
+            "height": 50
+          }
+        },
+        {
+          "text": "Appeler",
+          "tag": "BUTTON",
+          "label": "Appeler pour la Dacia Logan",
+          "rect": {
+            "left": 31.0,
+            "top": 642.421875,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "text": "MAD",
+          "tag": "BUTTON",
+          "label": "Devise : MAD",
+          "rect": {
+            "left": 123.90625,
+            "top": 72.6875,
+            "width": 72.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Fermer",
+          "rect": {
+            "left": 342.0,
+            "top": 73.6875,
+            "width": 34,
+            "height": 34
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Blanc",
+          "rect": {
+            "left": 26.799999237060547,
+            "top": 539.6749877929688,
+            "width": 26.400001525878906,
+            "height": 26.4000244140625
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Noir",
+          "rect": {
+            "left": 61.0,
+            "top": 540.875,
+            "width": 24,
+            "height": 24
+          }
+        },
+        {
+          "text": "+6 de plus",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 240.359375,
+            "top": 653.65625,
+            "width": 82.421875,
+            "height": 30.390625
+          }
+        },
+        {
+          "text": "10-D\u00e9c-2026",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 41.0,
+            "top": 803.84375,
+            "width": 309,
+            "height": 20
+          }
+        },
+        {
+          "text": "R\u00e9server",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 156.0,
+            "top": 787.0,
+            "width": 220,
+            "height": 45
+          }
+        }
+      ],
+      "raw_path": "frames\\state010_raw.png"
+    },
+    {
+      "index": 11,
+      "url": "http://localhost:5998/resultats?lieu=Casablanca&depart=2026-12-10&retour=2026-12-14",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": "YASSIR CARS, accueil",
+          "rect": {
+            "left": 14.0,
+            "top": 11.5,
+            "width": 190.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "Retour",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 269.296875,
+            "top": 7.5,
+            "width": 106.703125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Casablanca\n10 d\u00e9c.\n14 d\u00e9c.\n4 jours\nModifier",
+          "tag": "BUTTON",
+          "label": "Modifier la recherche",
+          "rect": {
+            "left": 14.0,
+            "top": 68.0,
+            "width": 362,
+            "height": 54
+          }
+        },
+        {
+          "text": "Filtres",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 189.09375,
+            "top": 139.0,
+            "width": 94.4375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Trier",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 291.53125,
+            "top": 139.0,
+            "width": 84.46875,
+            "height": 44
+          }
+        },
+        {
+          "text": "Tous\n8",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 199.0,
+            "width": 80.578125,
+            "height": 44
+          }
+        },
+        {
+          "text": "\u00c9conomique\n3",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 102.578125,
+            "top": 199.0,
+            "width": 129.859375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Citadine\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 240.4375,
+            "top": 199.0,
+            "width": 102.828125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Berline\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 351.265625,
+            "top": 199.0,
+            "width": 94.328125,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Blanc",
+          "rect": {
+            "left": 29.350000381469727,
+            "top": 527.3812255859375,
+            "width": 25.30000114440918,
+            "height": 25.300048828125
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Noir",
+          "rect": {
+            "left": 75.0,
+            "top": 529.03125,
+            "width": 22,
+            "height": 22
+          }
+        },
+        {
+          "text": "+8\n\u00e9quipements",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 244.53125,
+            "top": 603.421875,
+            "width": 39.765625,
+            "height": 25
+          }
+        },
+        {
+          "text": "R\u00e9server maintenant",
+          "tag": "BUTTON",
+          "label": "R\u00e9server maintenant : Dacia Logan",
+          "rect": {
+            "left": 91.0,
+            "top": 642.421875,
+            "width": 268,
+            "height": 50
+          }
+        },
+        {
+          "text": "Appeler",
+          "tag": "BUTTON",
+          "label": "Appeler pour la Dacia Logan",
+          "rect": {
+            "left": 31.0,
+            "top": 642.421875,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "text": "MAD",
+          "tag": "BUTTON",
+          "label": "Devise : MAD",
+          "rect": {
+            "left": 123.90625,
+            "top": 72.6875,
+            "width": 72.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Fermer",
+          "rect": {
+            "left": 342.0,
+            "top": 73.6875,
+            "width": 34,
+            "height": 34
+          }
+        },
+        {
+          "text": "10-D\u00e9c-2026",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 41.0,
+            "top": 20.84375,
+            "width": 309,
+            "height": 20
+          }
+        },
+        {
+          "text": "14-D\u00e9c-2026",
+          "tag": "INPUT",
+          "label": "Date de fin",
+          "rect": {
+            "left": 41.0,
+            "top": 130.4375,
+            "width": 309,
+            "height": 20
+          }
+        },
+        {
+          "text": "",
+          "tag": "INPUT",
+          "label": "Mohammed Alami",
+          "rect": {
+            "left": 28.0,
+            "top": 437.609375,
+            "width": 335,
+            "height": 48
+          }
+        },
+        {
+          "text": "Ville ou a\u00e9roport\u2026\nA\u00e9roport Mohammed V (Casablanca)\nA\u00e9roport",
+          "tag": "SELECT",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 548.59375,
+            "width": 335,
+            "height": 48
+          }
+        },
+        {
+          "text": "M\u00eame agence qu\u2019au d\u00e9part\nA\u00e9roport Mohammed V (Casablanca)\nA\u00e9",
+          "tag": "SELECT",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 635.390625,
+            "width": 335,
+            "height": 48
+          }
+        },
+        {
+          "text": "Ouvrir la page compl\u00e8te",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 13.0,
+            "top": 771.171875,
+            "width": 365,
+            "height": 40
+          }
+        },
+        {
+          "text": "R\u00e9server",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 156.0,
+            "top": 786.0,
+            "width": 220,
+            "height": 45
+          }
+        }
+      ],
+      "raw_path": "frames\\state011_raw.png"
+    },
+    {
+      "index": 12,
+      "url": "http://localhost:5998/resultats?lieu=Casablanca&depart=2026-12-10&retour=2026-12-14",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": "YASSIR CARS, accueil",
+          "rect": {
+            "left": 14.0,
+            "top": 11.5,
+            "width": 190.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "Retour",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 269.296875,
+            "top": 7.5,
+            "width": 106.703125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Casablanca\n10 d\u00e9c.\n14 d\u00e9c.\n4 jours\nModifier",
+          "tag": "BUTTON",
+          "label": "Modifier la recherche",
+          "rect": {
+            "left": 14.0,
+            "top": 68.0,
+            "width": 362,
+            "height": 54
+          }
+        },
+        {
+          "text": "Filtres",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 189.09375,
+            "top": 139.0,
+            "width": 94.4375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Trier",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 291.53125,
+            "top": 139.0,
+            "width": 84.46875,
+            "height": 44
+          }
+        },
+        {
+          "text": "Tous\n8",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 199.0,
+            "width": 80.578125,
+            "height": 44
+          }
+        },
+        {
+          "text": "\u00c9conomique\n3",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 102.578125,
+            "top": 199.0,
+            "width": 129.859375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Citadine\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 240.4375,
+            "top": 199.0,
+            "width": 102.828125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Berline\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 351.265625,
+            "top": 199.0,
+            "width": 94.328125,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Blanc",
+          "rect": {
+            "left": 29.350000381469727,
+            "top": 527.3812255859375,
+            "width": 25.30000114440918,
+            "height": 25.300048828125
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Noir",
+          "rect": {
+            "left": 75.0,
+            "top": 529.03125,
+            "width": 22,
+            "height": 22
+          }
+        },
+        {
+          "text": "+8\n\u00e9quipements",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 244.53125,
+            "top": 603.421875,
+            "width": 39.765625,
+            "height": 25
+          }
+        },
+        {
+          "text": "R\u00e9server maintenant",
+          "tag": "BUTTON",
+          "label": "R\u00e9server maintenant : Dacia Logan",
+          "rect": {
+            "left": 91.0,
+            "top": 642.421875,
+            "width": 268,
+            "height": 50
+          }
+        },
+        {
+          "text": "Appeler",
+          "tag": "BUTTON",
+          "label": "Appeler pour la Dacia Logan",
+          "rect": {
+            "left": 31.0,
+            "top": 642.421875,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "text": "MAD",
+          "tag": "BUTTON",
+          "label": "Devise : MAD",
+          "rect": {
+            "left": 123.90625,
+            "top": 72.6875,
+            "width": 72.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Fermer",
+          "rect": {
+            "left": 342.0,
+            "top": 73.6875,
+            "width": 34,
+            "height": 34
+          }
+        },
+        {
+          "text": "10-D\u00e9c-2026",
+          "tag": "INPUT",
+          "label": "Date de d\u00e9but",
+          "rect": {
+            "left": 41.0,
+            "top": 20.84375,
+            "width": 309,
+            "height": 20
+          }
+        },
+        {
+          "text": "14-D\u00e9c-2026",
+          "tag": "INPUT",
+          "label": "Date de fin",
+          "rect": {
+            "left": 41.0,
+            "top": 130.4375,
+            "width": 309,
+            "height": 20
+          }
+        },
+        {
+          "text": "Karim Test",
+          "tag": "INPUT",
+          "label": "Mohammed Alami",
+          "rect": {
+            "left": 28.0,
+            "top": 437.609375,
+            "width": 335,
+            "height": 48
+          }
+        },
+        {
+          "text": "Ville ou a\u00e9roport\u2026\nA\u00e9roport Mohammed V (Casablanca)\nA\u00e9roport",
+          "tag": "SELECT",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 524.40625,
+            "width": 335,
+            "height": 48
+          }
+        },
+        {
+          "text": "M\u00eame agence qu\u2019au d\u00e9part\nA\u00e9roport Mohammed V (Casablanca)\nA\u00e9",
+          "tag": "SELECT",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 611.203125,
+            "width": 335,
+            "height": 48
+          }
+        },
+        {
+          "text": "Ouvrir la page compl\u00e8te",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 13.0,
+            "top": 746.984375,
+            "width": 365,
+            "height": 40
+          }
+        },
+        {
+          "text": "R\u00e9server",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 156.0,
+            "top": 787.0,
+            "width": 220,
+            "height": 45
+          }
+        }
+      ],
+      "raw_path": "frames\\state012_raw.png"
+    },
+    {
+      "index": 13,
+      "url": "http://localhost:5998/resultats?lieu=Casablanca&depart=2026-12-10&retour=2026-12-14",
+      "inventory": [
+        {
+          "text": "YASSIR CARS",
+          "tag": "A",
+          "label": "YASSIR CARS, accueil",
+          "rect": {
+            "left": 14.0,
+            "top": 11.5,
+            "width": 190.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "Retour",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 269.296875,
+            "top": 7.5,
+            "width": 106.703125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Casablanca\n10 d\u00e9c.\n14 d\u00e9c.\n4 jours\nModifier",
+          "tag": "BUTTON",
+          "label": "Modifier la recherche",
+          "rect": {
+            "left": 14.0,
+            "top": 68.0,
+            "width": 362,
+            "height": 54
+          }
+        },
+        {
+          "text": "Filtres",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 189.09375,
+            "top": 139.0,
+            "width": 94.4375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Trier",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 291.53125,
+            "top": 139.0,
+            "width": 84.46875,
+            "height": 44
+          }
+        },
+        {
+          "text": "Tous\n8",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 14.0,
+            "top": 199.0,
+            "width": 80.578125,
+            "height": 44
+          }
+        },
+        {
+          "text": "\u00c9conomique\n3",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 102.578125,
+            "top": 199.0,
+            "width": 129.859375,
+            "height": 44
+          }
+        },
+        {
+          "text": "Citadine\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 240.4375,
+            "top": 199.0,
+            "width": 102.828125,
+            "height": 44
+          }
+        },
+        {
+          "text": "Berline\n2",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 351.265625,
+            "top": 199.0,
+            "width": 94.328125,
+            "height": 44
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Blanc",
+          "rect": {
+            "left": 29.350000381469727,
+            "top": 527.3812255859375,
+            "width": 25.30000114440918,
+            "height": 25.300048828125
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Couleur Noir",
+          "rect": {
+            "left": 75.0,
+            "top": 529.03125,
+            "width": 22,
+            "height": 22
+          }
+        },
+        {
+          "text": "+8\n\u00e9quipements",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 244.53125,
+            "top": 603.421875,
+            "width": 39.765625,
+            "height": 25
+          }
+        },
+        {
+          "text": "R\u00e9server maintenant",
+          "tag": "BUTTON",
+          "label": "R\u00e9server maintenant : Dacia Logan",
+          "rect": {
+            "left": 91.0,
+            "top": 642.421875,
+            "width": 268,
+            "height": 50
+          }
+        },
+        {
+          "text": "Appeler",
+          "tag": "BUTTON",
+          "label": "Appeler pour la Dacia Logan",
+          "rect": {
+            "left": 31.0,
+            "top": 642.421875,
+            "width": 50,
+            "height": 50
+          }
+        },
+        {
+          "text": "MAD",
+          "tag": "BUTTON",
+          "label": "Devise : MAD",
+          "rect": {
+            "left": 123.90625,
+            "top": 72.6875,
+            "width": 72.453125,
+            "height": 36
+          }
+        },
+        {
+          "text": "",
+          "tag": "BUTTON",
+          "label": "Fermer",
+          "rect": {
+            "left": 342.0,
+            "top": 73.6875,
+            "width": 34,
+            "height": 34
+          }
+        },
+        {
+          "text": "WhatsApp ne s\u2019est pas ouvert ?",
+          "tag": "A",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 570.5625,
+            "width": 335,
+            "height": 49.1875
+          }
+        },
+        {
+          "text": "Copier le message",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 631.75,
+            "width": 162.5,
+            "height": 56
+          }
+        },
+        {
+          "text": "Modifier ma demande",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 200.5,
+            "top": 631.75,
+            "width": 162.5,
+            "height": 56
+          }
+        },
+        {
+          "text": "Continuer \u00e0 parcourir les v\u00e9hicules",
+          "tag": "BUTTON",
+          "label": null,
+          "rect": {
+            "left": 28.0,
+            "top": 687.75,
+            "width": 335,
+            "height": 40
+          }
+        }
+      ],
+      "raw_path": "frames\\state013_raw.png"
+    }
+  ],
+  "notes": {
+    "leak_markers": [],
+    "states_visited": 14,
+    "success_criteria": false,
+    "objective_success": false,
+    "objective_success_step": null,
+    "data_policy": {
+      "client": null,
+      "redacted_selectors": [],
+      "frames_stored": true
+    },
+    "redactions_applied": 0,
+    "blocked_hosts": {
+      "patterns": [
+        "wa.me",
+        "*.wa.me",
+        "whatsapp.com",
+        "*.whatsapp.com"
+      ],
+      "total": 1,
+      "by_host": {
+        "wa.me": 1
+      },
+      "after_last_step": []
+    }
+  }
+}

@@ -1,28 +1,28 @@
-/* ── City wheel field (matches the dark booking form input) ───────────────── */
+/* ── City wheel field ─────────────────────────────────────────────────────── */
 .citywheel-field {
   width: 100%;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 12px 16px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.15);
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
   border-radius: 8px;
-  color: #fff; font-size: 14px; font-family: inherit; text-align: left;
+  color: var(--dark); font-size: 14px; font-family: inherit; text-align: left;
   cursor: pointer; outline: none;
   transition: border-color .3s, background .3s;
 }
-.citywheel-field:hover { background: rgba(255,255,255,.12); }
-.citywheel-field:focus-visible { border-color: #E63946; }
-.citywheel-field.is-placeholder .citywheel-field__txt { color: rgba(255,255,255,.4); }
+.citywheel-field:hover { background: #fff; border-color: var(--gray-400); }
+.citywheel-field:focus-visible { border-color: var(--red); }
+.citywheel-field.is-placeholder .citywheel-field__txt { color: var(--gray-500); }
 .citywheel-field__txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .citywheel-field__chev { flex-shrink: 0; opacity: .65; }
-.citywheel-field.input-error { border-color: #ff6b6b; background: rgba(255,80,80,.1); }
+.citywheel-field.input-error { border-color: var(--red); background: rgba(var(--red-rgb),.04); }
 
 /* ── Overlay + sheet ──────────────────────────────────────────────────────── */
 /* flex + margin:auto (not place-items) so a sheet taller than a short screen
    scrolls instead of losing its top edge. */
 .citywheel-overlay {
   position: fixed; inset: 0; z-index: 3000;
-  background: rgba(8,8,12,.6);
+  background: rgba(var(--dark-rgb),.45);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   display: flex; overflow-y: auto;
   padding: 1.2rem;
@@ -32,11 +32,10 @@
 
 .citywheel-sheet {
   width: 100%; max-width: 380px; margin: auto;
-  background: linear-gradient(180deg, #1c1f2e, #14161f);
-  border: 1px solid rgba(255,255,255,.1);
+  background: #fff;
   border-radius: 22px;
   padding: 1.3rem 1.3rem 1.4rem;
-  box-shadow: 0 30px 80px rgba(0,0,0,.55);
+  box-shadow: 0 30px 80px rgba(var(--dark-rgb),.3);
   animation: cw-pop .28s cubic-bezier(.16,1,.3,1);
 }
 @keyframes cw-pop {
@@ -48,64 +47,64 @@
   margin-bottom: 1rem;
 }
 .citywheel-sheet__head h3 {
-  margin: 0; font-size: 1.02rem; font-weight: 700; color: #fff;
+  margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--dark);
   display: flex; align-items: center; gap: .45rem;
 }
-.citywheel-sheet__head h3 svg { width: 18px; height: 18px; color: #ff8080; flex-shrink: 0; }
+.citywheel-sheet__head h3 svg { width: 18px; height: 18px; color: var(--dark); flex-shrink: 0; }
 .citywheel-sheet__close {
   width: 32px; height: 32px; flex-shrink: 0;
   display: grid; place-items: center;
-  background: rgba(255,255,255,.08); border: none; border-radius: 50%;
-  color: rgba(255,255,255,.7); cursor: pointer;
+  background: var(--gray-100); border: none; border-radius: 50%;
+  color: var(--gray-600); cursor: pointer;
   transition: background .15s, color .15s, transform .2s;
 }
-.citywheel-sheet__close:hover { background: rgba(255,255,255,.16); color: #fff; transform: rotate(90deg); }
+.citywheel-sheet__close:hover { background: var(--soft); color: var(--dark); transform: rotate(90deg); }
 
 /* ── Search ───────────────────────────────────────────────────────────────── */
 .citywheel-search { position: relative; margin-bottom: .85rem; }
 .citywheel-search__icon {
   position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-  width: 17px; height: 17px; color: rgba(255,255,255,.45); pointer-events: none;
+  width: 17px; height: 17px; color: var(--gray-500); pointer-events: none;
 }
 /* 16px font: anything smaller makes iOS Safari zoom the page on focus. */
 .citywheel-search input {
   width: 100%; padding: 12px 40px 12px 42px;
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.1); border-radius: 12px;
-  color: #fff; font-size: 16px; font-family: inherit; outline: none;
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200); border-radius: 12px;
+  color: var(--dark); font-size: 16px; font-family: inherit; outline: none;
   transition: border-color .2s, background .2s, box-shadow .2s;
 }
-.citywheel-search input::placeholder { color: rgba(255,255,255,.38); }
+.citywheel-search input::placeholder { color: var(--gray-500); }
 .citywheel-search input:focus {
-  border-color: rgba(230,57,70,.7); background: rgba(255,255,255,.08);
-  box-shadow: 0 0 0 3px rgba(230,57,70,.15);
+  border-color: var(--red); background: #fff;
+  box-shadow: 0 0 0 3px rgba(var(--red-rgb),.12);
 }
-.citywheel-search:focus-within .citywheel-search__icon { color: #ff8080; }
+.citywheel-search:focus-within .citywheel-search__icon { color: var(--dark); }
 .citywheel-search__clear {
   position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
   width: 24px; height: 24px; display: grid; place-items: center;
-  background: rgba(255,255,255,.12); border: none; border-radius: 50%;
-  color: rgba(255,255,255,.8); cursor: pointer; transition: background .15s;
+  background: var(--soft); border: none; border-radius: 50%;
+  color: var(--gray-700); cursor: pointer; transition: background .15s;
 }
-.citywheel-search__clear:hover { background: rgba(255,255,255,.22); color: #fff; }
+.citywheel-search__clear:hover { background: var(--soft-2); color: var(--dark); }
 
 /* ── Popular cities ───────────────────────────────────────────────────────── */
 .citywheel-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: .9rem; }
 .citywheel-chip {
   padding: 6px 12px; border-radius: 999px;
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-  color: rgba(255,255,255,.78); font-family: inherit; font-size: 13px; font-weight: 600;
+  background: #fff; border: 1px solid var(--gray-300);
+  color: var(--gray-700); font-family: inherit; font-size: 13px; font-weight: 600;
   cursor: pointer; transition: background .15s, border-color .15s, color .15s, transform .15s;
 }
-.citywheel-chip:hover { border-color: rgba(230,57,70,.55); color: #fff; transform: translateY(-1px); }
-.citywheel-chip.active { background: rgba(230,57,70,.16); border-color: #E63946; color: #fff; }
-.citywheel-chip:focus-visible { outline: 2px solid #ff8080; outline-offset: 2px; }
+.citywheel-chip:hover { border-color: var(--dark); color: var(--dark); transform: translateY(-1px); }
+.citywheel-chip.active { background: var(--dark); border-color: var(--dark); color: #fff; }
+.citywheel-chip:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
 
 /* ── No match ─────────────────────────────────────────────────────────────── */
 .citywheel-empty {
   height: 230px; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: .6rem;
-  color: rgba(255,255,255,.5); text-align: center; padding: 0 1rem;
+  color: var(--gray-500); text-align: center; padding: 0 1rem;
 }
 .citywheel-empty svg { width: 28px; height: 28px; opacity: .5; }
 .citywheel-empty p { margin: 0; font-size: 14px; }
@@ -119,9 +118,9 @@
 .citywheel__band {
   position: absolute; top: 50%; left: 0; right: 0;
   height: 46px; transform: translateY(-50%);
-  border-top: 1px solid rgba(230,57,70,.55);
-  border-bottom: 1px solid rgba(230,57,70,.55);
-  background: rgba(230,57,70,.1);
+  border-top: 1px solid var(--gray-300);
+  border-bottom: 1px solid var(--gray-300);
+  background: var(--page);
   border-radius: 10px;
   pointer-events: none; z-index: 1;
 }
@@ -146,28 +145,26 @@
   background: none; border: none; cursor: pointer;
   font-family: inherit;
   font-size: 16px; font-weight: 500;
-  color: rgba(255,255,255,calc(.85 - var(--d, 0) * .2));
+  color: rgba(var(--dark-rgb), calc(.85 - var(--d, 0) * .2));
   transform: scale(calc(1 - var(--d, 0) * .07));
   transition: color .15s, transform .15s, font-weight .15s;
   scroll-snap-align: center;
 }
 .citywheel__item.active {
-  color: #fff; font-weight: 800; font-size: 17px;
+  color: var(--dark); font-weight: 800; font-size: 17px;
   transform: scale(1);
-  text-shadow: 0 1px 10px rgba(230,57,70,.5);
 }
 
 /* ── Confirm button ───────────────────────────────────────────────────────── */
 .citywheel-confirm {
   width: 100%; margin-top: 1.2rem;
   padding: .9rem; border: none; border-radius: 12px;
-  background: linear-gradient(135deg, #E63946, #c1121f);
+  background: var(--dark);
   color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
   letter-spacing: .01em;
-  box-shadow: 0 6px 20px rgba(230,57,70,.4);
-  transition: transform .15s, box-shadow .15s, filter .15s;
+  transition: transform .15s, background .15s;
 }
-.citywheel-confirm:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(230,57,70,.5); filter: brightness(1.05); }
+.citywheel-confirm:hover:not(:disabled) { transform: translateY(-2px); background: #2c3038; }
 .citywheel-confirm:active { transform: translateY(0); }
 .citywheel-confirm strong { font-weight: 800; }
-.citywheel-confirm:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.citywheel-confirm:disabled { opacity: .45; cursor: not-allowed; }

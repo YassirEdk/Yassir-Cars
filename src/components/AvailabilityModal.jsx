@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import { formatNumber } from '../lib/currency'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { moroccanCities, addDays, colorName } from '../data'
+import { pickupPlaces, addDays, colorName } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { fetchCars, mergeByModel, isCarAvailable, unitForColor } from '../lib/cars'
 import { discounted, rateForCar } from '../lib/pricing'
 import { loadSearch, saveSearch } from '../lib/searchPrefs'
+import { useDialog } from '../hooks/useDialog'
+import CarPhoto from './CarPhoto'
 import CityWheel from './CityWheel'
 import DatePicker from './DatePicker'
 import Icon from './Icon'
@@ -26,7 +29,7 @@ const fmtDate = (iso) => (iso ? iso.split('-').reverse().join('/') : '')
     other cars of the fleet that ARE free for the same dates.
 */
 export default function AvailabilityModal({ car, onClose, mode = 'search', initialColor = null, onReserve = null }) {
-  const overlayRef = useRef(null)
+  const panelRef = useDialog(onClose)
   const navigate = useNavigate()
   const location = useLocation()
   const { settings } = useSettings()
@@ -47,19 +50,9 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   const [suggestions, setSuggestions] = useState([]) // [{ model, unit }]
 
   const setField = (k) => (v) => {
-    setForm(f => { const next = { ...f, [k]: v }; saveSearch(next); return next })
+    setForm(f => { const next = { ...f, [k]: v }; saveSearch({ ...loadSearch(), ...next }); return next })
     if (errors[k]) setErrors(prev => ({ ...prev, [k]: '' }))
   }
-
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-    }
-  }, [onClose])
 
   /* Booking. With an `onReserve` handler the caller opens the booking panel
      right there — the visitor never leaves the page they were browsing. Without
@@ -81,6 +74,10 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
         photo: gallery[0] || '',
         photos: gallery,
         features: unit.features ?? [],
+        categorie: unit.category,
+        fuel: unit.fuel,
+        transmission: unit.transmission,
+        seats: unit.seats,
         prix: unit.price,
         depart: form.depart,
         retour: form.retour,
@@ -101,7 +98,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
       state: {
         unavailable: {
           name: car.name,
-          couleur: initialColor ? colorName(initialColor) : '',
+          couleur: initialColor ? colorName(initialColor).toLowerCase() : '',
           depart: form.depart,
           retour: form.retour,
         },
@@ -153,7 +150,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
 
   const validate = () => {
     const errs = {}
-    if (!form.lieu) errs.lieu = 'Choisissez une ville'
+    if (!form.lieu) errs.lieu = 'Choisissez un lieu'
     if (!form.depart) errs.depart = 'Choisissez une date de début'
     else if (form.depart < today) errs.depart = 'Date dans le passé'
     if (!form.retour) errs.retour = 'Choisissez une date de fin'
@@ -216,27 +213,26 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   return createPortal(
     <div
       className={`phone-overlay ${isWide ? 'avail-overlay--wide' : ''}`}
-      ref={overlayRef}
-      onClick={e => { if (e.target === overlayRef.current) onClose() }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className={`avail-modal ${isWide ? 'avail-modal--wide' : ''}`}>
-        <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+      <div
+        className={`avail-modal ${isWide ? 'avail-modal--wide' : ''}`}
+        role="dialog" aria-modal="true" aria-label={`Réserver ${car.name}`} tabIndex={-1} ref={panelRef}
+      >
+        <button type="button" className="phone-modal__close" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
 
         {step === 'form' ? (
           <>
             <div className="avail-head">
-              <div className="avail-head__thumb" style={{ background: heroPhoto ? '#f4f5f7' : heroUnit.brandColor }}>
+              <div className="avail-head__thumb stage" style={heroPhoto ? undefined : { background: heroUnit.brandColor }}>
                 {heroPhoto
-                  ? <img src={heroPhoto} alt={car.name} />
+                  ? <CarPhoto src={heroPhoto} alt="" lazy={false} />
                   : <span className="avail-head__initial">{car.name.split(' ')[0]}</span>}
               </div>
               <div className="avail-head__txt">
-                <span className="avail-head__eyebrow">
-                  {mode === 'reserve' ? 'Réservation' : 'Disponibilité'}
-                </span>
-                <h3 className="avail-head__name">{car.name}</h3>
+                <h2 className="avail-head__name">{car.name}</h2>
                 <span className="avail-head__price">
-                  {promo.toLocaleString('fr-FR')} <small>{heroUnit.currency} / jour</small>
+                  {formatNumber(promo)} <small>{heroUnit.currency} / jour</small>
                 </span>
               </div>
             </div>
@@ -247,10 +243,10 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                 <CityWheel
                   value={form.lieu}
                   onChange={setField('lieu')}
-                  cities={moroccanCities}
+                  cities={pickupPlaces}
                   error={!!errors.lieu}
                 />
-                {errors.lieu && <span className="field-error">Attention: {errors.lieu}</span>}
+                {errors.lieu && <span className="field-error" role="alert">{errors.lieu}</span>}
               </div>
 
               <div className="avail-modal__dates">
@@ -260,10 +256,11 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                     value={form.depart}
                     onChange={(iso) => { setField('depart')(iso); setOpenRetour(n => n + 1) }}
                     min={today}
+                    ariaLabel="Date de début"
                     placeholder="Choisir une date"
                     className={errors.depart ? 'input-error' : ''}
                   />
-                  {errors.depart && <span className="field-error">Attention: {errors.depart}</span>}
+                  {errors.depart && <span className="field-error" role="alert">{errors.depart}</span>}
                 </div>
                 <div className="form-group">
                   <label><Icon name="calendar" /> Date de fin</label>
@@ -273,29 +270,32 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                     min={form.depart ? addDays(form.depart, minDays) : today}
                     highlight={form.depart || undefined}
                     openKey={openRetour}
+                    ariaLabel="Date de fin"
                     placeholder="Choisir une date"
                     className={errors.retour ? 'input-error' : ''}
                   />
-                  {errors.retour && <span className="field-error">Attention: {errors.retour}</span>}
+                  {errors.retour && <span className="field-error" role="alert">{errors.retour}</span>}
                 </div>
               </div>
 
               {days > 0 && (
                 <div className="avail-recap">
                   <span>{days} jour{days > 1 ? 's' : ''} de location</span>
-                  <strong>{(promo * days).toLocaleString('fr-FR')} {heroUnit.currency}</strong>
+                  <strong>{formatNumber(promo * days)} {heroUnit.currency}</strong>
                 </div>
               )}
 
               <button type="submit" className="btn btn-accent btn-lg avail-modal__btn" disabled={checking}>
-                {checking ? 'Vérification…' : mode === 'reserve' ? 'Réserver →' : 'Rechercher →'}
+                {checking
+                  ? 'Vérification…'
+                  : <>{mode === 'reserve' ? 'Réserver' : 'Rechercher'} <Icon name="arrowRight" className="btn__arrow" /></>}
               </button>
 
-              <div className="avail-trust">
-                <span>✓ Annulation gratuite</span>
-                <span>✓ Assurance incluse</span>
-                <span>✓ Km illimité</span>
-              </div>
+              <ul className="avail-trust">
+                <li><Icon name="check" /> Annulation gratuite</li>
+                <li><Icon name="check" /> Assurance incluse</li>
+                <li><Icon name="check" /> Km illimité</li>
+              </ul>
             </form>
           </>
         ) : (
@@ -305,9 +305,9 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                 <Icon name="calendarX" />
               </span>
               <div>
-                <h3 className="avail-nope__title">Véhicule non disponible</h3>
+                <h2 className="avail-nope__title">Véhicule non disponible</h2>
                 <p className="avail-nope__sub">
-                  {car.name}{initialColor ? ` en ${colorName(initialColor)}` : ''} est réservée
+                  {car.name}{initialColor ? ` en ${colorName(initialColor).toLowerCase()}` : ''} est réservée
                   du {fmtDate(form.depart)} au {fmtDate(form.retour)}.
                 </p>
               </div>
@@ -326,9 +326,9 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                         className="avail-sugg"
                         onClick={() => goReserve(model, unit)}
                       >
-                        <span className="avail-sugg__img" style={{ background: photo ? '#f4f5f7' : unit.brandColor }}>
+                        <span className="avail-sugg__img stage" style={photo ? undefined : { background: unit.brandColor }}>
                           {photo
-                            ? <img src={photo} alt={model.name} loading="lazy" />
+                            ? <CarPhoto src={photo} alt="" />
                             : <span className="avail-sugg__initial">{model.name.split(' ')[0]}</span>}
                         </span>
                         <span className="avail-sugg__body">
@@ -341,10 +341,10 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                             {unit.fuel} · {unit.transmission} · {unit.seats} places
                           </span>
                           <span className="avail-sugg__price">
-                            {discounted(unit.price, rateForCar(unit.id, settings)).toLocaleString('fr-FR')} {unit.currency} <small>/ jour</small>
+                            {formatNumber(discounted(unit.price, rateForCar(unit.id, settings)))} {unit.currency} <small>/ jour</small>
                           </span>
                         </span>
-                        <span className="avail-sugg__go">→</span>
+                        <Icon name="arrowRight" className="avail-sugg__go" />
                       </button>
                     )
                   })}
@@ -362,14 +362,14 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                 className="btn btn-accent avail-modal__btn"
                 onClick={goAllResults}
               >
-                Voir toutes les voitures disponibles →
+                Voir toutes les voitures disponibles <Icon name="arrowRight" className="btn__arrow" />
               </button>
               <button
                 type="button"
                 className="avail-back"
                 onClick={() => setStep('form')}
               >
-                ← Modifier les dates
+                <Icon name="arrowLeft" /> Modifier les dates
               </button>
             </div>
           </>

@@ -83,6 +83,18 @@ export function scrollToSection(id, { smooth = true } = {}) {
   return true
 }
 
+/* Every "Réserver" button of the home page: scroll to the search card, flash its
+   outline and focus its first field. False when the page has no search card. */
+export function focusBooking() {
+  if (!scrollToSection('reserver')) return false
+  const card = document.getElementById('reserver')
+  card.classList.remove('is-called')
+  void card.offsetWidth                      // restart the animation
+  card.classList.add('is-called')
+  setTimeout(() => card.querySelector('.smenu__btn')?.focus({ preventScroll: true }), EASE_MS + 40)
+  return true
+}
+
 export function takeSnapshot() {
   const y = window.scrollY
   let anchor = null

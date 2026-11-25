@@ -1,0 +1,114 @@
+/* ── Car card (home, fleet) ───────────────────────────────────────────────── */
+.cars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(340px, 100%), 1fr)); gap: 24px; margin-bottom: 44px; }
+.flotte-cta { text-align: center; }
+
+/* Column layout + `margin-top:auto` on the footer: every card's price row sits
+   on the same baseline across a row, whatever the equipment list or promo line
+   above it costs in height. */
+.car-card {
+  position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden;
+  background: #fff; border: 1px solid var(--gray-200); border-radius: 20px;
+  transition: transform .3s cubic-bezier(.2,.75,.25,1), box-shadow .3s, border-color .3s;
+}
+@media (hover: hover) {
+  .car-card:hover { transform: translateY(-5px); border-color: var(--gray-300); box-shadow: 0 30px 56px -28px rgba(var(--dark-rgb),.45); }
+}
+.car-card__media { aspect-ratio: 16 / 9.6; }
+.car-badge {
+  position: absolute; top: 14px; left: 14px; z-index: 5; padding: 5px 12px; border-radius: 50px;
+  background: var(--red); color: #fff; font-size: 12px; font-weight: 600; line-height: 1.35;
+}
+.car-badge--dark { background: var(--dark); }
+/* No photo at all: the logo of the brand, on its colour. */
+.car-img-none { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.car-brand-logo { max-width: 60%; max-height: 55%; object-fit: contain; }
+.car-brand-initial { font-family: var(--title-font); font-stretch: 118%; font-size: 52px; font-weight: 800; color: rgba(255,255,255,.6); }
+
+.car-info { container: car / inline-size; flex: 1; display: flex; flex-direction: column; gap: 14px; padding: 20px 20px 18px; }
+.car-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.car-header h3 { font-family: var(--title-font); font-stretch: 118%; font-size: 18px; font-weight: 700; letter-spacing: -.01em; line-height: 1.25; color: var(--dark); }
+.car-sub { margin-top: 3px; font-size: 13.5px; line-height: 1.4; color: var(--gray-600); }
+.car-header .car-colors { flex-shrink: 0; margin: 3px 2px 0 0; }
+
+.car-specs { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.car-specs li { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: var(--gray-800); }
+.car-specs svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--gray-500); }
+/* Equipment: quiet words, only what is hidden looks like a button. */
+.car-equip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; }
+.car-equip .equip-pill:not(.equip-pill--more) { padding: 0; border: 0; background: none; font-size: 13px; font-weight: 500; color: var(--gray-600); }
+.car-equip .equip-pill--more { padding: 3px 10px; font-size: 12.5px; }
+
+.car-footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-top: auto; padding-top: 16px; border-top: 1px solid var(--gray-200);
+}
+.car-price { min-width: 0; white-space: nowrap; line-height: 1.2; }
+.car-price__now { font-family: var(--title-font); font-stretch: 118%; font-size: 22px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--dark); }
+.car-price__now small { font-family: var(--text-font); font-stretch: normal; font-size: 13px; font-weight: 600; letter-spacing: 0; color: var(--gray-600); }
+.car-price__per { margin-top: 2px; font-size: 12.5px; color: var(--gray-600); }
+.car-price__old { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; font-size: 13.5px; color: var(--gray-500); }
+.price-discount { padding: 1px 7px; border-radius: 50px; background: var(--red); color: #fff; font-size: 11px; font-weight: 700; }
+.car-book { flex-shrink: 0; min-height: 46px; padding: 0 18px; justify-content: center; font-size: 13.5px; }
+/* Dark, so a row of cards is not a row of red buttons: the card pointed at lights
+   up its own. */
+@media (hover: hover) { .car-card:hover .car-book { background: var(--red); } }
+@container car (max-width: 278px) {
+  .car-footer { flex-direction: column; align-items: stretch; }
+}
+
+/* Colour swatches (cards, results). */
+.car-colors { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.car-color-dot {
+  position: relative; width: 18px; height: 18px; border-radius: 50%; padding: 0; cursor: pointer;
+  border: 1.5px solid #fff; box-shadow: 0 0 0 1px rgba(var(--dark-rgb),.3);
+  transition: transform .12s, box-shadow .12s;
+}
+.car-color-dot::after { content: ''; position: absolute; inset: -13px -5px; }
+.car-color-dot:hover { transform: scale(1.15); }
+.car-color-dot.active { box-shadow: 0 0 0 2px var(--dark); transform: scale(1.15); }
+/* A colour whose unit is reserved for the chosen dates */
+.car-color-dot.taken { opacity: .3; }
+.car-color-dot.taken.active { opacity: .55; }
+.car-color-swatch { width: 13px; height: 13px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(var(--dark-rgb),.22), inset 0 0 0 1px rgba(255,255,255,.5); }
+.car-colors__label { margin-left: 4px; font-size: 13px; font-weight: 500; color: var(--gray-600); }
+@media (pointer: coarse) {
+  .car-colors { gap: 22px; min-height: 30px; }
+  .car-color-dot { width: 22px; height: 22px; }
+  .car-color-dot::after { inset: -11px; }
+  .car-colors__label { margin-left: -6px; }
+  .car-color-swatch + .car-colors__label { margin-left: -14px; }
+  .car-header .car-colors { margin: 0 6px 0 0; }
+}
+
+/* Equipment pills (cards, results). */
+.equip-pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 50px;
+  background: #fff; border: 1px solid var(--gray-200); font-size: 12px; font-weight: 600; color: var(--gray-700);
+}
+.equip-pill__icon { width: 15px; height: 15px; flex-shrink: 0; color: var(--gray-500); }
+.equip-pill--more { position: relative; color: var(--dark); border-color: var(--gray-300); background: var(--gray-100); font-family: inherit; cursor: pointer; }
+/* A thumb-sized target around a small pill. */
+.equip-pill--more::after { content: ''; position: absolute; inset: -9px -4px; }
+@media (hover: hover) { .equip-pill--more:hover { border-color: var(--dark); } }
+/* Labels, not text to copy: no selection and no text cursor, on the cards,
+   the booking panel and the booking page. */
+.equip-pill, .rd-equip-pill, .rv-equip-pill { -webkit-user-select: none; user-select: none; cursor: default; }
+:is(.equip-pill, .rd-equip-pill, .rv-equip-pill):is(button) { cursor: pointer; }
+
+/* Placeholder, while the cars load. */
+.car-card--skeleton { pointer-events: none; }
+.car-card--skeleton .stage { animation: sk-breathe 1.6s ease-in-out infinite; }
+.car-card--skeleton .sk-line { margin: 0; }
+.car-card--skeleton .sk-line--price { width: 92px; height: 26px; }
+.car-card--skeleton .sk-line--btn { width: 150px; height: 46px; }
+@keyframes sk-breathe { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .car-card--skeleton .stage { animation: none; } }
+
+@media (max-width: 768px) {
+  .cars-grid { gap: 18px; margin-bottom: 28px; }
+  .cars-grid--teaser > :nth-child(n+5) { display: none; }
+  .car-card__media { aspect-ratio: 16 / 8.8; }
+  .car-info { gap: 12px; padding: 15px 16px 16px; }
+  .car-footer { padding-top: 14px; }
+  .cars-grid--teaser .car-equip { display: none; }
+}

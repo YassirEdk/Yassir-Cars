@@ -1,5 +1,5 @@
-import { supabase, isSupabaseConfigured } from './supabase'
-import { cars as staticCars, parseFeatures } from '../data'
+import { isSupabaseConfigured, restSelect, getSupabase } from './db'
+import { cars as staticCars, parseFeatures, carCategories } from '../data'
 
 // DB rows use snake_case; the React components expect camelCase
 // (brandLogo, whiteFilter, badgeColor). Normalize here so nothing else changes.
@@ -123,7 +123,10 @@ export function mergeByModel(cars) {
   for (const car of cars) {
     const key = car.name.trim().toLowerCase()
     if (!map.has(key)) {
-      map.set(key, { ...car, units: [car], colors: car.color ? [car.color] : [], features: [...(car.features ?? [])] })
+      map.set(key, {
+        ...car, units: [car], colors: car.color ? [car.color] : [],
+        features: [...(car.features ?? [])], categories: [...carCategories(car)],
+      })
     } else {
       const m = map.get(key)
       m.units.push(car)
@@ -131,6 +134,7 @@ export function mergeByModel(cars) {
       if (car.price < m.price) m.price = car.price // show the lowest price
       // Union features across units so the merged card lists every option.
       for (const f of car.features ?? []) if (!m.features.includes(f)) m.features.push(f)
+      for (const c of carCategories(car)) if (!m.categories.includes(c)) m.categories.push(c)
     }
   }
   return [...map.values()]
@@ -217,24 +221,8 @@ export function fetchCars() {
 }
 
 /* The public listing is two plain GETs against Supabase's REST endpoint rather
-   than the SDK. Reading a table needs no auth, no realtime and no storage — the
-   parts that make the client library heavy — and this keeps ~100 kB of
-   JavaScript out of every first visit. The SDK is still used everywhere it
-   earns its weight (admin, auth, uploads). */
-async function restSelect(path) {
-  const url = import.meta.env.VITE_SUPABASE_URL
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-  try {
-    const res = await fetch(`${url}/rest/v1/${path}`, {
-      headers: { apikey: key, Authorization: `Bearer ${key}` },
-    })
-    if (!res.ok) return { data: null, error: new Error(`${res.status} ${res.statusText}`) }
-    return { data: await res.json(), error: null }
-  } catch (err) {
-    return { data: null, error: err }
-  }
-}
-
+   than the SDK (see ./db). The SDK is still used everywhere it earns its weight
+   (admin, auth, uploads), loaded on demand through getSupabase(). */
 async function fetchCarsUncached() {
   if (!isSupabaseConfigured) {
     return staticCars.map(c => ({ ...c, unavailable: [] }))
@@ -269,6 +257,7 @@ export async function fetchCarsAdmin() {
   if (!isSupabaseConfigured) {
     return staticCars.map(c => ({ ...c, unavailable: [] }))
   }
+  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('cars')
     .select('*, unavailable_periods(*)')
@@ -297,6 +286,7 @@ export function isCarAvailable(car, depart, retour) {
 const ALLOWED_IMAGE_EXT = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'avif'])
 
 export async function uploadCarPhoto(file) {
+  const supabase = await getSupabase()
   if (!supabase) throw new Error('Supabase non configuré.')
   if (!file.type.startsWith('image/')) throw new Error('Seules les images sont autorisées.')
   // Derive a safe extension from the filename: strip anything that isn't a
@@ -329,6 +319,7 @@ export async function uploadCarPhotos(files) {
 // (e.g. 5 → 3: the old 3,4… become 4,5…) or DOWN (e.g. 3 → 5).
 async function normalizeOrder(placeId = null, placeIndex = null) {
   if (!isSupabaseConfigured) return
+  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('cars')
     .select('id, sort_order, created_at')
@@ -353,6 +344,7 @@ async function normalizeOrder(placeId = null, placeIndex = null) {
 
 export async function createCar(car) {
   const row = toRow(car)
+  const supabase = await getSupabase()
   const { data, error } = await supabase.from('cars').insert(row).select().single()
   if (error) throw error
   // Drop the new car into the requested slot; everything below it shifts down.
@@ -362,6 +354,7 @@ export async function createCar(car) {
 
 export async function updateCar(id, car) {
   const row = toRow(car)
+  const supabase = await getSupabase()
   const { data, error } = await supabase.from('cars').update(row).eq('id', id).select().single()
   if (error) throw error
   // Move this car to its requested slot and renumber the rest around it.
@@ -376,6 +369,7 @@ export async function setCarOrder(id, index) {
 }
 
 export async function deleteCar(id) {
+  const supabase = await getSupabase()
   const { error } = await supabase.from('cars').delete().eq('id', id)
   if (error) throw error
   // Close the gap left behind so numbering stays contiguous.
@@ -385,6 +379,7 @@ export async function deleteCar(id) {
 // ── Admin: blocked date ranges ──────────────────────────────────────────────
 // Creates a reservation: blocks the car for [start, end] and records the client.
 export async function addReservation(carId, r) {
+  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('unavailable_periods')
     .insert({
@@ -416,6 +411,7 @@ export async function addReservation(carId, r) {
 export async function findCinConflict(cin, name) {
   const c = (cin || '').trim()
   if (!c || !isSupabaseConfigured) return null
+  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('unavailable_periods')
     .select('client_name')
@@ -431,6 +427,7 @@ export async function findCinConflict(cin, name) {
 }
 
 export async function updateReservation(periodId, r) {
+  const supabase = await getSupabase()
   const { error } = await supabase
     .from('unavailable_periods')
     .update({
@@ -450,6 +447,7 @@ export async function updateReservation(periodId, r) {
 
 // Fix the pick-up odometer reading for a car that's already handed over.
 export async function updateDepartureKm(periodId, km) {
+  const supabase = await getSupabase()
   const { error } = await supabase
     .from('unavailable_periods')
     .update({ departure_km: km != null && km !== '' ? Number(km) : null })
@@ -458,6 +456,7 @@ export async function updateDepartureKm(periodId, km) {
 }
 
 export async function deletePeriod(periodId) {
+  const supabase = await getSupabase()
   const { error } = await supabase.from('unavailable_periods').delete().eq('id', periodId)
   if (error) throw error
 }
@@ -465,6 +464,7 @@ export async function deletePeriod(periodId) {
 // Hand the car over to the client: reservee → en_cours, recording the
 // odometer reading at pick-up.
 export async function confirmPickup(periodId, departureKm) {
+  const supabase = await getSupabase()
   const { error } = await supabase
     .from('unavailable_periods')
     .update({ status: 'en_cours', departure_km: departureKm != null && departureKm !== '' ? Number(departureKm) : null })
@@ -476,6 +476,7 @@ export async function confirmPickup(periodId, departureKm) {
 // return and whether the car came back damaged.
 export async function confirmReturn(periodId, returnKm, damaged = false, carId = null) {
   const km = returnKm != null && returnKm !== '' ? Number(returnKm) : null
+  const supabase = await getSupabase()
   const { error } = await supabase
     .from('unavailable_periods')
     .update({ status: 'terminee', return_km: km, damaged: !!damaged })
@@ -489,6 +490,7 @@ export async function confirmReturn(periodId, returnKm, damaged = false, carId =
 
 // Mark a car as damaged (out-of-service) or clear that flag.
 export async function setCarDamaged(carId, damaged) {
+  const supabase = await getSupabase()
   const { error } = await supabase.from('cars').update({ damaged: !!damaged }).eq('id', carId)
   if (error) throw error
 }
@@ -497,6 +499,7 @@ export async function setCarDamaged(carId, damaged) {
 export async function findCinDamage(cin) {
   const c = (cin || '').trim()
   if (!c || !isSupabaseConfigured) return false
+  const supabase = await getSupabase()
   const { data, error } = await supabase
     .from('unavailable_periods')
     .select('id')
@@ -509,6 +512,7 @@ export async function findCinDamage(cin) {
 
 // ── Admin: car services (maintenance log) ───────────────────────────────────
 export async function fetchCarServices(carId) {
+  const supabase = await getSupabase()
   if (!supabase) return []
   const { data, error } = await supabase
     .from('car_services')
@@ -524,6 +528,7 @@ export async function fetchCarServices(carId) {
 
 export async function addCarService(carId, s) {
   const km = s.mileage ? Number(s.mileage) : null
+  const supabase = await getSupabase()
   const { error } = await supabase.from('car_services').insert({
     car_id: carId,
     service: s.service,
@@ -540,6 +545,7 @@ export async function addCarService(carId, s) {
 }
 
 export async function deleteCarService(id) {
+  const supabase = await getSupabase()
   const { error } = await supabase.from('car_services').delete().eq('id', id)
   if (error) throw error
 }

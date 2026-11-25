@@ -1,0 +1,90 @@
+{
+ "name": "YASSIR CARS",
+ "build": "local",
+ "stopped_at_budget": false,
+ "stopped_because": "",
+ "updated_at": "2026-11-25T19:39:41Z",
+ "jobs": [
+  {
+   "id": "moins-chere",
+   "area": "R\u00e9server",
+   "label": "Louer la voiture la moins ch\u00e8re pour des dates pr\u00e9cises",
+   "kind": "task",
+   "goal": "Tu seras \u00e0 Casablanca du 10 au 14 d\u00e9cembre 2026. Loue la voiture la moins ch\u00e8re pour ces dates, jusqu'\u00e0 envoyer la demande. Tu t'appelles Karim Test.",
+   "question": null,
+   "expect": null,
+   "limit": null,
+   "stages": [
+    [
+     "A cherch\u00e9 avec ses dates",
+     "searched or form_open"
+    ],
+    [
+     "A ouvert la demande",
+     "form_open"
+    ],
+    [
+     "A envoy\u00e9 la demande",
+     "sent"
+    ]
+   ]
+  },
+  {
+   "id": "autre-ville",
+   "area": "R\u00e9server",
+   "label": "Prendre \u00e0 l'a\u00e9roport, rendre \u00e0 Marrakech",
+   "kind": "task",
+   "goal": "Tu arrives \u00e0 l'a\u00e9roport Mohammed V le 12 d\u00e9cembre 2026 et tu rends la voiture \u00e0 Marrakech le 16. Choisis un SUV et envoie la demande. Tu t'appelles Karim Test.",
+   "question": null,
+   "expect": null,
+   "limit": null,
+   "stages": [
+    [
+     "A cherch\u00e9 avec ses dates",
+     "searched or form_open"
+    ],
+    [
+     "A ouvert la demande",
+     "form_open"
+    ],
+    [
+     "A envoy\u00e9 la demande",
+     "sent"
+    ]
+   ]
+  },
+  {
+   "id": "q-telephone",
+   "area": "Lire l'\u00e9cran",
+   "label": "Peut-on trouver le num\u00e9ro de t\u00e9l\u00e9phone ?",
+   "kind": "question",
+   "goal": null,
+   "question": "Quel num\u00e9ro faut-il appeler pour joindre l'agence ?",
+   "expect": "590.?653.?810|629.?523.?763",
+   "limit": null,
+   "stages": []
+  },
+  {
+   "id": "q-par-jour",
+   "area": "Lire l'\u00e9cran",
+   "label": "Le prix est-il par jour ou au total ?",
+   "kind": "question",
+   "goal": null,
+   "question": "Les prix affich\u00e9s sont-ils par jour, ou pour toute la location ?",
+   "expect": "jour",
+   "limit": null,
+   "stages": []
+  },
+  {
+   "id": "q-caution",
+   "area": "Lire l'\u00e9cran",
+   "label": "Sait-on quels papiers et quelle caution il faut ?",
+   "kind": "question",
+   "goal": null,
+   "question": "Quels papiers faut-il, et y a-t-il une caution \u00e0 laisser ?",
+   "expect": "(permis|passeport|cin).*(caution|d\u00e9p\u00f4t)|(caution|d\u00e9p\u00f4t).*(permis|passeport|cin)",
+   "limit": null,
+   "stages": []
+  }
+ ]
+}

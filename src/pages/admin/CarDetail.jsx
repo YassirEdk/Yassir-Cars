@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { colorName } from '../../data'
+import { colorName, categoryLabel } from '../../data'
 import { Ico } from './Icons'
 import { formatKm, formatDate, kmDone } from './format'
 import { carStats, monthlySeries } from './stats'
@@ -50,14 +50,14 @@ export default function CarDetail({ car, onChange, onKmUpdate, onEdit }) {
         <div className="admin-detail__id">
           <h2>{car.name} <span className={`admin-status-pill ${meta.cls}`}>{meta.label}</span></h2>
           <div className="admin-car__meta">
-            <span className="admin-tag">{car.category}</span>
+            <span className="admin-tag">{categoryLabel(car.category)}</span>
             {car.color && <span className="admin-dot" style={{ background: car.color }} title={colorName(car.color)} />}
             {car.immatriculation && <span className="admin-plate">{car.immatriculation}</span>}
             <span className="admin-price">{car.price} {car.currency}/j</span>
             {car.lastKm != null && <span className="admin-last-km"><Ico name="gauge" /> {formatKm(car.lastKm)} km</span>}
           </div>
         </div>
-        <button className="admin-btn admin-btn--sm admin-btn--edit admin-detail__edit" onClick={() => onEdit(car)}>✏ Modifier</button>
+        <button className="admin-btn admin-btn--sm admin-btn--edit admin-detail__edit" onClick={() => onEdit(car)}><Ico name="pencil" /> Modifier</button>
       </div>
 
       <div className="admin-stats-row">

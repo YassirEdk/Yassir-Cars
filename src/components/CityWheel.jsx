@@ -8,7 +8,7 @@ const ITEM_H = 46          // px height of each row
 
 const clamp = (n, max) => Math.max(0, Math.min(max, n))
 
-export default function CityWheel({ value, onChange, cities, placeholder = 'Choisissez une ville…', error }) {
+export default function CityWheel({ value, onChange, cities, placeholder = 'Ville ou aéroport…', error }) {
   const [open, setOpen] = useState(false)
   const [sel, setSel] = useState(0)
   const [query, setQuery] = useState('')
@@ -23,10 +23,11 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
 
   const popular = useMemo(() => popularCities(cities), [cities])
 
-  // Center the wheel on the current value each time it opens.
+  // Center the wheel on the current value each time it opens, or on the place asked
+  // for most: on the first of the list, half the wheel would be empty.
   useEffect(() => {
     if (!open) return
-    const idx = Math.max(0, cities.indexOf(value))
+    const idx = Math.max(0, cities.indexOf(value || popular[0]))
     setSel(idx)
     requestAnimationFrame(() => {
       if (scrollRef.current) scrollRef.current.scrollTop = idx * ITEM_H
@@ -34,7 +35,7 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
       // over the wheel before the visitor asked for it.
       if (window.matchMedia('(pointer: fine)').matches) inputRef.current?.focus({ preventScroll: true })
     })
-  }, [open, value, cities])
+  }, [open, value, cities, popular])
 
   // Lock background scroll while the wheel is open.
   useEffect(() => {
@@ -137,7 +138,7 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
         >
           <div className="citywheel-sheet" role="dialog" aria-modal="true" aria-labelledby={titleId}>
             <div className="citywheel-sheet__head">
-              <h3 id={titleId}><Icon name="pin" /> Choisissez une ville</h3>
+              <h3 id={titleId}><Icon name="pin" /> Choisissez un lieu</h3>
               <button type="button" className="citywheel-sheet__close" onClick={close} aria-label="Fermer">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"
                   strokeWidth="2.4" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -151,8 +152,8 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
                 type="text"
                 value={query}
                 onChange={(e) => onQuery(e.target.value)}
-                placeholder="Rechercher une ville…"
-                aria-label="Rechercher une ville"
+                placeholder="Ville, aéroport…"
+                aria-label="Rechercher une ville ou un aéroport"
                 autoComplete="off"
                 spellCheck={false}
               />
@@ -182,7 +183,7 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
             {list.length === 0 ? (
               <div className="citywheel-empty">
                 <Icon name="search" />
-                <p>Aucune ville ne correspond à « {query.trim()} »</p>
+                <p>Aucun lieu ne correspond à « {query.trim()} »</p>
               </div>
             ) : (
               <div className="citywheel">
@@ -215,7 +216,7 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
             )}
 
             <button type="button" className="citywheel-confirm" onClick={() => choose(current)} disabled={!current}>
-              {current ? <>Choisir <strong>{current}</strong></> : 'Aucune ville'}
+              {current ? <>Choisir <strong>{current}</strong></> : 'Aucun lieu'}
             </button>
           </div>
         </div>,

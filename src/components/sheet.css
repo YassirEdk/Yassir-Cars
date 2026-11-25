@@ -1,0 +1,41 @@
+/* ── Bottom sheet (phones) ────────────────────────────────────────────────── */
+.sheet { position: fixed; inset: 0; z-index: 1500; display: flex; align-items: flex-end; justify-content: center; }
+.sheet__scrim { position: absolute; inset: 0; background: rgba(var(--dark-rgb),.45); animation: sheet-fade .2s ease; }
+.sheet__panel {
+  position: relative; width: 100%; max-width: 620px; max-height: 88vh; max-height: 88dvh;
+  display: flex; flex-direction: column; outline: none;
+  background: #fff; color: var(--gray-800); border-radius: 22px 22px 0 0;
+  box-shadow: 0 -14px 44px rgba(var(--dark-rgb),.22);
+  /* No fill mode: a transform left behind would re-anchor the fixed calendar. */
+  animation: sheet-up .28s cubic-bezier(.2,.8,.2,1);
+}
+@keyframes sheet-up { from { transform: translateY(100%); } }
+@keyframes sheet-fade { from { opacity: 0; } }
+.sheet__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 10px 8px 20px; flex-shrink: 0; }
+.sheet__title { font-size: 18px; font-weight: 800; color: var(--dark); letter-spacing: -.2px; }
+.sheet__close {
+  display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%;
+  border: 0; background: none; color: var(--gray-600); cursor: pointer;
+}
+.sheet__close:hover { background: var(--gray-100); color: var(--dark); }
+.sheet__body { padding: 4px 20px 20px; overflow-y: auto; overscroll-behavior: contain; }
+.sheet__foot {
+  display: flex; gap: 10px; flex-shrink: 0;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--gray-200);
+}
+.sheet__foot .btn { flex: 1; justify-content: center; min-height: 50px; border-radius: 14px; }
+.sheet__foot .btn--quiet { flex: 0 0 auto; background: none; color: var(--gray-700); padding: 0 18px; box-shadow: none; }
+
+/* The search form, on a grey that sets off its fields. Its lists open past the
+   edge of the sheet, so nothing here may clip them. */
+.sheet__panel--search { background: var(--soft); }
+.sheet__panel--search .sheet__close:hover { background: var(--soft-2); }
+.sheet__panel--search .sheet__body { overflow: visible; padding: 4px 16px calc(18px + env(safe-area-inset-bottom)); }
+/* Calendars centred on the screen: a date field low in the sheet has no room. */
+.sheet .bk-fields .bk-field .datepicker__pop {
+  position: fixed; inset: auto; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: min(320px, calc(100vw - 32px)); max-width: none; z-index: 1510; animation: none;
+  box-shadow: 0 24px 80px 100vmax rgba(var(--dark-rgb),.42);
+}
+
+@media (prefers-reduced-motion: reduce) { .sheet__panel, .sheet__scrim { animation: none; } }

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
+import Icon from '../../components/Icon'
 import Logo from '../../components/Logo'
 
 /* ── Login screen ─────────────────────────────────────────────────────────── */
@@ -22,7 +23,7 @@ export default function Login({ onAuthed }) {
   return (
     <div className="admin-login">
       <form className="admin-login__card" onSubmit={submit}>
-        <div className="admin-login__brand"><Logo size={48} animated={false} /></div>
+        <div className="admin-login__brand"><Logo size={48} /></div>
         <div className="admin-login__intro">
           <h1>Espace Admin</h1>
           <p className="admin-login__sub">Connectez-vous pour gérer la flotte</p>
@@ -37,7 +38,7 @@ export default function Login({ onAuthed }) {
         <button className="admin-btn admin-btn--primary admin-login__submit" disabled={busy}>
           {busy ? 'Connexion…' : 'Se connecter'}
         </button>
-        <Link to="/" className="admin-login__back">← Retour au site</Link>
+        <Link to="/" className="admin-login__back"><Icon name="arrowLeft" /> Retour au site</Link>
       </form>
     </div>
   )

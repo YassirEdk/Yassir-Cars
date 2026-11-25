@@ -1,0 +1,45 @@
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.footer {
+  position: relative; margin-top: calc(-1 * var(--rise)); padding: calc(var(--rise) + 64px) 0 0;
+  background: #14161a; clip-path: polygon(0 var(--rise), 100% 0, 100% 100%, 0 100%);
+}
+.footer::before {
+  content: ''; position: absolute; inset: 0 0 auto; height: calc(var(--rise) + 4px);
+  background: var(--red); clip-path: polygon(0 var(--rise), 100% 0, 100% 4px, 0 100%);
+}
+.footer-grid { display: grid; grid-template-columns: minmax(0, 1.9fr) repeat(3, minmax(0, 1fr)); gap: 48px; margin-bottom: 52px; }
+.footer-brand > p { max-width: 36ch; margin: 18px 0 22px; font-size: 14.5px; line-height: 1.75; color: rgba(255,255,255,.7); }
+.footer-contact { display: flex; flex-direction: column; gap: 10px; }
+.footer-contact :is(a, span) { display: inline-flex; align-items: center; gap: 11px; font-size: 14.5px; line-height: 1.4; color: rgba(255,255,255,.86); transition: color .2s; }
+.footer-contact svg { width: 18px; height: 18px; flex-shrink: 0; color: rgba(255,255,255,.6); }
+.footer-contact a:hover { color: #fff; }
+.footer-col h3 { margin-bottom: 18px; font-size: 15px; font-weight: 600; color: #fff; }
+.footer-col ul { display: flex; flex-direction: column; gap: 11px; }
+.footer-col li a { font-size: 14.5px; line-height: 1.4; color: rgba(255,255,255,.7); transition: color .2s; }
+.footer-col li a:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--red-light); }
+.footer-bottom { display: flex; align-items: center; justify-content: space-between; gap: 16px 24px; flex-wrap: wrap; padding: 24px 0; border-top: 1px solid rgba(255,255,255,.1); }
+.footer-bottom p { font-size: 13.5px; color: rgba(255,255,255,.64); }
+.footer-socials { display: flex; gap: 8px; }
+.footer-socials a { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,.08); color: rgba(255,255,255,.82); font-size: 17px; transition: background .2s, color .2s; }
+.footer-socials a:hover { background: #fff; color: var(--dark); }
+.footer-made { display: inline-flex; align-items: center; gap: 6px; }
+.footer-made svg { width: 14px; height: 14px; color: var(--red-light); }
+
+@media (max-width: 1000px) {
+  .footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px 28px; }
+  .footer-brand { grid-column: 1 / -1; }
+  .footer-brand > p { max-width: 60ch; }
+}
+@media (max-width: 768px) {
+  /* Below: room for the booking bar under the last line of the page. */
+  .footer { padding-top: calc(var(--rise) + 44px); padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 28px 20px; margin-bottom: 26px; }
+  .footer-brand > p { margin: 14px 0 0; }
+  .footer-contact { display: none; }         /* in the contact section, right above */
+  .footer-col:nth-child(2) { display: none; }
+  .footer-col h3 { margin-bottom: 8px; }
+  .footer-col ul { gap: 0; }
+  .footer-col li a { min-height: 40px; display: inline-flex; align-items: center; }
+  .footer-socials a { width: 44px; height: 44px; }
+  .footer-bottom { flex-direction: column; text-align: center; gap: 14px; padding: 22px 0; }
+}

@@ -8,6 +8,8 @@
 
 const STORAGE_KEY = 'yassir_search'
 const SAVE_TTL = 60 * 60 * 1000        // a saved search goes stale after 1h
+// The city outlives the dates: people rent in the same place.
+const CITY_KEY = 'yassir_city'
 
 export function loadSearch() {
   try {
@@ -29,7 +31,16 @@ export function loadSearch() {
 export function saveSearch(form) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...form, savedAt: Date.now() }))
+    if (form.lieu) localStorage.setItem(CITY_KEY, form.lieu)
   } catch { /* storage blocked */ }
+}
+
+export function loadCity() {
+  try {
+    return localStorage.getItem(CITY_KEY) ?? ''
+  } catch {
+    return ''
+  }
 }
 
 /* A search is "complete" only with a city and both dates — the three things a

@@ -1,0 +1,28 @@
+/* ── Promotion ────────────────────────────────────────────────────────────── */
+.promo { background: #fff; padding: 6px 0 40px; }
+.promo__card {
+  position: relative; isolation: isolate; overflow: hidden; border-radius: 24px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px 40px;
+  padding: 30px 40px 30px 36px; background: var(--dark-bg); color: #fff;
+}
+/* The rate on white, the rest on dark, the red line between them. */
+.promo__card::before {
+  content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: -80px; width: 312px;
+  background: #fff; border-right: 4px solid var(--red); transform: skewX(calc(-1 * var(--slash)));
+}
+.promo__rate { min-width: 190px; font-family: var(--title-font); font-stretch: 118%; font-size: 56px; font-weight: 800; letter-spacing: -.04em; line-height: 1; white-space: nowrap; color: var(--red); }
+.promo__card { border: 1px solid var(--gray-200); }
+.promo__text h2 { font-family: var(--title-font); font-stretch: 118%; font-size: clamp(20px, 2.1vw, 27px); font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.promo__text p { margin-top: 5px; font-size: 15.5px; line-height: 1.5; color: rgba(255,255,255,.8); }
+
+@media (max-width: 860px) {
+  .promo__card { grid-template-columns: auto minmax(0, 1fr); }
+  .promo__go { grid-column: 1 / -1; justify-content: center; }
+}
+@media (max-width: 560px) {
+  .promo { padding-bottom: 28px; }
+  .promo__card { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 0 22px 22px; border-radius: 20px; }
+  .promo__card::before { left: -10%; right: -10%; top: -20px; bottom: auto; width: auto; height: 104px; border-right: 0; border-bottom: 4px solid var(--red); transform: rotate(-3deg); }
+  .promo__rate { padding: 20px 0 18px; font-size: 46px; }
+  .promo__text { padding-top: 4px; }
+}

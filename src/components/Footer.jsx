@@ -1,22 +1,42 @@
+import { Link, useLocation } from 'react-router-dom'
 import Logo from './Logo'
 import Icon from './Icon'
 import SocialIcon from './SocialIcon'
 import { useSettings } from '../lib/SettingsContext'
+import { formatPhone, waLink } from '../lib/contact'
+import './footer.css'
 
+/* Every link leads somewhere real. Conditions générales, confidentialité and FAQ
+   belong in "Informations" as soon as those pages exist. */
 const cols = [
   {
-    title: 'Nos Services',
-    links: ['Location courte durée', 'Location longue durée', 'Navette aéroport', 'Chauffeur privé', 'Location minibus', "Voyage d'affaires"],
+    title: 'Nos services',
+    links: ['Location courte durée', 'Location longue durée', 'Navette aéroport', 'Chauffeur privé', 'Location minibus', "Voyage d'affaires"]
+      .map(label => ({ label, section: 'services' })),
   },
   {
-    title: 'Nos Agences',
-    links: ['Casablanca', 'Rabat', 'Marrakech', 'Agadir', 'Fès', 'Tanger'],
+    title: 'Louer à',
+    links: ['Casablanca', 'Rabat', 'Marrakech', 'Agadir', 'Fès', 'Tanger']
+      .map(city => ({ label: city, to: `/resultats?lieu=${encodeURIComponent(city)}` })),
   },
   {
     title: 'Informations',
-    links: ['À propos de nous', 'Conditions générales', 'Politique de confidentialité', 'FAQ', 'Blog', 'Carrières'],
+    links: [
+      { label: 'Notre flotte', to: '/flotte' },
+      { label: 'Comment ça marche', section: 'comment' },
+      { label: 'Avis clients', section: 'avis' },
+      { label: 'Nous contacter', section: 'contact' },
+    ],
   },
 ]
+
+// On the home page the link scrolls; from another page it goes there first.
+function FooterLink({ label, to, section }) {
+  const onHome = useLocation().pathname === '/'
+  if (to) return <Link to={to}>{label}</Link>
+  if (onHome) return <a href={`#${section}`}>{label}</a>
+  return <Link to="/" state={{ scrollToId: section }}>{label}</Link>
+}
 
 export default function Footer() {
   const { settings } = useSettings()
@@ -33,10 +53,36 @@ export default function Footer() {
       <div className="container">
         <div className="footer-grid">
           <div className="footer-brand">
-            <a href="#accueil" style={{ textDecoration: 'none', display: 'inline-flex', marginBottom: 20 }}>
-              <Logo size={38} animated={false} />
-            </a>
+            <FooterLink section="accueil" label={<Logo size={38} />} />
             <p>Votre partenaire de confiance pour la location de véhicules au Maroc depuis 2014. Qualité, transparence et satisfaction garanties.</p>
+            <ul className="footer-contact">
+              {settings.phone && (
+                <li><a href={`tel:+${settings.phone}`}><Icon name="phone" /> {formatPhone(settings.phone)}</a></li>
+              )}
+              {settings.whatsapp && (
+                <li>
+                  <a href={waLink(settings.whatsapp, 'Bonjour YASSIR CARS, je souhaite des informations.')} target="_blank" rel="noopener noreferrer">
+                    <SocialIcon name="whatsapp" /> {formatPhone(settings.whatsapp)}
+                  </a>
+                </li>
+              )}
+              <li><span><Icon name="clock" /> Lun – sam 8h – 20h, dim. 9h – 18h</span></li>
+            </ul>
+          </div>
+
+          {cols.map(col => (
+            <div className="footer-col" key={col.title}>
+              <h3>{col.title}</h3>
+              <ul>
+                {col.links.map(l => <li key={l.label}><FooterLink {...l} /></li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="footer-bottom">
+          <p>© {new Date().getFullYear()} YASSIR CARS. Tous droits réservés.</p>
+          {socials.length > 0 && (
             <div className="footer-socials">
               {socials.map(s => (
                 <a href={s.url} key={s.key} aria-label={s.label} title={s.label} target="_blank" rel="noopener noreferrer">
@@ -44,20 +90,7 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-          </div>
-
-          {cols.map(col => (
-            <div className="footer-col" key={col.title}>
-              <h4>{col.title}</h4>
-              <ul>
-                {col.links.map(l => <li key={l}><a href="#">{l}</a></li>)}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <div className="footer-bottom">
-          <p>© 2026 YASSIR CARS. Tous droits réservés.</p>
+          )}
           <p className="footer-made">Conçu avec <Icon name="heart" /> au Maroc</p>
         </div>
       </div>

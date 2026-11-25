@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import Icon from './Icon'
+import { Ico } from '../pages/admin/Icons'
 
 // ── Tiny imperative dialog/toast system ──────────────────────────────────────
 // Replaces native alert()/confirm() with styled, in-app popups. Any module can
@@ -31,6 +33,7 @@ export function confirmAsync(message, opts = {}) {
       confirmLabel: opts.confirmLabel || 'Confirmer',
       cancelLabel: opts.cancelLabel || 'Annuler',
       danger: opts.danger ?? false,
+      icon: opts.icon || (opts.danger ? 'trash' : 'question'),
       resolve: (val) => { state.confirm = null; emit(); resolve(val) },
     }
     emit()
@@ -49,9 +52,9 @@ export function DialogHost() {
       <div className="admin-toasts">
         {s.toasts.map(t => (
           <div key={t.id} className={`admin-toast admin-toast--${t.type}`}>
-            <span className="admin-toast__icon">{t.type === 'error' ? '⚠' : 'ℹ'}</span>
+            <span className="admin-toast__icon"><Ico name={t.type === 'error' ? 'warning' : 'info'} /></span>
             <span className="admin-toast__msg">{t.message}</span>
-            <button className="admin-toast__close" onClick={() => dismissToast(t.id)} aria-label="Fermer">✕</button>
+            <button className="admin-toast__close" onClick={() => dismissToast(t.id)} aria-label="Fermer"><Icon name="close" /></button>
           </div>
         ))}
       </div>
@@ -60,9 +63,9 @@ export function DialogHost() {
         <div className="admin-modal admin-modal--conflict" onClick={() => s.confirm.resolve(false)}>
           <div className={`admin-conflict-popup ${s.confirm.danger ? 'admin-conflict-popup--danger' : ''}`} onClick={e => e.stopPropagation()}>
             <div className="admin-conflict-popup__head">
-              <span className="admin-conflict-popup__icon">{s.confirm.danger ? '🗑' : '❓'}</span>
+              <span className="admin-conflict-popup__icon"><Ico name={s.confirm.icon} /></span>
               <h3>{s.confirm.title}</h3>
-              <button className="phone-modal__close" onClick={() => s.confirm.resolve(false)} aria-label="Fermer">✕</button>
+              <button className="phone-modal__close" onClick={() => s.confirm.resolve(false)} aria-label="Fermer"><Icon name="close" /></button>
             </div>
             <p className="admin-conflict-popup__desc">{s.confirm.message}</p>
             <div className="admin-conflict-popup__actions">

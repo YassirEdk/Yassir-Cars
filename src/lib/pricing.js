@@ -39,6 +39,12 @@ export function rateForCar(carId, settings) {
   return ids.includes(String(carId)) ? rate : 0
 }
 
+// The lowest daily price among these cars, promotion included. Null without cars.
+export function lowestPrice(cars, settings) {
+  const prices = cars.map(c => discounted(c.price, rateForCar(c.id, settings))).filter(p => p > 0)
+  return prices.length ? Math.min(...prices) : null
+}
+
 // True when the promotion could show up anywhere at all — used by the banner,
 // which must never advertise an offer no car actually has.
 export function promotionRuns(settings) {

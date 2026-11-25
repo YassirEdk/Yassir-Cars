@@ -1,0 +1,66 @@
+# Simulated customers on the local site (http://localhost:5998). See README.md.
+# WhatsApp is blocked: a request is prepared, never sent.
+name: YASSIR CARS
+build: local
+library: personas.yaml
+personas: [mre_telephone, touriste_hesitant, client_methodique]
+trials: 1
+workers: 2
+run:
+  state_probe: probe.js
+  block_hosts: "wa.me,*.wa.me,whatsapp.com,*.whatsapp.com"
+  max_steps: 30
+
+jobs:
+  - id: moins-chere
+    area: Réserver
+    label: Louer la voiture la moins chère pour des dates précises
+    url: "http://localhost:5998/"
+    personas: [mre_telephone, touriste_hesitant]
+    goal: >-
+      Tu seras à Casablanca du 10 au 14 décembre 2026. Loue la voiture la moins chère
+      pour ces dates, jusqu'à envoyer la demande. Tu t'appelles Karim Test.
+    seen: "sent and start == '10/12/2026' and end == '14/12/2026'"
+    stages:
+      - [A cherché avec ses dates, "searched or form_open"]
+      - [A ouvert la demande, "form_open"]
+      - [A envoyé la demande, "sent"]
+
+  - id: autre-ville
+    area: Réserver
+    label: Prendre à l'aéroport, rendre à Marrakech
+    url: "http://localhost:5998/"
+    personas: [client_methodique]
+    goal: >-
+      Tu arrives à l'aéroport Mohammed V le 12 décembre 2026 et tu rends la voiture à
+      Marrakech le 16. Choisis un SUV et envoie la demande. Tu t'appelles Karim Test.
+    seen: "sent and 'Mohammed V' in pickup and 'Marrakech' in dropoff"
+    stages:
+      - [A cherché avec ses dates, "searched or form_open"]
+      - [A ouvert la demande, "form_open"]
+      - [A envoyé la demande, "sent"]
+
+  - id: q-telephone
+    area: Lire l'écran
+    label: Peut-on trouver le numéro de téléphone ?
+    url: "http://localhost:5998/"
+    personas: [mre_telephone]
+    question: Quel numéro faut-il appeler pour joindre l'agence ?
+    expect: "590.?653.?810|629.?523.?763"
+
+  - id: q-par-jour
+    area: Lire l'écran
+    label: Le prix est-il par jour ou au total ?
+    url: "http://localhost:5998/flotte"
+    personas: [touriste_hesitant]
+    question: Les prix affichés sont-ils par jour, ou pour toute la location ?
+    expect: "jour"
+
+  - id: q-caution
+    area: Lire l'écran
+    label: Sait-on quels papiers et quelle caution il faut ?
+    url: "http://localhost:5998/"
+    personas: [client_methodique]
+    question: Quels papiers faut-il, et y a-t-il une caution à laisser ?
+    # Right only if the page says it: a deposit, and which papers.
+    expect: "(permis|passeport|cin).*(caution|dépôt)|(caution|dépôt).*(permis|passeport|cin)"

@@ -1,0 +1,59 @@
+/* ── Figures and brands, right under the hero ─────────────────────────────── */
+.figures { background: #fff; padding: 38px 0 32px; }
+.figures__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.figure { position: relative; display: flex; flex-direction: column; gap: 4px; padding-left: 44px; }
+.figure:first-child { padding-left: 0; }
+/* Leaning like the cut of the hero. */
+.figure + .figure::before {
+  content: ''; position: absolute; left: 12px; top: 6px; bottom: 6px; width: 2px;
+  background: var(--gray-300); transform: skewX(calc(-1 * var(--slash)));
+}
+.figure__num {
+  font-family: var(--title-font); font-stretch: 118%; font-weight: 800; font-variant-numeric: tabular-nums;
+  font-size: clamp(32px, 3.7vw, 50px); line-height: 1.1; letter-spacing: -.035em; white-space: nowrap;
+  color: var(--dark);
+}
+.figure__label { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; font-weight: 500; line-height: 1.35; color: var(--gray-600); }
+.figure__label svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--dark); }
+
+.brands-band { background: #fff; padding-bottom: 30px; overflow: hidden; }
+.brands-inner { display: flex; align-items: center; gap: 36px; padding-top: 24px; position: relative; }
+.brands-inner::before { content: ''; position: absolute; left: 24px; right: 24px; top: 0; height: 1px; background: var(--gray-200); }
+.brands-label { flex-shrink: 0; max-width: 108px; font-size: 14px; font-weight: 500; line-height: 1.4; color: var(--gray-600); }
+.brands-track {
+  flex: 1; min-width: 0; overflow: hidden; min-height: 64px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+/* Identical copies: sliding by exactly one of them makes a seamless loop. */
+.brands-slide {
+  display: flex; align-items: center; width: max-content;
+  animation: scrollBrands var(--time, 32s) linear infinite; will-change: transform;
+}
+.brands-slide:hover { animation-play-state: paused; }
+/* Fixed box: every logo (circle or wordmark) occupies the same space. */
+.brand-logo-box { width: 150px; height: 64px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+/* The files are white (scripts/build-images.mjs); the filter inks them. */
+.brand-logo { width: 96px; height: 42px; object-fit: contain; display: block; filter: brightness(0); opacity: .5; transition: opacity .3s ease; }
+.brand-logo-box:hover .brand-logo { opacity: 1; }
+.brand-text-fallback { font-size: 13px; font-weight: 700; color: var(--gray-500); white-space: nowrap; }
+@keyframes scrollBrands { to { transform: translateX(var(--shift, -25%)); } }
+@media (prefers-reduced-motion: reduce) { .brands-slide { animation: none !important; } }
+
+@media (max-width: 900px) {
+  .figure { padding-left: 32px; }
+  .figure + .figure::before { left: 6px; }
+  .figure__label { font-size: 13.5px; }
+}
+@media (max-width: 640px) {
+  .figures { padding: 30px 0 26px; }
+  .figures__row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 0; }
+  .figure:nth-child(odd) { padding-left: 0; }
+  .figure:nth-child(odd)::before { content: none; }
+  .figure__num { font-size: 36px; }
+  .brands-inner { flex-direction: column; align-items: stretch; gap: 8px; padding-top: 20px; }
+  .brands-inner::before { left: 14px; right: 14px; }
+  .brands-label { max-width: none; }
+  .brands-band { padding-bottom: 22px; }
+  .brand-logo-box { width: 122px; }
+}

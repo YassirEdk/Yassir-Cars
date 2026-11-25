@@ -27,9 +27,16 @@ export function convert(mad, code) {
   return (v - whole) < 0.1 ? whole : whole + 1
 }
 
+/* 1050 → "1 050". French groups thousands with U+202F, a hairline that Inter
+   draws almost at zero width, so prices read "1050". A plain no-break space
+   always shows, and still never wraps. */
+export function formatNumber(n) {
+  return Number(n || 0).toLocaleString('fr-FR').replace(/\u202f/g, '\u00a0')
+}
+
 // MAD amount → formatted string with the currency symbol (e.g. "1 750 MAD", "€163", "$175").
 export function formatMoney(mad, code) {
   const c = CURRENCIES[code] ?? CURRENCIES.MAD
-  const v = convert(mad, code).toLocaleString('fr-FR')
-  return c.suffix ? `${v} ${c.symbol}` : `${c.symbol}${v}`
+  const v = formatNumber(convert(mad, code))
+  return c.suffix ? `${v}\u00a0${c.symbol}` : `${c.symbol}${v}`
 }

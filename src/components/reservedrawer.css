@@ -8,13 +8,12 @@
 
 :root {
   --rd-w: 460px;
-  --rd-bg: #f5f6f8;
-  --rd-line: #e8eaee;
-  --rd-ink: #14161a;
-  --rd-mute: #6b7280;
-  --rd-faint: #9aa1ac;
-  --rd-accent: #e63946;
-  --rd-wa: #25d366;
+  --rd-bg: var(--page);
+  --rd-line: var(--gray-200);
+  --rd-ink: var(--dark);
+  --rd-mute: var(--gray-600);
+  --rd-faint: var(--gray-500);
+  --rd-accent: var(--red);
 }
 
 /* ── Shell ── */
@@ -27,7 +26,7 @@
   border-left: 1px solid var(--rd-line);
   border-top-left-radius: 20px;
   overflow: hidden;
-  box-shadow: -24px 0 60px rgba(16, 20, 28, .16);
+  box-shadow: -24px 0 60px rgba(var(--dark-rgb), .16);
   animation: rd-slide .3s cubic-bezier(.22, .8, .3, 1) both;
   will-change: transform;
 }
@@ -41,7 +40,7 @@
   .rd-drawer { z-index: 901; border-top-left-radius: 0; }
   .rd-scrim {
     display: block; position: fixed; inset: 0; z-index: 900;
-    background: rgba(15, 17, 21, .45);
+    background: rgba(var(--dark-rgb), .42);
     backdrop-filter: blur(2px);
     animation: rd-fade .25s ease both;
   }
@@ -58,7 +57,7 @@
 /* `backwards`, not `both`: with `both` the finished animation left a transform
    on every card, turning each into a stacking context that trapped the open
    calendar underneath the next card. */
-.rd-scroll > * { animation: rd-rise .38s .05s cubic-bezier(.22, .8, .3, 1) backwards; }
+.rd-scroll > * { flex-shrink: 0; animation: rd-rise .38s .05s cubic-bezier(.22, .8, .3, 1) backwards; }
 .rd-drawer--closing .rd-scroll > * { animation: none; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -82,12 +81,9 @@
   border-bottom: 1px solid var(--rd-line);
 }
 .rd-top__txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.rd-top__eyebrow {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--rd-accent);
-}
+.rd-top__eyebrow { font-size: 12.5px; line-height: 1.3; color: var(--rd-mute); }
 .rd-top__name {
-  font-size: 15px; font-weight: 800; color: var(--rd-ink);
+  font-size: 15.5px; font-weight: 700; line-height: 1.3; color: var(--rd-ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .rd-top__close {
@@ -98,7 +94,7 @@
   color: var(--rd-mute); cursor: pointer;
   transition: background .18s, color .18s, border-color .18s;
 }
-.rd-top__close:hover { background: #fff5f5; border-color: var(--rd-accent); color: var(--rd-accent); }
+.rd-top__close:hover { background: #fff; border-color: var(--rd-ink); color: var(--rd-ink); }
 
 /* Small currency switcher sitting right beside the car name (not floated to the
    centre/right — the close button below takes the right edge via its own auto
@@ -112,7 +108,7 @@
   border-radius: 10px; box-shadow: none;
   background: var(--rd-bg); border-color: var(--rd-line); color: var(--rd-ink);
 }
-.rd-top .rd-currency .smenu__btn:hover { border-color: var(--rd-accent); }
+.rd-top .rd-currency .smenu__btn:hover { border-color: var(--rd-ink); }
 .rd-top .rd-currency .smenu__chev { color: var(--rd-mute); }
 
 /* ── Scrolling content ──
@@ -140,35 +136,20 @@
    its own z-index. Lift the card that currently holds an open calendar. */
 .rd-card:has(.datepicker__pop) { z-index: 30; }
 .rd-card__title {
-  display: flex; align-items: center; gap: 9px;
-  font-size: 14.5px; font-weight: 800; color: var(--rd-ink);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 15.5px; font-weight: 700; color: var(--rd-ink);
   margin: 0 0 14px;
 }
 /* Numbered steps: two short, obvious stages instead of one long form. */
 .rd-step {
   display: grid; place-items: center;
   width: 22px; height: 22px; border-radius: 50%;
-  background: var(--rd-accent); color: #fff;
+  background: var(--rd-ink); color: #fff;
   font-size: 12px; font-weight: 800;
 }
 
 /* ── Hero photo ── */
-.rd-hero {
-  position: relative; margin: 0;
-  width: 100%; aspect-ratio: 16 / 10;
-  border-radius: 18px; overflow: hidden;
-  background: #101216;
-  border: 1px solid var(--rd-line);
-}
-.rd-hero__blur {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  filter: blur(26px) brightness(.7); transform: scale(1.25);
-}
-.rd-hero__img {
-  position: relative; z-index: 1;
-  width: 100%; height: 100%; object-fit: contain; display: block;
-}
+.rd-hero { margin: 0; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; border: 1px solid var(--rd-line); }
 .rd-hero__none {
   width: 100%; height: 100%; display: grid; place-items: center;
   color: #fff; font-size: 22px; font-weight: 800;
@@ -178,9 +159,10 @@
 .rd-hero__nav {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
   width: 34px; height: 34px; border-radius: 50%;
-  background: rgba(255, 255, 255, .9); border: none;
-  color: var(--rd-ink); font-size: 20px; line-height: 1; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+  display: grid; place-items: center; padding: 0;
+  background: rgba(255, 255, 255, .95); border: none;
+  color: var(--rd-ink); font-size: 15px; line-height: 1; cursor: pointer;
+  box-shadow: 0 4px 14px rgba(var(--dark-rgb), .2);
   transition: transform .18s, background .18s;
 }
 .rd-hero__nav--prev { left: 10px; }
@@ -195,10 +177,10 @@
 }
 .rd-hero__dot {
   width: 7px; height: 7px; border-radius: 999px; padding: 0; border: none;
-  background: rgba(255, 255, 255, .5); cursor: pointer;
+  background: rgba(var(--dark-rgb), .25); cursor: pointer;
   transition: width .18s, background .18s;
 }
-.rd-hero__dot.active { background: #fff; width: 20px; }
+.rd-hero__dot.active { background: var(--rd-ink); width: 20px; }
 
 .rd-tag {
   position: absolute; top: 10px; left: 10px; z-index: 2;
@@ -207,8 +189,8 @@
   padding: 5px 11px; border-radius: 999px;
   backdrop-filter: blur(6px);
 }
-.rd-tag--ok { background: rgba(22, 163, 74, .92); }
-.rd-tag--no { background: rgba(75, 85, 99, .92); }
+.rd-tag--ok { background: #1a7f43; }
+.rd-tag--no { background: var(--rd-mute); }
 .rd-tag svg { width: 1.3em; height: 1.3em; }
 
 /* ── Car head ── */
@@ -216,11 +198,11 @@
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 14px; margin-bottom: 14px;
 }
-.rd-carhead__name { font-size: 19px; font-weight: 800; color: var(--rd-ink); margin: 0 0 3px; line-height: 1.2; }
-.rd-carhead__cat { font-size: 12px; font-weight: 600; color: var(--rd-faint); }
+.rd-carhead__name { font-family: var(--title-font); font-stretch: 118%; font-size: 19px; font-weight: 700; letter-spacing: -.015em; color: var(--rd-ink); margin: 0 0 3px; line-height: 1.2; }
+.rd-carhead__cat { font-size: 13.5px; color: var(--rd-mute); }
 .rd-carhead__price { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex-shrink: 0; }
-.rd-carhead__amount { font-size: 20px; font-weight: 800; color: var(--rd-accent); line-height: 1.1; }
-.rd-carhead__per { font-size: 11px; font-weight: 600; color: var(--rd-faint); }
+.rd-carhead__amount { font-family: var(--title-font); font-stretch: 118%; font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--rd-ink); line-height: 1.2; }
+.rd-carhead__per { font-size: 12.5px; color: var(--rd-mute); }
 .rd-carhead__promo {
   display: inline-flex; align-items: center; gap: 5px; margin-top: 3px;
   font-size: 11px; font-weight: 800; color: #fff; background: var(--rd-accent);
@@ -236,11 +218,11 @@
   background: var(--rd-bg);
   font-size: 12px; font-weight: 600; color: var(--rd-mute); text-align: center;
 }
-.rd-spec svg { width: 17px; height: 17px; color: var(--rd-accent); }
+.rd-spec svg { width: 17px; height: 17px; color: var(--rd-ink); }
 
 .rd-colors { margin-top: 14px; }
-.rd-colors__title { font-size: 11.5px; font-weight: 700; color: var(--rd-faint); text-transform: uppercase; letter-spacing: .05em; }
-.rd-colors__title strong { color: var(--rd-ink); text-transform: none; letter-spacing: 0; }
+.rd-colors__title { font-size: 13.5px; color: var(--rd-mute); }
+.rd-colors__title strong { font-weight: 600; color: var(--rd-ink); }
 .rd-colors__row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-top: 8px; }
 .rd-color {
   width: 24px; height: 24px; border-radius: 50%; padding: 0; cursor: pointer;
@@ -248,7 +230,7 @@
   transition: transform .18s, box-shadow .18s;
 }
 .rd-color:hover { transform: scale(1.08); }
-.rd-color.active { box-shadow: 0 0 0 2px var(--rd-accent); transform: scale(1.1); }
+.rd-color.active { box-shadow: 0 0 0 2px var(--rd-ink); transform: scale(1.1); }
 .rd-color.taken { opacity: .3; }
 
 .rd-equip { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 14px; }
@@ -258,8 +240,8 @@
   background: var(--rd-bg); border: 1px solid var(--rd-line);
   padding: 5px 11px; border-radius: 999px;
 }
-.rd-equip-pill__icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--rd-accent); }
-.rd-equip-pill--more { font-family: inherit; cursor: pointer; color: var(--rd-accent); background: #fff5f5; border-color: rgba(230, 57, 70, .25); }
+.rd-equip-pill__icon { width: 14px; height: 14px; flex-shrink: 0; color: var(--rd-faint); }
+.rd-equip-pill--more { font-family: inherit; cursor: pointer; color: var(--rd-ink); background: #fff; border-color: var(--gray-300); }
 
 /* ── Dates ── */
 .rd-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -271,15 +253,15 @@
   border-radius: 14px;
   transition: border-color .18s, background .18s;
 }
-.rd-date:hover { border-color: rgba(230, 57, 70, .3); }
-.rd-date.is-set { background: #fff; border-color: rgba(230, 57, 70, .35); }
-.rd-date:focus-within { border-color: var(--rd-accent); background: #fff; }
+.rd-date:hover { border-color: var(--gray-300); }
+.rd-date.is-set { background: #fff; border-color: var(--gray-300); }
+.rd-date:focus-within, .rd-date.has-error { border-color: var(--rd-accent); background: #fff; }
+.rd-date.has-error .rd-date__day { color: var(--red-dark); font-weight: 600; text-transform: none; }
 .rd-date__label {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--rd-faint); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 500; color: var(--rd-mute); white-space: nowrap;
 }
-.rd-date__label svg { width: 12px; height: 12px; color: var(--rd-accent); }
+.rd-date__label svg { width: 14px; height: 14px; }
 /* Shared DatePicker (same component as the search bar). The class lands on the
    <input>, so the selector must be compound, not descendant. */
 .rd-date .datepicker { width: 100%; }
@@ -305,7 +287,7 @@
   padding: 10px;
   border-radius: 12px;
   border: 1px solid var(--rd-line);
-  box-shadow: 0 16px 40px rgba(16, 20, 28, .2);
+  box-shadow: 0 16px 40px rgba(var(--dark-rgb), .2);
 }
 .rd-dates .rd-date:last-child .datepicker__pop { left: auto; right: 0; }
 .rd-date .datepicker__head { margin-bottom: 7px; }
@@ -315,7 +297,7 @@
 .rd-date .datepicker__grid--days { margin-bottom: 3px; }
 .rd-date .datepicker__wd { font-size: 9.5px; padding: 2px 0; }
 .rd-date .datepicker__day { font-size: 12px; border-radius: 8px; }
-.rd-date__day { font-size: 11px; font-weight: 600; color: var(--rd-accent); text-transform: capitalize; }
+.rd-date__day { font-size: 12.5px; color: var(--rd-mute); text-transform: capitalize; }
 .rd-date:not(.is-set) .rd-date__day { color: var(--rd-faint); }
 
 .rd-note {
@@ -333,30 +315,36 @@
 }
 .rd-recap__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .rd-recap__row + .rd-recap__row { margin-top: 6px; }
-.rd-recap__row--save { color: #16a34a; font-weight: 700; }
+.rd-recap__row--save { color: #1a7f43; font-weight: 700; }
 .rd-recap__total {
   display: flex; align-items: center; justify-content: space-between;
   margin-top: 10px; padding-top: 10px;
-  border-top: 1px dashed #d7dbe1;
+  border-top: 1px dashed var(--gray-300);
   font-weight: 700; color: var(--rd-ink);
 }
-.rd-recap__total strong { font-size: 17px; color: var(--rd-accent); }
+.rd-recap__total strong { font-size: 17px; color: var(--rd-ink); }
 
 /* ── Fields ── */
 .rd-field { display: flex; flex-direction: column; gap: 6px; }
 .rd-field + .rd-field { margin-top: 12px; }
-.rd-field__label { font-size: 12px; font-weight: 700; color: var(--rd-mute); }
+.rd-field__label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
 .rd-req { color: var(--rd-accent); }
 .rd-input {
   width: 100%; box-sizing: border-box;
   font-family: inherit; font-size: 14.5px; color: var(--rd-ink);
   background: var(--rd-bg); border: 1.5px solid transparent;
-  border-radius: 12px; padding: 12px 13px;
+  border-radius: 12px; min-height: 48px; padding: 12px 13px;
   transition: border-color .18s, background .18s;
 }
-.rd-input:hover { border-color: rgba(230, 57, 70, .25); }
-.rd-input:focus { outline: none; border-color: var(--rd-accent); background: #fff; }
+select.rd-input {
+  appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer; text-overflow: ellipsis;
+  background: var(--rd-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23616873' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 13px center / 16px no-repeat;
+}
+.rd-input:hover { border-color: var(--gray-300); }
+.rd-input:focus { outline: none; border-color: var(--rd-accent); background-color: #fff; box-shadow: 0 0 0 3px rgba(var(--red-rgb), .12); }
 .rd-input.is-placeholder { color: var(--rd-faint); }
+.rd-field.has-error .rd-input { border-color: var(--red-dark); }
+.rd-field__error { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--red-dark); }
 
 /* ── Alerts ── */
 .rd-alert {
@@ -365,8 +353,8 @@
   border-radius: 14px; padding: 12px 14px; margin: 0;
 }
 .rd-alert svg { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
-.rd-alert--warn  { color: #a16207; background: #fef6e7; border: 1px solid #f6e2b8; }
-.rd-alert--error { color: var(--rd-accent); background: #fdecee; border: 1px solid #f7ccd1; }
+.rd-alert--warn  { color: var(--gray-700); background: var(--soft); border: 1px solid var(--gray-300); }
+.rd-alert--error { color: var(--red-dark); background: rgba(var(--red-rgb), .06); border: 1px solid rgba(var(--red-rgb), .22); }
 
 .rd-trust {
   display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px;
@@ -374,15 +362,15 @@
   padding: 2px 4px;
 }
 .rd-trust span { display: inline-flex; align-items: center; gap: 5px; }
-.rd-trust svg { width: 14px; height: 14px; color: #16a34a; }
+.rd-trust svg { width: 14px; height: 14px; color: var(--rd-ink); }
 
 .rd-textlink {
-  display: block; width: 100%; text-align: center;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 40px;
   background: none; border: none; font-family: inherit; cursor: pointer;
-  font-size: 13px; font-weight: 600; color: var(--rd-mute); text-decoration: none;
+  font-size: 14px; font-weight: 600; color: var(--rd-mute); text-decoration: none;
   padding: 4px;
 }
-.rd-textlink:hover { color: var(--rd-accent); }
+.rd-textlink:hover { color: var(--rd-ink); }
 
 /* ── Buttons ── */
 .rd-btn {
@@ -393,30 +381,32 @@
   transition: background .18s, transform .18s, box-shadow .18s, color .18s;
 }
 .rd-btn svg { width: 19px; height: 19px; }
-.rd-btn--wa { background: var(--rd-wa); color: #fff; box-shadow: 0 8px 20px rgba(37, 211, 102, .28); }
-.rd-btn--wa:hover { background: #1fb855; transform: translateY(-1px); }
+/* WhatsApp's green: the booking is sent there. */
+.rd-btn--wa { background: var(--wa); color: #fff; }
+.rd-btn--wa:hover { background: var(--wa-dark); transform: translateY(-1px); box-shadow: 0 12px 24px -10px rgba(var(--wa-rgb), .5); }
 .rd-btn--wa:disabled, .rd-btn--wa:disabled:hover {
-  background: #9ca3af; box-shadow: none; transform: none; cursor: not-allowed;
+  background: var(--gray-400); box-shadow: none; transform: none; cursor: not-allowed;
 }
 .rd-btn--ghost {
   flex: 1; background: #fff; color: var(--rd-mute);
   border: 1px solid var(--rd-line); font-size: 13px; padding: 11px 14px;
 }
-.rd-btn--ghost:hover { border-color: var(--rd-accent); color: var(--rd-accent); }
+.rd-btn--ghost:hover { border-color: var(--rd-ink); color: var(--rd-ink); }
 
 /* ── Sticky action bar ── */
 .rd-cta {
   flex-shrink: 0;
-  display: flex; align-items: center; gap: 14px;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 10px 14px;
   padding: 12px 14px;
   background: #fff;
   border-top: 1px solid var(--rd-line);
-  box-shadow: 0 -8px 24px rgba(16, 20, 28, .06);
+  box-shadow: 0 -8px 24px rgba(var(--dark-rgb), .06);
   padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
+.rd-cta .rd-alert { flex: 0 0 100%; }
 .rd-cta__price { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.rd-cta__label { font-size: 10.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--rd-faint); }
-.rd-cta__amount { font-size: 18px; font-weight: 800; color: var(--rd-ink); white-space: nowrap; }
+.rd-cta__label { font-size: 12.5px; line-height: 1.3; color: var(--rd-mute); }
+.rd-cta__amount { font-family: var(--title-font); font-stretch: 118%; font-size: 18px; font-weight: 800; letter-spacing: -.02em; line-height: 1.25; color: var(--rd-ink); white-space: nowrap; }
 .rd-cta .rd-btn { margin-left: auto; flex: 1; max-width: 220px; }
 
 /* ── Sent ── */
@@ -424,10 +414,10 @@
 .rd-sent__icon {
   display: grid; place-items: center; width: 54px; height: 54px;
   margin: 0 auto 14px; border-radius: 50%;
-  background: rgba(22, 163, 74, .1); color: #16a34a;
+  background: rgba(26, 127, 67, .1); color: #1a7f43;
 }
 .rd-sent__icon svg { width: 27px; height: 27px; }
-.rd-sent__title { font-size: 19px; font-weight: 800; color: var(--rd-ink); margin: 0 0 6px; }
+.rd-sent__title { font-family: var(--title-font); font-stretch: 118%; font-size: 19px; font-weight: 800; letter-spacing: -.015em; color: var(--rd-ink); margin: 0 0 6px; }
 .rd-sent__sub { font-size: 13.5px; color: var(--rd-mute); line-height: 1.6; margin: 0 0 14px; }
 .rd-sent__msg {
   text-align: left; white-space: pre-wrap; word-break: break-word;
@@ -451,7 +441,7 @@
     padding: 16px;
     z-index: 960;
     animation: none;                 /* dpFade's translateY would fight the centring */
-    box-shadow: 0 24px 60px rgba(16, 20, 28, .32);
+    box-shadow: 0 24px 60px rgba(var(--dark-rgb), .32);
   }
   /* Bigger, thumb-friendly cells now that there's room to centre. */
   .rd-date .datepicker__title { font-size: 15px; }

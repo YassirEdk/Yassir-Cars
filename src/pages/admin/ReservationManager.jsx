@@ -1,12 +1,13 @@
 import React, { useState, useMemo } from 'react'
 import DatePicker from '../../components/DatePicker'
+import Icon from '../../components/Icon'
 import { showError, confirmAsync } from '../../components/AdminDialog'
 import {
   addReservation, updateReservation, deletePeriod,
   confirmPickup, confirmReturn, updateDepartureKm, findCinConflict, findCinDamage,
 } from '../../lib/cars'
-import { Ico } from './Icons'
-import { formatKm, formatDate, kmDone } from './format'
+import { Ico, DateRange } from './Icons'
+import { formatKm, kmDone } from './format'
 import ListFilters from './ListFilters'
 
 // Inline odometer field shown when confirming a pick-up or a return.
@@ -24,7 +25,7 @@ function KmConfirm({ label, actionLabel, onSubmit, onCancel, withDamage }) {
   }
   return (
     <div className="admin-km-confirm">
-      <label><Ico name="gauge" /> {label}
+      <label><span><Ico name="gauge" /> {label}</span>
         <input
           type="text" inputMode="numeric" autoFocus
           value={formatKm(km)}
@@ -36,7 +37,7 @@ function KmConfirm({ label, actionLabel, onSubmit, onCancel, withDamage }) {
       {withDamage && (
         <label className="admin-km-confirm__damage">
           <input type="checkbox" checked={damaged} onChange={e => setDamaged(e.target.checked)} />
-          <span>🛠 La voiture est endommagée</span>
+          <span><Ico name="wrench" /> La voiture est endommagée</span>
         </label>
       )}
       <div className="admin-km-confirm__actions">
@@ -50,7 +51,7 @@ function KmConfirm({ label, actionLabel, onSubmit, onCancel, withDamage }) {
 }
 
 /* ── Pop-up: all reservations / rental history with search + date range ───── */
-function ReservationsModal({ title, reservations, car, onClose, onRemove, removeLabel = 'Annuler', history = false }) {
+function ReservationsModal({ icon, title, reservations, car, onClose, onRemove, removeLabel = 'Annuler', history = false }) {
   const [q, setQ] = useState('')
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -68,8 +69,8 @@ function ReservationsModal({ title, reservations, car, onClose, onRemove, remove
     <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
       <div className="admin-list-modal admin-list-modal--wide">
         <div className="admin-list-modal__head">
-          <h3>{title} ({reservations.length})</h3>
-          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+          <h3><Ico name={icon} /> {title} ({reservations.length})</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer"><Icon name="close" /></button>
         </div>
         <ListFilters q={q} setQ={setQ} from={from} setFrom={setFrom} to={to} setTo={setTo} placeholder="Client, CIN, téléphone…" />
         <div className="admin-list-modal__body">
@@ -96,15 +97,15 @@ function ReservationsModal({ title, reservations, car, onClose, onRemove, remove
                     <tr key={r.id} className={r.damaged ? 'admin-hist-table__row--damaged' : ''}>
                       <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
                         {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
-                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge"><Ico name="users" /> 2ème conducteur</span>}
                       </td>
-                      <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                      <td className="admin-hist-table__dates"><DateRange start={r.start} end={r.end} /></td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
                       <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
                       <td>{r.returnKm != null ? formatKm(r.returnKm) + ' km' : '—'}</td>
                       <td className="admin-hist-table__dist">{kmDone(r) != null ? formatKm(kmDone(r)) + ' km' : '—'}</td>
-                      <td>{r.damaged ? <span className="admin-damage-badge">🛠 Endommagée</span> : <span className="admin-ok-badge">✓ OK</span>}</td>
+                      <td>{r.damaged ? <span className="admin-damage-badge"><Ico name="wrench" /> Endommagée</span> : <span className="admin-ok-badge"><Ico name="check" /> OK</span>}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -127,9 +128,9 @@ function ReservationsModal({ title, reservations, car, onClose, onRemove, remove
                     <tr key={r.id}>
                       <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
                         {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
-                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge"><Ico name="users" /> 2ème conducteur</span>}
                       </td>
-                      <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                      <td className="admin-hist-table__dates"><DateRange start={r.start} end={r.end} /></td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
                       <td>{onRemove && <button onClick={() => onRemove(r.id)} className="admin-link-del">{removeLabel}</button>}</td>
@@ -145,8 +146,8 @@ function ReservationsModal({ title, reservations, car, onClose, onRemove, remove
         <div className="admin-modal" style={{ zIndex: 1200 }} onClick={() => setDetailR(null)}>
           <div className="admin-resa-detail" onClick={e => e.stopPropagation()}>
             <div className="admin-resa-detail__head">
-              <h3>📋 Détails de la réservation</h3>
-              <button className="phone-modal__close" onClick={() => setDetailR(null)} aria-label="Fermer">✕</button>
+              <h3><Ico name="clipboard" /> Détails de la réservation</h3>
+              <button className="phone-modal__close" onClick={() => setDetailR(null)} aria-label="Fermer"><Icon name="close" /></button>
             </div>
             <div className="admin-resa-detail__body">
               <div className="admin-resa-detail__section">
@@ -163,7 +164,7 @@ function ReservationsModal({ title, reservations, car, onClose, onRemove, remove
               </div>
               <div className="admin-resa-detail__section">
                 <span className="admin-resa-detail__label">Période</span>
-                <span className="admin-resa-detail__value">{formatDate(detailR.start)} → {formatDate(detailR.end)}</span>
+                <span className="admin-resa-detail__value"><DateRange start={detailR.start} end={detailR.end} /></span>
               </div>
               <div className="admin-resa-detail__section">
                 <span className="admin-resa-detail__label">N° permis</span>
@@ -233,7 +234,7 @@ function EditDepartureKm({ r, onSaved, onCancel }) {
 
   return (
     <div className="admin-km-confirm admin-km-confirm--edit">
-      <label><Ico name="gauge" /> Modifier le kilométrage de départ
+      <label><span><Ico name="gauge" /> Modifier le kilométrage de départ</span>
         <input
           type="text" inputMode="numeric" autoFocus
           value={formatKm(km)}
@@ -407,10 +408,10 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
   return (
     <div className="admin-resa">
       <div className="admin-resa__head">
-        <h4>📋 Réservations</h4>
+        <h4><Ico name="clipboard" /> Réservations</h4>
         {!open && (
           <button className="admin-btn admin-btn--sm admin-btn--primary" onClick={() => { setEditingR(null); setForm(EMPTY_RESA); setOpen(true) }}>
-            ➕ Faire une réservation
+            <Ico name="plus" /> Faire une réservation
           </button>
         )}
       </div>
@@ -437,9 +438,9 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
                   <tr className="admin-hist-table__row--clickable">
                     <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
                       {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
-                      {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                      {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge"><Ico name="users" /> 2ème conducteur</span>}
                     </td>
-                    <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                    <td className="admin-hist-table__dates"><DateRange start={r.start} end={r.end} /></td>
                     <td>{r.tel || '—'}</td>
                     <td>{r.cin || '—'}</td>
                     <td>
@@ -453,7 +454,7 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
                       ) : (
                         <div className="admin-resa-actions-inline">
                           {ongoingError === r.id && (
-                            <span className="admin-resa-block-error">⚠ Tu dois confirmer le retour d'abord</span>
+                            <span className="admin-resa-block-error"><Ico name="warning" /> Tu dois confirmer le retour d'abord</span>
                           )}
                           <button
                             className="admin-btn admin-btn--sm admin-btn--confirm"
@@ -462,9 +463,9 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
                               setOngoingError(null); setConfirming(r.id)
                             }}
                           >
-                            ✓ Confirmer la réception
+                            <Ico name="check" /> Confirmer la réception
                           </button>
-                          <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => openEdit(r)}>✏ Modifier</button>
+                          <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => openEdit(r)}><Ico name="pencil" /> Modifier</button>
                           <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
                         </div>
                       )}
@@ -479,7 +480,7 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
 
       {reserved.length > 3 && (
         <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setModalOpen(true)}>
-          📋 Voir toutes les réservations ({reserved.length})
+          <Ico name="clipboard" /> Voir toutes les réservations ({reserved.length})
         </button>
       )}
 
@@ -507,9 +508,9 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
                     <tr className="admin-hist-table__row--clickable">
                       <td className="admin-hist-table__td--click" onClick={() => setDetailR(r)}>
                         {r.clientName ? <strong className="admin-resa-name-link">{r.clientName}</strong> : '—'}
-                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge">👥 2ème conducteur</span>}
+                        {(r.secondDriverName || r.secondDriverCin || r.secondDriverLicence) && <span className="admin-2nd-badge"><Ico name="users" /> 2ème conducteur</span>}
                       </td>
-                      <td className="admin-hist-table__dates">{formatDate(r.start)} → {formatDate(r.end)}</td>
+                      <td className="admin-hist-table__dates"><DateRange start={r.start} end={r.end} /></td>
                       <td>{r.tel || '—'}</td>
                       <td>{r.cin || '—'}</td>
                       <td>{r.departureKm != null ? formatKm(r.departureKm) + ' km' : '—'}</td>
@@ -529,9 +530,9 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
                         ) : (
                           <div className="admin-resa-actions-inline">
                               <button className="admin-btn admin-btn--sm admin-btn--confirm" onClick={() => setConfirming(r.id)}>
-                              ↩ Confirmer le retour
+                              <Ico name="undo" /> Confirmer le retour
                             </button>
-                            <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingKmId(editingKmId === r.id ? null : r.id)}>✏ Modifier km</button>
+                            <button className="admin-btn admin-btn--sm admin-btn--edit" onClick={() => setEditingKmId(editingKmId === r.id ? null : r.id)}><Ico name="pencil" /> Modifier km</button>
                             <button onClick={() => remove(r.id)} className="admin-link-del">Annuler</button>
                           </div>
                         )}
@@ -555,13 +556,14 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
       {/* ── Stage 3: finished rentals — just a button that opens the full list ── */}
       {history.length > 0 && (
         <button className="admin-btn admin-btn--sm admin-all-btn" onClick={() => setHistOpen(true)}>
-          📜 Location historique ({history.length})
+          <Ico name="history" /> Location historique ({history.length})
         </button>
       )}
 
       {modalOpen && (
         <ReservationsModal
-          title="📋 Toutes les réservations"
+          icon="clipboard"
+          title="Toutes les réservations"
           reservations={reserved}
           car={car}
           onClose={() => setModalOpen(false)}
@@ -571,7 +573,8 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
 
       {histOpen && (
         <ReservationsModal
-          title="📜 Location historique"
+          icon="history"
+          title="Location historique"
           reservations={history}
           car={car}
           history
@@ -585,8 +588,8 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
         <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) closePopup() }}>
           <div className="admin-resa-popup">
             <div className="admin-resa-popup__head">
-              <h3>{editingR ? `✏️ Modifier la réservation — ${car.name}` : `➕ Nouvelle réservation — ${car.name}`}</h3>
-              <button className="phone-modal__close" onClick={closePopup} aria-label="Fermer">✕</button>
+              <h3><Ico name={editingR ? 'pencil' : 'plus'} /> {editingR ? 'Modifier la réservation' : 'Nouvelle réservation'} — {car.name}</h3>
+              <button className="phone-modal__close" onClick={closePopup} aria-label="Fermer"><Icon name="close" /></button>
             </div>
             {formError?.message && (
               <div className="admin-resa-popup__error"><p>{formError.message}</p></div>
@@ -602,7 +605,7 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
                   className={cinConflict ? 'admin-input-error' : ''}
                 />
                 {cinChecking && <small className="admin-hint">Vérification…</small>}
-                {cinConflict && <small className="admin-cin-warn">⚠ CIN déjà utilisé par « {cinConflict} »</small>}
+                {cinConflict && <small className="admin-cin-warn"><Ico name="warning" /> CIN déjà utilisé par « {cinConflict} »</small>}
               </label>
               <label>Téléphone
                 <input type="tel" value={form.tel} onChange={set('tel')} />
@@ -652,14 +655,14 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
         <div className="admin-modal admin-modal--conflict" onClick={() => setFormError(null)}>
           <div className="admin-conflict-popup">
             <div className="admin-conflict-popup__head">
-              <span className="admin-conflict-popup__icon">⚠</span>
+              <span className="admin-conflict-popup__icon"><Ico name="warning" /></span>
               <h3>Dates non disponibles</h3>
-              <button className="phone-modal__close" onClick={() => setFormError(null)} aria-label="Fermer">✕</button>
+              <button className="phone-modal__close" onClick={() => setFormError(null)} aria-label="Fermer"><Icon name="close" /></button>
             </div>
             <p className="admin-conflict-popup__desc">Ces dates chevauchent une réservation existante :</p>
             <div className="admin-resa-popup__conflict">
               <span className="conflict-chip conflict-chip--name"><Ico name="user" /> {formError.conflict.clientName || 'Client'}</span>
-              <span className="conflict-chip conflict-chip--date"><Ico name="calendar" /> {formatDate(formError.conflict.start)} → {formatDate(formError.conflict.end)}</span>
+              <span className="conflict-chip conflict-chip--date"><Ico name="calendar" /> <DateRange start={formError.conflict.start} end={formError.conflict.end} /></span>
               {formError.conflict.tel && <span className="conflict-chip conflict-chip--tel"><Ico name="phone" /> {formError.conflict.tel}</span>}
               {formError.conflict.cin && <span className="conflict-chip conflict-chip--cin"><Ico name="id" /> {formError.conflict.cin}</span>}
             </div>
@@ -672,8 +675,8 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
         <div className="admin-modal" style={{ zIndex: 1200 }} onClick={() => setDetailR(null)}>
           <div className="admin-resa-detail" onClick={e => e.stopPropagation()}>
             <div className="admin-resa-detail__head">
-              <h3>📋 Détails de la réservation</h3>
-              <button className="phone-modal__close" onClick={() => setDetailR(null)} aria-label="Fermer">✕</button>
+              <h3><Ico name="clipboard" /> Détails de la réservation</h3>
+              <button className="phone-modal__close" onClick={() => setDetailR(null)} aria-label="Fermer"><Icon name="close" /></button>
             </div>
             <div className="admin-resa-detail__body">
               <div className="admin-resa-detail__section">
@@ -690,7 +693,7 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
               </div>
               <div className="admin-resa-detail__section">
                 <span className="admin-resa-detail__label">Période</span>
-                <span className="admin-resa-detail__value">{formatDate(detailR.start)} → {formatDate(detailR.end)}</span>
+                <span className="admin-resa-detail__value"><DateRange start={detailR.start} end={detailR.end} /></span>
               </div>
               <div className="admin-resa-detail__section">
                 <span className="admin-resa-detail__label">N° permis</span>
@@ -740,9 +743,9 @@ export default function ReservationManager({ car, onChange, onKmUpdate }) {
         <div className="admin-modal admin-modal--conflict" onClick={() => setDamageWarn(false)}>
           <div className="admin-conflict-popup admin-conflict-popup--danger" onClick={e => e.stopPropagation()}>
             <div className="admin-conflict-popup__head">
-              <span className="admin-conflict-popup__icon">🛠</span>
+              <span className="admin-conflict-popup__icon"><Ico name="wrench" /></span>
               <h3>Client à risque</h3>
-              <button className="phone-modal__close" onClick={() => setDamageWarn(false)} aria-label="Fermer">✕</button>
+              <button className="phone-modal__close" onClick={() => setDamageWarn(false)} aria-label="Fermer"><Icon name="close" /></button>
             </div>
             <p className="admin-conflict-popup__desc">
               Ce client (<strong>{form.clientName}</strong> — CIN {form.cin}) a <strong>déjà endommagé</strong> une voiture lors d'une location précédente.

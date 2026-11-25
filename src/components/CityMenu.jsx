@@ -1,14 +1,15 @@
 import { useState, useRef, useEffect, useMemo, useId } from 'react'
 import Icon from './Icon'
 import { useOpensUp } from '../hooks/useOpensUp'
-import { popularCities, searchCities } from '../lib/cities'
+import { popularCities, searchCities, isAirport, placeHint } from '../lib/cities'
 import './selectmenu.css'
 
-/* City dropdown — the same list as SelectMenu, with a search box on top because
-   there are 58 cities. Popular ones come first; typing searches all of them.
-   Props: value, onChange(city), cities, placeholder, className, flip (see
-   SelectMenu). */
-export default function CityMenu({ value, onChange, cities, placeholder = 'Choisir une ville', className = '', flip = false }) {
+/* Place dropdown — the same list as SelectMenu, with a search box on top because
+   there are 58 cities and the airports. Popular ones come first; typing searches
+   all of them.
+   Props: value, onChange(place), cities, placeholder, ariaLabel, className, flip
+   (see SelectMenu). */
+export default function CityMenu({ value, onChange, cities, placeholder = 'Ville ou aéroport', ariaLabel, className = '', flip = false }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [active, setActive] = useState(0)     // row the arrow keys are on
@@ -23,10 +24,12 @@ export default function CityMenu({ value, onChange, cities, placeholder = 'Chois
   const groups = useMemo(() => {
     if (query.trim()) return [{ cities: searchCities(cities, query) }]
     const popular = popularCities(cities)
+    const rest = cities.filter(c => !popular.includes(c))
     return [
-      { label: 'Villes populaires', cities: popular },
-      { label: 'Autres villes', cities: cities.filter(c => !popular.includes(c)) },
-    ]
+      { label: 'Les plus demandés', cities: popular },
+      { label: 'Aéroports', cities: rest.filter(isAirport) },
+      { label: 'Villes', cities: rest.filter(c => !isAirport(c)) },
+    ].filter(g => g.cities.length)
   }, [cities, query])
   const rows = groups.flatMap(g => g.cities)
 
@@ -111,6 +114,7 @@ export default function CityMenu({ value, onChange, cities, placeholder = 'Chois
         onClick={() => (open ? close() : setOpen(true))}
         aria-haspopup="listbox"
         aria-expanded={open}
+        aria-label={ariaLabel ? `${ariaLabel} : ${value || placeholder}` : undefined}
       >
         <span className={`smenu__value ${value ? '' : 'is-placeholder'}`}>{value || placeholder}</span>
         <svg className="smenu__chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -130,16 +134,16 @@ export default function CityMenu({ value, onChange, cities, placeholder = 'Chois
               aria-expanded="true"
               aria-controls={listId}
               aria-activedescendant={rows.length ? `${listId}-${active}` : undefined}
-              aria-label="Rechercher une ville"
+              aria-label="Rechercher une ville ou un aéroport"
               value={query}
               onChange={(e) => onQuery(e.target.value)}
-              placeholder="Rechercher une ville…"
+              placeholder="Ville, aéroport…"
               autoComplete="off"
               spellCheck={false}
             />
           </div>
 
-          <div className="smenu__scroll" role="listbox" id={listId} aria-label="Villes" ref={scrollRef}>
+          <div className="smenu__scroll" role="listbox" id={listId} aria-label="Lieux" ref={scrollRef}>
             {groups.map(g => (
               <div key={g.label ?? 'results'} role="group" aria-label={g.label}>
                 {g.label && <div className="smenu__group" aria-hidden="true">{g.label}</div>}
@@ -161,7 +165,11 @@ export default function CityMenu({ value, onChange, cities, placeholder = 'Chois
                       onMouseMove={() => { if (i !== active) setActive(i) }}
                       onClick={() => pick(city)}
                     >
-                      <span className="smenu__name">{city}</span>
+                      <Icon name={isAirport(city) ? 'plane' : 'pin'} className="smenu__place" />
+                      <span className="smenu__name">
+                        {city}
+                        {placeHint(city) && <span className="smenu__hint">{placeHint(city)}</span>}
+                      </span>
                       {value === city && (
                         <svg className="smenu__check" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                           strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
@@ -174,7 +182,7 @@ export default function CityMenu({ value, onChange, cities, placeholder = 'Chois
               </div>
             ))}
             {rows.length === 0 && (
-              <p className="smenu__empty">Aucune ville ne correspond à « {query.trim()} »</p>
+              <p className="smenu__empty">Aucun lieu ne correspond à « {query.trim()} »</p>
             )}
           </div>
         </div>

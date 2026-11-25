@@ -166,18 +166,20 @@ export const testimonials = [
   { id: 6, name: 'Mohamed Kettani', location: 'Tanger', initials: 'MK', rating: 5, text: '"Assistance rapide quand j\'ai eu un petit problème en route. Équipe très réactive. Bravo pour ce professionnalisme exemplaire !"', featured: false },
 ]
 
+// Logos of the home strip, which keeps only the brands in the fleet. Add one with
+// scripts/build-images.mjs.
 export const brands = [
-  { name: 'Renault',    logo: '/Renault-logo.png' },
-  { name: 'Mercedes',   logo: '/mercedes-logo-mercedes-benz-logo-png-transparent-svg-vector-bie-13.png' },
-  { name: 'BMW',        logo: '/BMW-Logo-500x281.png' },
-  { name: 'Toyota',     logo: '/Toyota-logo-500x281.png' },
-  { name: 'Dacia',      logo: '/Dacia-logo.png' },
-  { name: 'Fiat',       logo: '/Fiat_logo.svg.png' },
-  { name: 'Ford',       logo: '/Ford-Logo-500x281.png' },
-  { name: 'Mazda',      logo: '/Mazda-Logo-500x281.png' },
-  { name: 'Porsche',    logo: '/Porsche-Logo-500x281.png' },
-  { name: 'Volkswagen', logo: '/Volkswagen-logo-500x281.png' },
-  { name: 'Peugeot',    logo: '/Peugeot-logo.png' },
+  { name: 'Renault',    logo: '/brands/renault.webp' },
+  { name: 'Mercedes',   logo: '/brands/mercedes.webp' },
+  { name: 'BMW',        logo: '/brands/bmw.webp' },
+  { name: 'Toyota',     logo: '/brands/toyota.webp' },
+  { name: 'Dacia',      logo: '/brands/dacia.webp' },
+  { name: 'Fiat',       logo: '/brands/fiat.webp' },
+  { name: 'Ford',       logo: '/brands/ford.webp' },
+  { name: 'Mazda',      logo: '/brands/mazda.webp' },
+  { name: 'Porsche',    logo: '/brands/porsche.webp' },
+  { name: 'Volkswagen', logo: '/brands/volkswagen.webp' },
+  { name: 'Peugeot',    logo: '/brands/peugeot.webp' },
 ]
 
 // Moroccan cities for the pick-up location selector (alphabetical).
@@ -193,6 +195,26 @@ export const moroccanCities = [
   'Taourirt', 'Taroudant', 'Taza', 'Témara', 'Tétouan', 'Tinghir', 'Tiznit',
   'Youssoufia', 'Zagora',
 ]
+
+// Airports served, with the city they belong to: typing "Casablanca" finds
+// Mohammed V.
+export const airports = [
+  { name: 'Aéroport Mohammed V',             city: 'Casablanca', code: 'CMN' },
+  { name: 'Aéroport Marrakech-Ménara',       city: 'Marrakech',  code: 'RAK' },
+  { name: 'Aéroport Agadir-Al Massira',      city: 'Agadir',     code: 'AGA' },
+  { name: 'Aéroport Rabat-Salé',             city: 'Rabat',      code: 'RBA' },
+  { name: 'Aéroport Tanger Ibn Battouta',    city: 'Tanger',     code: 'TNG' },
+  { name: 'Aéroport Fès-Saïss',              city: 'Fès',        code: 'FEZ' },
+  { name: 'Aéroport Oujda-Angads',           city: 'Oujda',      code: 'OUD' },
+  { name: 'Aéroport Nador-El Aroui',         city: 'Nador',      code: 'NDR' },
+  { name: 'Aéroport Essaouira-Mogador',      city: 'Essaouira',  code: 'ESU' },
+  { name: 'Aéroport Ouarzazate',             city: 'Ouarzazate', code: 'OZZ' },
+  { name: 'Aéroport Dakhla',                 city: 'Dakhla',     code: 'VIL' },
+  { name: 'Aéroport Laâyoune Hassan Ier',    city: 'Laâyoune',   code: 'EUN' },
+]
+
+// Everywhere a car can be picked up or brought back.
+export const pickupPlaces = [...moroccanCities, ...airports.map(a => a.name)]
 
 // Minimum rental length, in days, for all public (non-admin) date pickers.
 export const MIN_RENTAL_DAYS = 3
@@ -226,32 +248,42 @@ export const colorName = (hex) => carColors.find(c => c.hex === hex)?.name ?? he
 // Équipements / options a car can have. Each car stores an array of these
 // `value` keys (like `categories`); the admin picks them with chips and the
 // public cards render a vector <Icon> + label. `icon` is a name from the shared
-// Icon component (src/components/Icon.jsx). Add new options here as needed.
+// Icon component (src/components/Icon.jsx). `short` is the label used where only
+// a few chips fit (car cards). Add new options here as needed.
 export const carFeatures = [
-  { value: 'clim_auto',        label: 'Climatisation auto',           icon: 'snow' },
-  { value: 'cruise',           label: 'Régulateur de vitesse',        icon: 'gauge' },
-  { value: 'adaptive_cruise',  label: 'Régulateur adaptatif',         icon: 'broadcast' },
-  { value: 'toit_panoramique', label: 'Toit panoramique',             icon: 'sunHorizon' },
-  { value: 'toit_ouvrant',     label: 'Toit ouvrant',                 icon: 'sun' },
-  { value: 'gps',              label: 'GPS / Navigation',             icon: 'navigationArrow' },
-  { value: 'carplay',          label: 'Apple CarPlay / Android Auto', icon: 'deviceMobile' },
-  { value: 'touchscreen',      label: 'Écran tactile',                icon: 'monitor' },
-  { value: 'bluetooth',        label: 'Bluetooth',                    icon: 'bluetooth' },
-  { value: 'usb',              label: 'Ports USB',                    icon: 'usb' },
-  { value: 'camera',           label: 'Caméra de recul',              icon: 'videoCamera' },
-  { value: 'parking_sensors',  label: 'Capteurs de stationnement',    icon: 'scan' },
-  { value: 'lane_assist',      label: 'Aide au maintien de voie',     icon: 'road' },
-  { value: 'keyless',          label: 'Démarrage sans clé',           icon: 'key' },
-  { value: 'start_stop',       label: 'Start & Stop',                 icon: 'power' },
-  { value: 'leather',          label: 'Sièges cuir',                  icon: 'armchair' },
-  { value: 'heated_seats',     label: 'Sièges chauffants',            icon: 'fire' },
-  { value: 'led',              label: 'Feux LED',                     icon: 'lightbulb' },
-  { value: 'alloy_wheels',     label: 'Jantes alliage',               icon: 'steeringWheel' },
-  { value: 'premium_audio',    label: 'Système audio premium',        icon: 'speakerHigh' },
+  { value: 'clim_auto',        label: 'Climatisation auto',           short: 'Clim',               icon: 'snow' },
+  { value: 'cruise',           label: 'Régulateur de vitesse',        short: 'Régulateur',         icon: 'gauge' },
+  { value: 'adaptive_cruise',  label: 'Régulateur adaptatif',         short: 'Régul. adaptatif',   icon: 'broadcast' },
+  { value: 'toit_panoramique', label: 'Toit panoramique',             short: 'Toit pano',          icon: 'sunHorizon' },
+  { value: 'toit_ouvrant',     label: 'Toit ouvrant',                 short: 'Toit ouvrant',       icon: 'sun' },
+  { value: 'gps',              label: 'GPS / Navigation',             short: 'GPS',                icon: 'navigationArrow' },
+  { value: 'carplay',          label: 'Apple CarPlay / Android Auto', short: 'CarPlay',            icon: 'deviceMobile' },
+  { value: 'touchscreen',      label: 'Écran tactile',                short: 'Écran tactile',      icon: 'monitor' },
+  { value: 'bluetooth',        label: 'Bluetooth',                    short: 'Bluetooth',          icon: 'bluetooth' },
+  { value: 'usb',              label: 'Ports USB',                    short: 'USB',                icon: 'usb' },
+  { value: 'camera',           label: 'Caméra de recul',              short: 'Caméra de recul',    icon: 'videoCamera' },
+  { value: 'parking_sensors',  label: 'Capteurs de stationnement',    short: 'Capteurs',           icon: 'scan' },
+  { value: 'lane_assist',      label: 'Aide au maintien de voie',     short: 'Aide voie',          icon: 'road' },
+  { value: 'keyless',          label: 'Démarrage sans clé',           short: 'Sans clé',           icon: 'key' },
+  { value: 'start_stop',       label: 'Start & Stop',                 short: 'Start & Stop',       icon: 'power' },
+  { value: 'leather',          label: 'Sièges cuir',                  short: 'Cuir',               icon: 'armchair' },
+  { value: 'heated_seats',     label: 'Sièges chauffants',            short: 'Sièges chauffants',  icon: 'fire' },
+  { value: 'led',              label: 'Feux LED',                     short: 'Feux LED',           icon: 'lightbulb' },
+  { value: 'alloy_wheels',     label: 'Jantes alliage',               short: 'Jantes alu',         icon: 'steeringWheel' },
+  { value: 'premium_audio',    label: 'Système audio premium',        short: 'Audio premium',      icon: 'speakerHigh' },
 ]
 
 export const featureLabel = (v) => carFeatures.find(f => f.value === v)?.label ?? v
+export const featureShort = (v) => carFeatures.find(f => f.value === v)?.short ?? featureLabel(v)
 export const featureIcon  = (v) => carFeatures.find(f => f.value === v)?.icon ?? 'check'
+
+/* The options renters compare first. A card shows only a handful of chips, so
+   these lead; the rest keep the order the admin saved them in. */
+const HIGHLIGHTS = ['clim_auto', 'gps', 'carplay', 'camera', 'bluetooth', 'cruise', 'adaptive_cruise', 'toit_panoramique', 'leather']
+export const highlightsFirst = (features = []) => [
+  ...HIGHLIGHTS.filter(f => features.includes(f)),
+  ...features.filter(f => !HIGHLIGHTS.includes(f)),
+]
 
 const FEATURE_VALUES = new Set(carFeatures.map(f => f.value))
 
@@ -281,17 +313,41 @@ export const parseFeatures = (raw) => {
   return arr.map(v => String(v).trim()).filter(v => FEATURE_VALUES.has(v))
 }
 
-export const filterOptions = [
-  { value: 'all', label: 'Tous' },
-  { value: 'economique', label: 'Économique' },
-  { value: 'citadine', label: 'Citadine' },
-  { value: 'suv', label: 'SUV / 4x4' },
-  { value: 'berline', label: 'Berline' },
-  { value: 'luxe', label: 'Luxe' },
-]
+/* ── Categories ───────────────────────────────────────────────────────────────
+   The only place category names are written. Every pill, badge, search field and
+   admin checkbox reads them from here, so they can't drift apart again
+   ("Economique" on a card under an "Économique" filter). */
+export const CATEGORIES = {
+  economique: 'Économique',
+  citadine:   'Citadine',
+  berline:    'Berline',
+  suv:        'SUV / 4×4',
+  luxe:       'Luxe',
+  utilitaire: 'Utilitaire',
+}
 
-// A car belongs to a category if it's in its `categories` list,
-// or (fallback) matches its single `category`. Lets one car appear
-// under several filters (e.g. the Clio is économique + citadine).
-export const carInCategory = (car, key) =>
-  (car.categories ?? [car.category]).includes(key)
+export const categoryLabel = (key) =>
+  CATEGORIES[key] ?? (key ? key.charAt(0).toUpperCase() + key.slice(1) : '')
+
+export const categoryOptions = Object.entries(CATEGORIES).map(([value, label]) => ({ value, label }))
+
+// For the search fields: '' means no category filter.
+export const searchCategoryOptions = [{ value: '', label: 'Toutes catégories' }, ...categoryOptions]
+
+// For the fleet filters.
+export const filterOptions = [{ value: 'all', label: 'Tous' }, ...categoryOptions]
+
+/* Whatever a link or a saved search carries → a category key, or ''. Links used
+   to hold the label ("SUV / 4x4"), so those still work. */
+export const categoryKey = (raw) => {
+  if (!raw) return ''
+  const s = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  if (s.includes('4x4')) return 'suv'
+  return Object.keys(CATEGORIES).find(k => s.includes(k)) ?? ''
+}
+
+// Every category a car belongs to (the Clio is économique + citadine).
+export const carCategories = (car) =>
+  (car.categories?.length ? car.categories : [car.category]).filter(Boolean)
+
+export const carInCategory = (car, key) => carCategories(car).includes(key)

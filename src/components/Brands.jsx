@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { brands } from '../data'
+import { fetchCars } from '../lib/cars'
 
 function BrandLogo({ brand }) {
   const [failed, setFailed] = useState(false)
@@ -8,8 +9,10 @@ function BrandLogo({ brand }) {
       {!failed ? (
         <img
           src={brand.logo}
-          alt={brand.name}
+          alt=""
           className="brand-logo"
+          width="96"
+          height="42"
           loading="lazy"
           onError={() => setFailed(true)}
         />
@@ -20,14 +23,37 @@ function BrandLogo({ brand }) {
   )
 }
 
+const BOX = 122            // narrowest .brand-logo-box
+const WIDEST = 2560        // screens the loop must cover
+
+/* Logos of the brands that can actually be rented: a car joining the fleet
+   brings its logo in, the last one leaving takes it out. */
 export default function Brands() {
-  // 4 copies → always fills any viewport width, guarantees seamless loop
-  const repeated = [...brands, ...brands, ...brands, ...brands]
+  const [names, setNames] = useState([])
+  useEffect(() => {
+    let alive = true
+    fetchCars()
+      .then(list => { if (alive) setNames(list.map(c => c.name.toLowerCase())) })
+      .catch(() => { /* no logos */ })
+    return () => { alive = false }
+  }, [])
+
+  const rented = brands.filter(b => names.some(n => n.startsWith(b.name.toLowerCase())))
+  // Enough copies that one can scroll away without leaving a gap.
+  const copies = rented.length ? Math.ceil(WIDEST / (rented.length * BOX)) + 1 : 0
+
   return (
-    <section className="brands-band" id="marques">
-      <div className="brands-track">
-        <div className="brands-slide">
-          {repeated.map((b, i) => <BrandLogo key={i} brand={b} />)}
+    <section className="brands-band" id="marques" aria-label="Les marques de notre flotte">
+      <div className="container brands-inner">
+        <p className="brands-label">Les marques de notre flotte</p>
+        {rented.length > 0 && <p className="sr-only">{rented.map(b => b.name).join(', ')}</p>}
+        <div className="brands-track" aria-hidden="true">
+          <div
+            className="brands-slide"
+            style={{ '--shift': `-${100 / (copies || 1)}%`, '--time': `${rented.length * 3}s` }}
+          >
+            {Array.from({ length: copies }, (_, c) => rented.map(b => <BrandLogo key={`${b.name}-${c}`} brand={b} />))}
+          </div>
         </div>
       </div>
     </section>

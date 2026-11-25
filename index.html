@@ -2,25 +2,24 @@
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <!-- maximum-scale=1 stops iOS Safari from auto-zooming the page whenever a
-         field is focused (calendars, date inputs, selects). user-scalable=no
-         reinforces it on older WebKit. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- Pinch-zoom stays allowed. What stops iOS zooming on a focused field is
+         its 16px text (src/index.css). -->
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>YASSIR CARS — Location de Voitures</title>
     <meta name="description" content="YASSIR CARS — Location de voitures premium, partout au Maroc. Réservation en ligne, assurance incluse, kilométrage illimité." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <!-- %SITE_URL% is substituted at build time by scripts/site-url.mjs:
          VITE_SITE_URL if set, otherwise the domain Vercel provides. -->
     <link rel="canonical" href="%SITE_URL%/" />
-    <meta name="theme-color" content="#0d0d0d" />
+    <meta name="theme-color" content="#F4F5F7" />
 
     <!-- LCP element: start the hero download before the JS bundle parses.
-         Keep in sync with HERO_SRCSET in src/components/Hero.jsx. -->
+         Keep in sync with CAR in src/components/Hero.jsx. -->
     <link
       rel="preload" as="image" fetchpriority="high"
-      href="/hero/hero-1400.webp"
-      imagesrcset="/hero/hero-800.webp 800w, /hero/hero-1400.webp 1400w, /hero/hero-2000.webp 2000w"
-      imagesizes="(max-width: 860px) 170vw, 100vw"
+      href="/hero/car-1000.webp"
+      imagesrcset="/hero/car-640.webp 640w, /hero/car-1000.webp 1000w, /hero/car-1500.webp 1500w"
+      imagesizes="(max-width: 860px) min(92vw, 600px), min(52vw, 800px)"
     />
 
     <!-- Open Graph -->
@@ -40,7 +39,7 @@
     <meta name="twitter:image" content="%SITE_URL%/og-image.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@118,700;118,800&family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@118,700;118,800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
     <!-- Local-business structured data. Local search is the main free channel
          for a Moroccan rental agency; without this the site is invisible to it.

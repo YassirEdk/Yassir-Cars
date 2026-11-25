@@ -1,566 +1,182 @@
-/* ── Reservation page ─────────────────────────────────────────────────────── */
-* { box-sizing: border-box; }
+/* ── Booking page: the car on dark, the request on light ──────────────────── */
+.rv-page { position: relative; min-height: 100vh; min-height: 100svh; background: var(--page); color: var(--dark); }
 
-.rv-page {
-  min-height: 100vh;
-  background: #0f0f0f;
-  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: #1a1a1a;
-}
-
-/* ── Empty state: opened /reserver with no car selected ────────────────────── */
-.rv-empty {
-  display: flex; align-items: center; justify-content: center;
-  padding: 24px;
-}
-.rv-empty__card {
-  width: 100%; max-width: 420px; text-align: center;
-  background: #1a1a1a; border: 1px solid rgba(255,255,255,.08);
-  border-radius: 20px; padding: 40px 32px;
-  box-shadow: 0 24px 60px rgba(0,0,0,.5);
-  animation: rv-card-in .4s ease both;
-}
-.rv-empty__icon {
-  width: 76px; height: 76px; margin: 0 auto 20px;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; background: rgba(230,57,70,.12); color: #E63946;
-}
-.rv-empty__icon svg { width: 38px; height: 38px; }
-.rv-empty__title { font-size: 22px; font-weight: 800; color: #fff; margin: 0 0 10px; }
-.rv-empty__text { font-size: 14.5px; line-height: 1.6; color: rgba(255,255,255,.6); margin: 0 0 28px; }
-.rv-empty__btn {
-  display: inline-block; width: 100%; padding: 15px 24px;
-  background: #E63946; color: #fff; font-size: 15px; font-weight: 700;
-  border-radius: 12px; text-decoration: none; transition: background .2s, transform .15s;
-}
-.rv-empty__btn:hover { background: #d62f3c; transform: translateY(-1px); }
-.rv-empty__btn:active { transform: translateY(0); }
-
-/* ── Top bar (transparent — logo over dark image, button over light form) ──── */
+/* Over both halves; it scrolls away, or the button would float over the form. */
 .rv-topbar {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 1.1rem 1.8rem;
-  pointer-events: none;            /* let clicks pass except on children */
+  position: absolute; top: 0; left: 0; right: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px clamp(18px, 3vw, 44px); pointer-events: none;
 }
-.rv-topbar__logo,
-.rv-topbar__back { pointer-events: auto; }
-.rv-topbar__logo {
-  display: flex; align-items: center;
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.5));
-}
-.rv-topbar__back {
-  display: inline-flex; align-items: center; gap: .45rem;
-  color: #334155; font-size: .85rem; text-decoration: none;
-  font-weight: 700; letter-spacing: .01em;
-  padding: .55rem 1rem; border-radius: 999px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 14px rgba(0,0,0,.1);
-  transition: all .2s;
-}
-.rv-topbar__back:hover {
-  color: #E63946;
-  border-color: #fca5a5;
-  box-shadow: 0 6px 18px rgba(0,0,0,.14);
-  transform: translateY(-1px);
-}
-.rv-topbar__back svg { transition: transform .2s; }
-.rv-topbar__back:hover svg { transform: translateX(-3px); }
+.rv-topbar > a { pointer-events: auto; }
+.rv-topbar .logo-yassir { color: #fff; }
+.rv-topbar .logo-cars { color: var(--red-light); }
 
-/* ── Split layout: image left, form right ─────────────────────────────────── */
-.rv-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 100vh;
-}
+/* --lean: how far the cut of the hero goes sideways over the height of the screen. */
+.rv-split { --lean: 31.3vh; display: grid; grid-template-columns: minmax(0, 48fr) minmax(0, 52fr); min-height: 100vh; min-height: 100svh; }
 
-/* ── Left: car image panel (sticky) ───────────────────────────────────────── */
-.rv-left {
-  position: sticky; top: 0;
-  height: 100vh;
-  overflow: hidden;
-  background: #0d0d0d;
-  display: flex; flex-direction: column; justify-content: flex-end;
-}
-/* Blurred fill of the same photo so the sharp image is never upscaled */
-.rv-left__blur {
-  position: absolute; inset: -40px;
-  background-size: cover; background-position: center;
-  filter: blur(40px) brightness(.5) saturate(1.2);
-  transform: scale(1.1);
-  z-index: 0;
-}
-.rv-left__inner {
-  position: absolute; inset: 0;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 1.3rem;
-  padding: 5.5rem 2.5rem 11rem;
-  z-index: 1;
-}
-/* Fixed-aspect frame so every photo shows at the exact same dimensions */
-.rv-left__frame {
-  position: relative;
-  width: 100%; max-width: 600px;
-  aspect-ratio: 3 / 2;
-  border-radius: 16px; overflow: hidden;
-  box-shadow: 0 24px 50px rgba(0,0,0,.55);
-  background: #15161a;
-}
-/* Blurred copy of the photo fills the frame behind the full (contained) image */
-.rv-left__frame-blur {
-  position: absolute; inset: 0;
-  background-size: cover; background-position: center;
-  filter: blur(26px) brightness(.7) saturate(1.15);
-  transform: scale(1.18);
-}
-.rv-left__img {
-  position: relative; z-index: 1;
-  width: 100%; height: 100%;
-  object-fit: contain;        /* full car always visible, uniform frame */
-  display: block;
-  animation: rv-img-in .45s ease both;
-}
-@keyframes rv-img-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.rv-left__noimg {
-  width: 100%; height: 100%;
-  display: grid; place-items: center;
-  color: rgba(255,255,255,.18);
-}
+/* ── The car ── */
+.rv-car { position: sticky; top: 0; align-self: start; height: 100vh; height: 100svh; isolation: isolate; }
+/* Dark, and the red line along its edge, which leans across the middle. */
+.rv-car::before, .rv-car::after { content: ''; position: absolute; z-index: -1; top: 0; bottom: 0; left: 0; right: calc(var(--lean) / -2); }
+.rv-car::before { background: var(--red); clip-path: polygon(calc(100% - 40px) 0, 100% 0, calc(100% - var(--lean)) 100%, calc(100% - var(--lean) - 40px) 100%); }
+.rv-car::after { background: var(--dark-bg); clip-path: polygon(0 0, calc(100% - 5px) 0, calc(100% - var(--lean) - 5px) 100%, 0 100%); }
 
-/* Gallery arrows — glassy, anchored to the frame edges */
-.rv-gallery-nav {
-  position: absolute; top: 50%; transform: translateY(-50%);
-  z-index: 3;
-  display: grid; place-items: center;
-  width: 42px; height: 42px; border-radius: 50%;
-  background: rgba(20,20,20,.45);
-  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,.3);
-  color: #fff; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(0,0,0,.3);
-  transition: background .18s, transform .18s, box-shadow .18s;
-}
-.rv-gallery-nav:hover {
-  background: rgba(10,10,10,.72);
-  box-shadow: 0 6px 20px rgba(0,0,0,.45);
-}
-.rv-gallery-nav--prev { left: .9rem; }
-.rv-gallery-nav--next { right: .9rem; }
-.rv-gallery-nav--prev:hover { transform: translateY(-50%) translateX(-2px); }
-.rv-gallery-nav--next:hover { transform: translateY(-50%) translateX(2px); }
+.rv-car__inner { display: flex; flex-direction: column; justify-content: center; height: 100%; padding: 84px clamp(24px, 3vw, 44px) 36px; color: #fff; }
+/* Takes the height the words under it leave, inside the cut. */
+.rv-car__frame { flex: 0 1 auto; min-height: 170px; width: 100%; max-width: min(720px, 72vh); aspect-ratio: 16 / 9.6; border-radius: 20px; box-shadow: 0 30px 60px -30px rgba(0,0,0,.6); }
+.rv-car__none { display: grid; place-items: center; width: 100%; height: 100%; font-size: 72px; color: rgba(var(--dark-rgb),.25); }
 
-/* Dots sit just below the frame (normal flow) */
-.rv-gallery-dots {
-  display: flex; gap: .5rem; z-index: 3;
-}
-.rv-gallery-dot {
-  width: 9px; height: 9px; border-radius: 50%; padding: 0; cursor: pointer;
-  background: rgba(255,255,255,.4); border: none;
-  transition: background .18s, width .18s;
-}
-.rv-gallery-dot:hover { background: rgba(255,255,255,.7); }
-.rv-gallery-dot.active {
-  background: #fff; width: 24px; border-radius: 999px;
-}
+.rv-car__head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px 24px; max-width: 500px; margin-top: 28px; }
+.rv-car__name { font-family: var(--title-font); font-stretch: 118%; font-size: clamp(24px, 2.5vw, 34px); font-weight: 800; letter-spacing: -.025em; line-height: 1.12; text-wrap: balance; }
+.rv-car__cat { margin-top: 5px; font-size: 15px; line-height: 1.4; color: rgba(255,255,255,.76); }
+.rv-car__price { flex-shrink: 0; text-align: right; line-height: 1.25; white-space: nowrap; }
+.rv-car__price strong { display: block; font-family: var(--title-font); font-stretch: 118%; font-size: 24px; font-weight: 800; letter-spacing: -.02em; }
+.rv-car__price > span:last-child { font-size: 14px; color: rgba(255,255,255,.76); }
+.rv-car__old { display: block; margin-bottom: 3px; font-size: 14px; color: rgba(255,255,255,.7); }
+.rv-car__old span { margin-left: 4px; padding: 1px 8px; border-radius: 50px; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; }
 
-/* Car name + price at the bottom of the panel */
-.rv-left__info {
-  position: relative; z-index: 2;
-  padding: 2rem 2.5rem 2.4rem;
-  background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,.4) 55%, transparent 100%);
-}
-.rv-left__eyebrow {
-  display: inline-block;
-  font-size: .7rem; font-weight: 700; letter-spacing: .18em;
-  text-transform: uppercase; color: #f4a261;
-  margin-bottom: .7rem;
-  padding: .3rem .8rem;
-  background: rgba(244,162,97,.12);
-  border: 1px solid rgba(244,162,97,.3);
-  border-radius: 999px;
-}
-.rv-left__name {
-  margin: 0 0 .55rem;
-  font-size: clamp(1.7rem, 3vw, 2.6rem);
-  font-weight: 900; color: #fff;
-  letter-spacing: -.025em; line-height: 1.05;
-  text-shadow: 0 4px 30px rgba(0,0,0,.7);
-}
-.rv-left__pricing { display: flex; align-items: baseline; gap: .55rem; flex-wrap: wrap; }
-.rv-left__promo {
-  font-size: 1.6rem; font-weight: 800; color: #4ade80;
-  text-shadow: 0 2px 16px rgba(74,222,128,.45);
-}
-.rv-left__per { font-size: .9rem; color: rgba(255,255,255,.7); font-weight: 500; }
-.rv-left__old { font-size: .85rem; color: rgba(255,255,255,.4); text-decoration: line-through; }
-.rv-left__discount {
-  font-size: .72rem; font-weight: 800; color: #fff; background: #E63946;
-  padding: .22rem .5rem; border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(230,57,70,.5);
-}
-
-/* Équipements / options of the selected car */
-.rv-left__equip {
-  display: flex; flex-wrap: wrap; gap: .5rem;
-  margin-top: 1.1rem;
-}
+.rv-car__specs { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 22px; font-size: 15px; font-weight: 600; line-height: 1.4; }
+.rv-car__specs li { display: inline-flex; align-items: center; gap: 8px; }
+.rv-car__specs svg { width: 18px; height: 18px; flex-shrink: 0; color: rgba(255,255,255,.62); }
+.rv-car__equip { display: flex; flex-wrap: wrap; gap: 8px; max-width: 470px; margin-top: 18px; }
 .rv-equip-pill {
-  display: inline-flex; align-items: center; gap: .4rem;
-  font-size: .8rem; font-weight: 600; color: #fff;
-  background: rgba(255,255,255,.12);
-  border: 1px solid rgba(255,255,255,.18);
-  padding: .34rem .66rem; border-radius: 999px;
-  backdrop-filter: blur(4px);
+  display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 50px;
+  background: rgba(255,255,255,.09); border: 1px solid rgba(255,255,255,.15);
+  font-size: 13px; font-weight: 500; line-height: 1.35; color: #fff;
 }
-.rv-equip-pill__icon { width: 16px; height: 16px; flex-shrink: 0; opacity: .9; }
-.rv-equip-pill--more {
-  font-family: inherit; cursor: pointer;
-  background: rgba(245,158,11,.22); border-color: rgba(245,158,11,.4); color: #fde68a;
-}
+.rv-equip-pill__icon { width: 15px; height: 15px; flex-shrink: 0; color: rgba(255,255,255,.72); }
+.rv-equip-pill--more { font-family: inherit; background: #fff; border-color: #fff; color: var(--dark); font-weight: 600; }
 
-/* ── Right: form panel ────────────────────────────────────────────────────── */
-.rv-right {
-  background: linear-gradient(180deg, #f4f5f7 0%, #eef0f3 100%);
-  display: flex; align-items: center; justify-content: center;
-  padding: 6rem 2rem 3rem;
-  min-height: 100vh;
-}
-.rv-card {
-  width: 100%; max-width: 480px;
-  background: #fff;
-  border-radius: 24px;
-  box-shadow: 0 24px 60px rgba(0,0,0,.12), 0 4px 16px rgba(0,0,0,.05);
-  padding: 2.2rem 2.2rem 2rem;
-  position: relative;
-  overflow: hidden;
-  animation: rv-card-in .7s cubic-bezier(.16,1,.3,1) .1s both;
-}
-@keyframes rv-card-in {
-  from { opacity: 0; transform: translateY(30px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-/* Brand accent bar on top of the card */
-.rv-card::before {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; height: 5px;
-  background: linear-gradient(90deg, #E63946, #f4a261);
-}
+/* ── The request ── */
+.rv-side { position: relative; z-index: 1; display: grid; place-items: center; padding: 84px clamp(20px, 3vw, 44px) 48px; }
+.rv-card { width: 100%; max-width: 508px; padding: 36px; border-radius: 26px; background: #fff; box-shadow: 0 30px 70px -36px rgba(var(--dark-rgb),.42), 0 2px 10px rgba(var(--dark-rgb),.05); animation: rvCard .6s cubic-bezier(.16,1,.3,1) backwards; }
+@keyframes rvCard { from { opacity: 0; transform: translateY(26px); } }
 
-.rv-card__header {
-  display: flex; align-items: center; gap: 1rem;
-  margin-bottom: 1.8rem; padding-bottom: 1.4rem;
-  border-bottom: 1px solid #f1f3f5;
-}
-.rv-card__icon {
-  display: flex; align-items: center; justify-content: center;
-  width: 54px; height: 54px; flex-shrink: 0;
-  background: linear-gradient(135deg, #fff1f2, #ffe4e6);
-  border-radius: 16px;
-  color: #E63946;
-  box-shadow: inset 0 0 0 1px rgba(230,57,70,.12);
-}
-.rv-card__title { margin: 0 0 .25rem; font-size: 1.4rem; font-weight: 800; color: #0f172a; letter-spacing: -.01em; }
-.rv-card__sub { margin: 0; font-size: .84rem; color: #6b7280; line-height: 1.45; }
+.rv-form { display: flex; flex-direction: column; gap: 16px; }
+.rv-form__head { margin-bottom: 4px; }
+.rv-form__title { font-family: var(--title-font); font-stretch: 118%; font-size: 23px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.rv-form__head p { margin-top: 7px; font-size: 14.5px; line-height: 1.55; color: var(--gray-600); text-wrap: pretty; }
 
-/* ── Form fields ──────────────────────────────────────────────────────────── */
-.rv-form { display: flex; flex-direction: column; gap: 1.15rem; }
-
-.rv-field { display: flex; flex-direction: column; gap: .45rem; }
-.rv-field__label {
-  display: flex; align-items: center; gap: .4rem;
-  font-size: .74rem; font-weight: 700; color: #475569;
-  letter-spacing: .04em; text-transform: uppercase;
-}
-.rv-field__label svg { color: #94a3b8; }
-.rv-req { color: #E63946; margin-left: .1rem; }
-
-.rv-field__wrap { position: relative; display: flex; align-items: center; }
-.rv-field__ico {
-  position: absolute; left: .9rem;
-  display: flex; color: #94a3b8;
-  pointer-events: none;
-  transition: color .18s;
-}
-.rv-field__wrap:focus-within .rv-field__ico { color: #E63946; }
-
+.rv-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.rv-field__label { font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--gray-800); }
+.rv-req { margin-left: 5px; color: var(--red-dark); }
+.rv-field__wrap { position: relative; }
+.rv-field__ico { position: absolute; z-index: 1; left: 15px; top: 50%; width: 19px; height: 19px; transform: translateY(-50%); color: var(--gray-500); pointer-events: none; }
+.rv-field__error { font-size: 13px; font-weight: 600; line-height: 1.4; color: var(--red-dark); }
 .rv-input {
-  width: 100%;
-  padding: .85rem .9rem .85rem 2.85rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 13px;
-  font-size: .95rem; color: #0f172a;
-  background: #f9fafb;
-  transition: border-color .18s, box-shadow .18s, background .18s;
+  width: 100%; min-height: 50px; padding: 12px 15px; border: 1px solid var(--gray-300); border-radius: 13px;
+  background: var(--gray-100); color: var(--dark); font-family: inherit; font-size: 15px; outline: none;
+  transition: border-color .2s, background-color .2s, box-shadow .2s;
 }
-.rv-input:focus {
-  outline: none;
-  border-color: #E63946;
-  background: #fff;
-  box-shadow: 0 0 0 3.5px rgba(230,57,70,.12);
-}
-.rv-input::placeholder { color: #9ca3af; }
-
-/* Select variant */
+.rv-field__ico ~ .rv-input { padding-left: 44px; }
+.rv-input::placeholder { color: var(--gray-500); opacity: 1; }
+.rv-input.is-placeholder { color: var(--gray-500); }
+.rv-field.has-error .rv-input { border-color: var(--red-dark); background-color: rgba(var(--red-rgb),.04); }
+@media (hover: hover) { .rv-field:not(.has-error) .rv-input:hover { border-color: var(--gray-400); } }
+.rv-input:focus { border-color: var(--red); background-color: #fff; box-shadow: 0 0 0 3px rgba(var(--red-rgb),.12); }
 .rv-select {
-  appearance: none; -webkit-appearance: none;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right .9rem center;
-  padding-right: 2.4rem;
+  appearance: none; -webkit-appearance: none; padding-right: 42px; cursor: pointer; text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23616873' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center; background-size: 16px;
 }
-.rv-select--placeholder { color: #9ca3af; }
+.rv-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.rv-dates .datepicker__pop { z-index: 200; }
+/* Right column: the calendar would run off the card. */
+.rv-dates > :last-child .datepicker__pop { left: auto; right: 0; }
 
-/* Date pickers — identical to the home page (.form-group input) style.
-   NOTE: the `rv-datepicker` class is applied to the <input> itself, so the
-   selector must be compound (.datepicker__input.rv-datepicker), not descendant. */
-.rv-dates { display: grid; grid-template-columns: 1fr 1fr; gap: .9rem; }
-.rv-dates .datepicker { width: 100%; }
-.datepicker__input.rv-datepicker {
-  width: 100%; box-sizing: border-box;
-  padding: 12px 40px 12px 16px;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  font-size: 14px; font-family: inherit; color: #0d0d0d;
-  background: #f8f9fa;
-  outline: none;
-  transition: .3s cubic-bezier(.4,0,.2,1);
-  cursor: pointer;
-}
-.datepicker__input.rv-datepicker::placeholder { color: #adb5bd; }
-.datepicker__input.rv-datepicker:focus {
-  border-color: #E63946;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(230,57,70,.08);
-}
-/* Compact calendar popup for the reservation page */
-.rv-dates .datepicker__pop {
-  z-index: 200;
-  width: 248px;
-  padding: 12px;
-  border-radius: 12px;
-}
-.rv-dates .datepicker__title { font-size: 13px; }
-.rv-dates .datepicker__nav { width: 26px; height: 26px; font-size: 16px; border-radius: 7px; }
-.rv-dates .datepicker__wd { font-size: 10px; padding: 2px 0; }
-.rv-dates .datepicker__day { font-size: 12px; border-radius: 7px; }
-.rv-dates .datepicker__grid { gap: 1px; }
-/* Right column ("Retour") — anchor popup to the right so it stays in the card */
-.rv-dates .rv-field:last-child .datepicker__pop { left: auto; right: 0; }
+.rv-total { padding: 16px 18px; border-radius: 16px; background: var(--page); font-size: 14.5px; line-height: 1.4; color: var(--gray-700); }
+.rv-total--wait { height: 100px; }
+.rv-total > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.rv-total > div + div { margin-top: 8px; }
+.rv-total__save { color: #17713c; font-weight: 600; }
+.rv-total .rv-total__sum { margin-top: 13px; padding-top: 13px; border-top: 1px solid var(--gray-300); font-weight: 600; color: var(--dark); }
+.rv-total__sum dd { font-family: var(--title-font); font-stretch: 118%; font-size: 22px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; white-space: nowrap; }
 
-/* ── Itemized summary ─────────────────────────────────────────────────────── */
-.rv-summary {
-  display: flex; flex-direction: column; gap: .1rem;
-  padding: 1.1rem 1.2rem; border-radius: 16px;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border: 1px solid #e2e8f0;
-}
-.rv-summary__row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .35rem 0;
-  font-size: .88rem;
-}
-.rv-summary__label {
-  display: inline-flex; align-items: center; gap: .45rem;
-  color: #64748b; font-weight: 500;
-}
-.rv-summary__label svg { color: #94a3b8; }
-.rv-summary__val { color: #334155; font-weight: 700; }
-.rv-summary__val--muted { color: #94a3b8; font-weight: 500; }
-.rv-summary__total {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: .55rem; padding-top: .8rem;
-  border-top: 1px dashed #cbd5e1;
-  font-size: .92rem; color: #475569; font-weight: 600;
-}
-.rv-summary__total strong {
-  font-size: 1.3rem; font-weight: 900; color: #15803d;
-  letter-spacing: -.01em;
-}
+.rv-alert { display: flex; gap: 9px; padding: 13px 15px; border-radius: 13px; border: 1px solid rgba(var(--red-rgb),.22); background: rgba(var(--red-rgb),.06); font-size: 14px; font-weight: 600; line-height: 1.5; color: var(--red-dark); }
+.rv-alert svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; }
+.rv-trust { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px; padding-top: 2px; font-size: 13.5px; font-weight: 500; line-height: 1.4; color: var(--gray-600); }
+.rv-trust li { display: inline-flex; align-items: center; gap: 7px; }
+.rv-trust svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--dark); }
 
-/* ── Error ────────────────────────────────────────────────────────────────── */
-.rv-error {
-  display: flex; align-items: center; gap: .5rem;
-  margin: 0; padding: .75rem 1rem;
-  background: #fef2f2; border: 1px solid #fecaca;
-  border-radius: 11px; color: #b91c1c;
-  font-size: .84rem; font-weight: 600;
-  animation: rv-shake .4s ease;
-}
-@keyframes rv-shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-/* ── WhatsApp button ──────────────────────────────────────────────────────── */
-.rv-wa-btn {
-  display: flex; align-items: center; justify-content: center; gap: .7rem;
-  width: 100%; padding: 1.1rem 1.2rem;
-  background: linear-gradient(135deg, #25d366, #1eb958);
-  color: #fff;
-  border: none; border-radius: 15px;
-  font-size: 1.06rem; font-weight: 800; cursor: pointer;
-  letter-spacing: .01em;
-  box-shadow: 0 8px 24px rgba(37,211,102,.42);
-  transition: transform .18s, box-shadow .18s, filter .18s;
-  margin-top: .5rem;
-  position: relative; overflow: hidden;
-}
-.rv-wa-btn::after {
-  content: '';
-  position: absolute; top: 0; left: -120%;
-  width: 70%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,.35), transparent);
-  transform: skewX(-20deg);
-  transition: left .6s ease;
-}
-.rv-wa-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(37,211,102,.55);
-  filter: brightness(1.03);
-}
-.rv-wa-btn:hover::after { left: 130%; }
-.rv-wa-btn:disabled, .rv-wa-btn:disabled:hover {
-  background: #9ca3af; box-shadow: none; transform: none; cursor: not-allowed;
-}
-.rv-wa-btn:disabled::after { display: none; }
-.rv-wa-btn:active { transform: translateY(0); box-shadow: 0 5px 16px rgba(37,211,102,.4); }
-
-/* ── Guarantees row ───────────────────────────────────────────────────────── */
-.rv-guarantees {
-  display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem 1.2rem;
-  margin-top: 1.4rem; padding-top: 1.3rem;
-  border-top: 1px solid #f1f3f5;
-}
-.rv-guarantee {
-  display: inline-flex; align-items: center; gap: .4rem;
-  font-size: .78rem; font-weight: 600; color: #475569;
-}
-.rv-guarantee__ico {
-  display: flex; align-items: center; justify-content: center;
-  color: #15803d;
-}
-
-/* ── Tablet: tighten the split ─────────────────────────────────────────────── */
-@media (max-width: 960px) {
-  .rv-split { grid-template-columns: 1fr 1.05fr; }
-  .rv-left__inner { padding: 5rem 1.5rem 9rem; }
-  .rv-right { padding: 5.5rem 1.2rem 2.5rem; }
-}
-
-/* ── Mobile: stack image on top, form below ───────────────────────────────── */
-@media (max-width: 760px) {
-  .rv-topbar { padding: .7rem 1rem; }
-  .rv-topbar__back { font-size: .8rem; padding: .42rem .75rem; }
-
-  .rv-split { grid-template-columns: 1fr; min-height: auto; }
-
-  .rv-left {
-    position: relative; top: auto;
-    height: 52vh; min-height: 300px;
-    justify-content: flex-end;
-  }
-  .rv-left__inner { padding: 4.5rem 1.5rem 7rem; }
-  .rv-left__name { font-size: 1.7rem; }
-  .rv-left__promo { font-size: 1.4rem; }
-  .rv-gallery-nav { width: 36px; height: 36px; }
-  .rv-gallery-nav--prev { left: .6rem; }
-  .rv-gallery-nav--next { right: .6rem; }
-
-  .rv-right {
-    min-height: auto;
-    padding: 1.5rem .8rem 3rem;
-    align-items: flex-start;
-  }
-  .rv-card {
-    max-width: 560px;
-    padding: 1.6rem 1.3rem;
-    border-radius: 20px;
-    margin-top: -2.5rem;   /* overlap the image bottom */
-  }
-  .rv-dates { grid-template-columns: 1fr; }
-
-  /* iOS Safari zooms the page when a focused field's text is under 16px — pin
-     the date inputs to 16px so tapping "Départ"/"Retour" never zooms. */
-  .datepicker__input.rv-datepicker { font-size: 16px; }
-  /* Detach the calendar from the field and centre it in the viewport, shrunk as
-     far as it comfortably goes, so the whole month always fits on a phone. Both
-     selectors overridden: the base one and the last-child right-anchor. */
-  .rv-dates .datepicker__pop,
-  .rv-dates .rv-field:last-child .datepicker__pop {
-    position: fixed;
-    top: 50%; left: 50%; right: auto; bottom: auto;
-    transform: translate(-50%, -50%);
-    width: min(268px, calc(100vw - 48px));
-    padding: 12px;
-    z-index: 3000;
-    animation: none;                 /* dpFade's translateY would fight the centring */
-    box-shadow: 0 24px 60px rgba(16, 20, 28, .32);
-  }
-  .rv-dates .datepicker__head { margin-bottom: 6px; }
-  .rv-dates .datepicker__title { font-size: 13px; }
-  .rv-dates .datepicker__nav { width: 26px; height: 26px; font-size: 15px; }
-  .rv-dates .datepicker__grid { gap: 1px; }
-  .rv-dates .datepicker__grid--days { margin-bottom: 2px; }
-  .rv-dates .datepicker__wd { font-size: 9.5px; padding: 2px 0; }
-  .rv-dates .datepicker__day { font-size: 12px; border-radius: 7px; }
-
-  .rv-card__title { font-size: 1.2rem; }
-  .rv-guarantees { gap: .5rem .9rem; }
-  .rv-sent__actions { flex-direction: column; }
-  .rv-sent__msg { max-height: 160px; }
-}
-
-/* ── Confirmation panel ───────────────────────────────────────────────────────
-   Replaces the form once the request has been handed to WhatsApp. The fallback
-   link matters: window.open is silently blocked on iOS Safari often enough that
-   customers would otherwise believe they had booked. */
-.rv-sent {
-  display: flex; flex-direction: column; align-items: center;
-  text-align: center; gap: .85rem;
-  animation: rv-card-in .5s cubic-bezier(.16,1,.3,1) both;
-}
-.rv-sent__icon {
-  display: grid; place-items: center;
-  width: 68px; height: 68px; border-radius: 50%;
-  background: linear-gradient(135deg, #25d366, #1eb958);
-  color: #fff;
-  box-shadow: 0 10px 28px rgba(37,211,102,.38);
-  margin-bottom: .2rem;
-}
-.rv-sent__title { margin: 0; font-size: 1.5rem; font-weight: 800; color: #0f172a; letter-spacing: -.02em; }
-.rv-sent__sub   { margin: 0; font-size: .9rem; line-height: 1.55; color: #64748b; }
-.rv-sent__sub strong { color: #0f172a; }
-
+/* ── Sent ── */
+.rv-sent { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.rv-sent__icon { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--wa); color: #fff; font-size: 30px; }
+.rv-sent__title { font-family: var(--title-font); font-stretch: 118%; font-size: 23px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; }
+.rv-sent__sub { font-size: 15px; line-height: 1.6; color: var(--gray-600); text-wrap: pretty; }
+.rv-sent__sub strong { color: var(--dark); }
 /* The exact text that was handed off, so nothing is a mystery. */
-.rv-sent__msg {
-  width: 100%; max-height: 210px; overflow: auto;
-  margin: .2rem 0 0;
-  padding: .9rem 1rem;
-  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-  border: 1px solid #e2e8f0; border-radius: 14px;
-  text-align: left; white-space: pre-wrap; word-break: break-word;
-  font-family: inherit; font-size: .8rem; line-height: 1.6; color: #334155;
-}
-.rv-sent .rv-wa-btn { text-decoration: none; }
+.rv-sent__msg { width: 100%; max-height: 270px; overflow: auto; padding: 15px 17px; border-radius: 14px; background: var(--page); text-align: left; white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: 14px; line-height: 1.6; color: var(--gray-700); }
+.rv-sent__actions { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; }
+.rv-sent__btn { flex: 1 1 190px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 0 16px; border-radius: 13px; border: 1px solid var(--gray-300); background: #fff; color: var(--dark); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: border-color .2s; }
+.rv-sent__btn:hover { border-color: var(--dark); }
+.rv-sent__link { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 14px; font-weight: 600; color: var(--gray-600); }
+.rv-sent__link:hover { color: var(--dark); }
 
-.rv-sent__actions { display: flex; gap: .6rem; width: 100%; }
-.rv-sent__copy, .rv-sent__back {
-  flex: 1;
-  display: inline-flex; align-items: center; justify-content: center; gap: .45rem;
-  padding: .8rem 1rem;
-  border-radius: 12px; border: 1px solid #e2e8f0; background: #fff;
-  font-size: .85rem; font-weight: 700; color: #475569; cursor: pointer;
-  transition: background .18s, border-color .18s, color .18s;
+/* Phones: total and button within reach. */
+.rv-dock { display: none; }
+
+@media (min-width: 861px) and (max-width: 1080px) {
+  .rv-car__head { flex-direction: column; align-items: flex-start; }
+  .rv-car__price { text-align: left; }
+  .rv-car__equip { max-width: 330px; }
+  .rv-card { padding: 28px 26px; }
 }
-.rv-sent__copy:hover, .rv-sent__back:hover { background: #f8fafc; border-color: #cbd5e1; color: #0f172a; }
-.rv-sent__link {
-  margin-top: .2rem;
-  font-size: .84rem; font-weight: 600; color: #94a3b8; text-decoration: none;
+/* Low laptop screens: the photo must not disappear to make room for the pills. */
+@media (min-width: 861px) and (max-height: 720px) {
+  .rv-car__inner { padding-top: 78px; padding-bottom: 24px; }
+  .rv-car__head { margin-top: 20px; }
+  .rv-car__specs { margin-top: 14px; }
+  .rv-car__equip { margin-top: 12px; }
 }
-.rv-sent__link:hover { color: #475569; }
+@media (min-width: 861px) and (max-height: 620px) { .rv-car__equip { display: none; } }
+
+@media (max-width: 860px) {
+  .rv-split { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .rv-car { position: relative; height: auto; }
+  /* Turned round: the cut runs under the dark half. */
+  .rv-car::before, .rv-car::after { right: 0; }
+  .rv-car::before { clip-path: polygon(0 60%, 100% 60%, 100% calc(100% - 32px), 0 100%); }
+  .rv-car::after { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 36px), 0 calc(100% - 4px)); }
+  .rv-car__inner { height: auto; max-width: 640px; margin: 0 auto; padding: 78px 18px 62px; }
+  .rv-car__frame { max-width: none; aspect-ratio: 16 / 8.8; min-height: 0; border-radius: 18px; }
+  .rv-car__head { max-width: none; align-items: flex-start; margin-top: 20px; }
+  .rv-car__specs { margin-top: 14px; }
+  .rv-car__equip { margin-top: 14px; }
+  .rv-side { padding: 6px 18px 48px; }
+  .rv-card { max-width: 604px; padding: 28px 24px; border-radius: 22px; }
+
+  /* A calendar under its field would be cut by the bottom of the screen: centred. */
+  .rv-dates .datepicker__pop, .rv-dates > :last-child .datepicker__pop {
+    position: fixed; inset: auto; top: 50%; left: 50%; right: auto; bottom: auto; transform: translate(-50%, -50%);
+    width: min(320px, calc(100vw - 32px)); max-width: none; z-index: 3000; animation: none;
+    box-shadow: 0 24px 80px 100vmax rgba(var(--dark-rgb),.42);
+  }
+
+  .rv-dock {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 800;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+    background: #fff; border-top: 1px solid var(--gray-200); box-shadow: 0 -10px 28px -18px rgba(var(--dark-rgb),.4);
+    transform: translateY(110%); visibility: hidden; transition: transform .28s cubic-bezier(.2,.8,.2,1), visibility 0s .28s;
+  }
+  .rv-dock.is-shown { transform: none; visibility: visible; transition-delay: 0s; }
+  .rv-dock__total { line-height: 1.25; }
+  .rv-dock__total span { display: block; font-size: 13px; color: var(--gray-600); }
+  .rv-dock__total strong { font-family: var(--title-font); font-stretch: 118%; font-size: 19px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap; }
+  .rv-dock .btn { flex: 1; justify-content: center; max-width: 230px; min-height: 50px; padding: 0 18px; border-radius: 14px; margin-left: auto; }
+  .rv-page { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 480px) {
+  .rv-topbar { padding: 14px; }
+  .rv-car__inner { padding: 74px 14px 54px; }
+  .rv-car__name { font-size: 23px; }
+  .rv-car__price strong { font-size: 21px; }
+  .rv-side { padding-inline: 14px; }
+  .rv-card { padding: 24px 18px; }
+  .rv-card .btn { padding-inline: 14px; }
+  .rv-dates { gap: 12px; }
+  .rv-dates .rv-input { padding: 12px 34px 12px 13px !important; }
+}
+/* Too narrow for two dates on one line. */
+@media (max-width: 359px) { .rv-dates { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .rv-card { animation: none; } .rv-dock { transition: none; } }

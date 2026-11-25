@@ -1,17 +1,9 @@
 import { useState, useRef } from 'react'
 import { showError } from '../../components/AdminDialog'
-import { carColors, colorName, carFeatures } from '../../data'
+import { carColors, colorName, carFeatures, categoryOptions } from '../../data'
 import Icon from '../../components/Icon'
 import { uploadCarPhotos, createCar, updateCar } from '../../lib/cars'
-
-export const CATEGORIES = [
-  { value: 'economique', label: 'Économique' },
-  { value: 'citadine',   label: 'Citadine' },
-  { value: 'berline',    label: 'Berline' },
-  { value: 'suv',        label: 'SUV / 4x4' },
-  { value: 'luxe',       label: 'Luxe' },
-  { value: 'utilitaire', label: 'Utilitaire' },
-]
+import { Ico } from './Icons'
 
 export const EMPTY_CAR = {
   name: '', category: 'economique', categories: ['economique'], photo: '', photos: [],
@@ -119,7 +111,7 @@ export default function CarForm({ initial, onSaved, onCancel }) {
   return (
     <form className="admin-form" onSubmit={save}>
       <div className="admin-form__head">
-        <h3>{car.id ? '✏️ Modifier la voiture' : '➕ Nouvelle voiture'}</h3>
+        <h3><Ico name={car.id ? 'pencil' : 'plus'} /> {car.id ? 'Modifier la voiture' : 'Nouvelle voiture'}</h3>
         <p className="admin-muted">Renseignez les informations et ajoutez des photos.</p>
       </div>
 
@@ -151,14 +143,14 @@ export default function CarForm({ initial, onSaved, onCancel }) {
               {i === 0 && <span className="admin-thumb__badge">Couverture</span>}
               <div className="admin-thumb__actions">
                 {i !== 0 && (
-                  <button type="button" title="Définir comme couverture" onClick={() => makeCover(i)}>★</button>
+                  <button type="button" title="Définir comme couverture" aria-label="Définir comme couverture" onClick={() => makeCover(i)}><Icon name="star" /></button>
                 )}
-                <button type="button" title="Supprimer" onClick={() => removePhoto(i)}>✕</button>
+                <button type="button" title="Supprimer" aria-label="Supprimer la photo" onClick={() => removePhoto(i)}><Icon name="close" /></button>
               </div>
             </div>
           ))}
           <label className="admin-thumb admin-thumb--add">
-            <span>{uploading ? '⏳ Envoi…' : '＋ Ajouter'}</span>
+            <span><Ico name={uploading ? 'hourglass' : 'plus'} /> {uploading ? 'Envoi…' : 'Ajouter'}</span>
             <input type="file" accept="image/*" multiple hidden onChange={handlePhotos} disabled={uploading} />
           </label>
         </div>
@@ -202,16 +194,17 @@ export default function CarForm({ initial, onSaved, onCancel }) {
         <div className="admin-cats-field">
           <span>Catégories <small className="admin-hint">(cochez une ou plusieurs)</small></span>
           <div className="admin-cats-pick">
-            {CATEGORIES.map(c => {
+            {categoryOptions.map(c => {
               const on = (car.categories ?? []).includes(c.value)
               return (
                 <button
                   type="button"
                   key={c.value}
                   className={`admin-cat-chip ${on ? 'active' : ''}`}
+                  aria-pressed={on}
                   onClick={() => toggleCat(c.value)}
                 >
-                  {on ? '✓ ' : ''}{c.label}
+                  {on && <Ico name="check" />}{c.label}
                 </button>
               )
             })}
@@ -262,9 +255,10 @@ export default function CarForm({ initial, onSaved, onCancel }) {
                 type="button"
                 key={f.value}
                 className={`admin-cat-chip admin-feature-chip ${on ? 'active' : ''}`}
+                aria-pressed={on}
                 onClick={() => toggleFeature(f.value)}
               >
-                {on ? '✓ ' : ''}<Icon name={f.icon} /> {f.label}
+                {on && <Ico name="check" />}<Icon name={f.icon} /> {f.label}
               </button>
             )
           })}
