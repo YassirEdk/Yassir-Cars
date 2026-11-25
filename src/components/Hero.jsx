@@ -7,11 +7,15 @@ import Icon from './Icon'
 import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { loadSearch, saveSearch } from '../lib/searchPrefs'
+import { scrollToSection } from '../lib/scroll'
+import './hero.css'
 
 /* Self-hosted, responsive hero. Regenerate with `node scripts/build-hero.mjs`.
    Previously a fixed 1800px JPEG pulled from Unsplash's CDN — a third-party
-   round-trip on the LCP element of every first visit. */
+   round-trip on the LCP element of every first visit.
+   Keep both in sync with the preload in index.html. */
 const HERO_SRCSET = '/hero/hero-800.webp 800w, /hero/hero-1400.webp 1400w, /hero/hero-2000.webp 2000w'
+const HERO_SIZES = '(max-width: 860px) 170vw, 100vw'
 const HERO_FALLBACK = '/hero/hero-1400.jpg'
 
 const categories = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
@@ -24,6 +28,31 @@ const stats = [
   { num: '24/7', label: 'Assistance' },
 ]
 
+const jours = (n) => `${n} jour${n > 1 ? 's' : ''}`
+
+// Same day count as the results page prices with.
+function rentalLength(depart, retour) {
+  if (!depart || !retour || retour <= depart) return 0
+  return Math.ceil((new Date(retour) - new Date(depart)) / 86_400_000)
+}
+
+/* One cell of the search strip. The control fills the whole cell, so the icon
+   and the label sit on top of it and the entire cell is clickable. */
+function Field({ id, icon, label, error, children }) {
+  return (
+    <div
+      className={`bk-field bk-field--${id}${error ? ' has-error' : ''}`}
+      role="group"
+      aria-labelledby={`bk-${id}`}
+    >
+      <Icon name={icon} className="bk-field__icon" />
+      <span className="bk-field__label" id={`bk-${id}`}>{label}</span>
+      {children}
+      {error && <span className="bk-field__error" role="alert">{error}</span>}
+    </div>
+  )
+}
+
 export default function Hero() {
   const saved = loadSearch()
   const [form, setForm] = useState({
@@ -34,6 +63,8 @@ export default function Hero() {
   })
   const [errors, setErrors] = useState({})
   const [shake,  setShake]  = useState(false)
+  // The photo has arrived: the headlights can come on.
+  const [lit, setLit] = useState(false)
   // Bumped when a start date is picked, so the return calendar opens by itself.
   const [openRetour, setOpenRetour] = useState(0)
   const navigate = useNavigate()
@@ -41,25 +72,26 @@ export default function Hero() {
   const minDays = settings.minRentalDays
 
   const today = new Date().toISOString().split('T')[0]
+  const length = rentalLength(form.depart, form.retour)
 
   const handleSubmit = (e) => {
     e.preventDefault()
 
     const newErrors = {}
     if (!form.lieu.trim())
-      newErrors.lieu = 'Veuillez indiquer le lieu de prise en charge'
+      newErrors.lieu = 'Choisissez une ville'
 
     if (!form.depart)
-      newErrors.depart = 'Veuillez choisir une date de départ'
+      newErrors.depart = 'Choisissez une date de début'
     else if (form.depart < today)
-      newErrors.depart = 'La date de départ ne peut pas être dans le passé'
+      newErrors.depart = 'Cette date est déjà passée'
 
     if (!form.retour)
-      newErrors.retour = 'Veuillez choisir une date de retour'
+      newErrors.retour = 'Choisissez une date de retour'
     else if (form.retour && form.retour < today)
-      newErrors.retour = 'La date de retour ne peut pas être dans le passé'
+      newErrors.retour = 'Cette date est déjà passée'
     else if (form.depart && form.retour && form.retour < addDays(form.depart, minDays))
-      newErrors.retour = `La location doit durer au moins ${minDays} jours`
+      newErrors.retour = `Au moins ${jours(minDays)} de location`
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -81,40 +113,53 @@ export default function Hero() {
 
   return (
     <section className="hero" id="accueil">
-      <div className="hero-bg">
-        <img
-          className="hero-bg__img"
-          src={HERO_FALLBACK}
-          srcSet={HERO_SRCSET}
-          sizes="100vw"
-          alt=""
-          aria-hidden
-          /* LCP element: load it eagerly and ahead of everything else. */
-          fetchPriority="high"
-          decoding="async"
-        />
-        <div className="hero-overlay" />
+      <div className="hero-bg" aria-hidden="true">
+        {/* The scene keeps the photo's proportions, so the light beams stay on
+            the car's headlights at every screen size. */}
+        <div className={`hero-scene${lit ? ' is-lit' : ''}`}>
+          <img
+            className="hero-scene__img"
+            src={HERO_FALLBACK}
+            srcSet={HERO_SRCSET}
+            sizes={HERO_SIZES}
+            alt=""
+            onLoad={() => setLit(true)}
+            /* LCP element: load it ahead of everything else. Lowercase: React 18
+               does not know the camelCase spelling. */
+            fetchpriority="high"
+            decoding="async"
+          />
+          <span className="hero-beam hero-beam--left" />
+          <span className="hero-beam hero-beam--right" />
+        </div>
+        <div className="hero-shade" />
       </div>
 
       <div className="container hero-content">
-        <h1 className="hero-title">
-          Conduisez avec<br />
-          <span className="gradient-text">Style & Liberté</span>
-        </h1>
+        <div className="hero-intro">
+          <h1 className="hero-title">
+            Conduisez avec<br />
+            <span className="gradient-text">Style & Liberté</span>
+          </h1>
 
-        <p className="hero-subtitle">
-          Découvrez notre gamme exceptionnelle de véhicules. De la citadine élégante au SUV luxueux,
-          YASSIR CARS vous offre la meilleure expérience de location au Maroc.
-        </p>
+          <p className="hero-subtitle">
+            Découvrez notre gamme exceptionnelle de véhicules. De la citadine élégante au SUV luxueux,
+            YASSIR CARS vous offre la meilleure expérience de location au Maroc.
+          </p>
+        </div>
 
         <div className="booking-card" id="reserver">
-          <h2 className="booking-heading">Réservez votre véhicule</h2>
+          <div className="booking-head">
+            <h2 className="booking-heading">Réservez votre véhicule</h2>
+            <p className={`booking-hint${length ? ' is-set' : ''}`} aria-live="polite">
+              <Icon name="clock" />
+              {length ? `${jours(length)} de location` : `Location dès ${jours(minDays)}`}
+            </p>
+          </div>
 
           <form className={`booking-form ${shake ? 'form-shake' : ''}`} onSubmit={handleSubmit}>
-            <div className="form-row">
-
-              <div className="form-group">
-                <label><Icon name="pin" /> Lieu de prise en charge</label>
+            <div className="bk-fields">
+              <Field id="lieu" icon="pin" label="Lieu de prise en charge" error={errors.lieu}>
                 <CityWheel
                   value={form.lieu}
                   onChange={(city) => {
@@ -122,13 +167,11 @@ export default function Hero() {
                     if (errors.lieu) setErrors(prev => ({ ...prev, lieu: '' }))
                   }}
                   cities={moroccanCities}
-                  error={!!errors.lieu}
+                  placeholder="Choisir une ville"
                 />
-                {errors.lieu && <span className="field-error">Attention: {errors.lieu}</span>}
-              </div>
+              </Field>
 
-              <div className="form-group">
-                <label><Icon name="calendar" /> Date de début</label>
+              <Field id="depart" icon="calendar" label="Date de début" error={errors.depart}>
                 <DatePicker
                   value={form.depart}
                   onChange={(iso) => {
@@ -138,13 +181,11 @@ export default function Hero() {
                   }}
                   min={today}
                   placeholder="Choisir une date"
-                  className={errors.depart ? 'input-error' : ''}
+                  flip
                 />
-                {errors.depart && <span className="field-error">Attention: {errors.depart}</span>}
-              </div>
+              </Field>
 
-              <div className="form-group">
-                <label><Icon name="calendar" /> Date de retour</label>
+              <Field id="retour" icon="calendar" label="Date de retour" error={errors.retour}>
                 <DatePicker
                   value={form.retour}
                   onChange={(iso) => {
@@ -155,53 +196,51 @@ export default function Hero() {
                   highlight={form.depart || undefined}
                   openKey={openRetour}
                   placeholder="Choisir une date"
-                  className={errors.retour ? 'input-error' : ''}
+                  flip
                 />
-                {errors.retour && <span className="field-error">Attention: {errors.retour}</span>}
-              </div>
+              </Field>
 
-              <div className="form-group">
-                <label><Icon name="car" /> Catégorie</label>
+              <Field id="categorie" icon="car" label="Catégorie">
                 <SelectMenu
                   value={form.categorie === categories[0] ? '' : form.categorie}
                   onChange={(v) => setForm(f => { const next = { ...f, categorie: v }; saveSearch(next); return next })}
                   options={categoryOptions}
                   ariaLabel="Catégorie"
+                  flip
                 />
-              </div>
-
+              </Field>
             </div>
-            <button type="submit" className="btn btn-accent btn-lg">
-              Rechercher un véhicule
-              <span className="btn-arrow" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
-                  strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" focusable="false">
-                  <path d="M5 12h14M13 6l6 6-6 6" />
-                </svg>
-              </span>
+
+            <button type="submit" className="btn btn-accent booking-submit">
+              <span>Rechercher<span className="booking-submit__more"> un véhicule</span></span>
+              <svg className="booking-submit__arrow" viewBox="0 0 24 24" width="18" height="18" fill="none"
+                stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round"
+                focusable="false" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+              </svg>
             </button>
           </form>
         </div>
 
-        <div className="hero-stats">
-          {stats.map((s, i) => (
-            <div key={s.label} style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-              {i > 0 && <div className="stat-divider" />}
-              <div className="stat">
+        <div className="hero-foot">
+          <ul className="hero-stats">
+            {stats.map(s => (
+              <li className="stat" key={s.label}>
                 <span className="stat-num">{s.num}</span>
                 <span className="stat-label">{s.label}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+              </li>
+            ))}
+          </ul>
 
-      {/* Scroll hint — pinned to the bottom of the hero */}
-      <div className="scroll-hint">
-        <span className="scroll-hint__label">Défiler vers le bas</span>
-
-        <div className="scroll-hint__chevrons">
-          <span /><span /><span />
+          <button type="button" className="hero-next" onClick={() => scrollToSection('marques')}>
+            <span className="hero-next__label">Découvrir</span>
+            <span className="hero-next__icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+                strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" focusable="false" aria-hidden="true">
+                <path d="M12 5v14M6 13l6 6 6-6" />
+              </svg>
+            </span>
+          </button>
         </div>
       </div>
     </section>

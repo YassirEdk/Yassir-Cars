@@ -24,7 +24,7 @@ export default function Brands() {
   // 4 copies → always fills any viewport width, guarantees seamless loop
   const repeated = [...brands, ...brands, ...brands, ...brands]
   return (
-    <section className="brands-band">
+    <section className="brands-band" id="marques">
       <div className="brands-track">
         <div className="brands-slide">
           {repeated.map((b, i) => <BrandLogo key={i} brand={b} />)}

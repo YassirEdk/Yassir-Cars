@@ -1,11 +1,15 @@
 import { useState, useRef, useEffect } from 'react'
+import { useOpensUp } from '../hooks/useOpensUp'
 import './selectmenu.css'
 
 /* Styled dropdown — simple click to open & pick. Replaces native <select>.
-   Props: value, onChange(value), options [{ value, label }], ariaLabel. */
-export default function SelectMenu({ value, onChange, options, ariaLabel, className = '' }) {
+   Props: value, onChange(value), options [{ value, label }], ariaLabel,
+   flip (open above the button when the list doesn't fit below). */
+export default function SelectMenu({ value, onChange, options, ariaLabel, className = '', flip = false }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
+  const listRef = useRef(null)
+  const up = useOpensUp(flip, open, ref, listRef)
   const current = options.find(o => o.value === value)
 
   useEffect(() => {
@@ -40,7 +44,7 @@ export default function SelectMenu({ value, onChange, options, ariaLabel, classN
       </button>
 
       {open && (
-        <ul className="smenu__list" role="listbox">
+        <ul className={`smenu__list${up ? ' smenu__list--up' : ''}`} role="listbox" ref={listRef}>
           {options.map(o => (
             <li key={o.value}>
               <button

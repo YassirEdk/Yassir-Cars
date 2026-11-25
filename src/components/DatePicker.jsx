@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
+import { useOpensUp } from '../hooks/useOpensUp'
 
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -19,9 +20,12 @@ const formatDisplay = (iso) => {
 
 // `openKey`: bump this counter from the parent to pop the calendar open — used
 // to chain "date de début" → "date de fin" without a second click.
-export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight, openKey }) {
+// `flip`: open above the field when the calendar doesn't fit below it.
+export default function DatePicker({ value, onChange, min, placeholder, className, blockedDates, allowPast, highlight, openKey, flip = false }) {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
+  const popRef = useRef(null)
+  const up = useOpensUp(flip, open, wrapRef, popRef)
 
   // Which month the calendar is showing
   const initial = value ? value.split('-').map(Number) : null
@@ -91,7 +95,7 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
       <span className="datepicker__icon" onClick={openCalendar}><Icon name="calendar" /></span>
 
       {open && (
-        <div className="datepicker__pop">
+        <div className={`datepicker__pop${up ? ' datepicker__pop--up' : ''}`} ref={popRef}>
           <div className="datepicker__head">
             <button type="button" className="datepicker__nav" onClick={prevMonth}>‹</button>
             <span className="datepicker__title">{MONTHS[month]} {year}</span>
