@@ -1,13 +1,14 @@
 import { supabase, isSupabaseConfigured } from './supabase'
 import { MIN_RENTAL_DAYS } from '../data'
 
-// Fallback values used before the settings load, when Supabase isn't
-// configured, or if the read fails. Keep these in sync with the seed row in
-// migration-settings.sql.
+// Values used before the settings load, when Supabase isn't configured, or if
+// the read fails. They must be safe to show: no number a customer could write
+// to by mistake, and no discount the agency hasn't actually switched on.
 export const DEFAULT_SETTINGS = {
-  whatsapp: '212661000000',   // international digits, no leading 0
-  // Blank on purpose: every consumer hides its phone/email block when these are
-  // empty, so the site can never ship a placeholder number a customer might dial.
+  // Blank on purpose: every consumer hides its contact block (or refuses to
+  // send) when these are empty, so the site can never ship a placeholder number
+  // a customer might dial or message.
+  whatsapp: '',               // international digits, no leading 0
   phone: '',                  // international digits, no leading 0
   contactEmail: '',
   address: '',
@@ -15,13 +16,12 @@ export const DEFAULT_SETTINGS = {
   facebookUrl: '',
   tiktokUrl: '',
   minRentalDays: MIN_RENTAL_DAYS,
-  // Promotion. Defaults match what the site displayed before this became
-  // configurable: 30% off the whole fleet.
-  discountRate: 30,
+  // Promotion: off until the real settings say otherwise.
+  discountRate: 0,
   // Headline of the promo banner. Editable so a campaign can be named
   // ("Offre de l'été", "Black Friday") without a code change.
   discountTitle: 'Offre Spéciale',
-  discountActive: true,
+  discountActive: false,
   discountAllCars: true,
   discountCarIds: [],
 }
@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS = {
 // DB row (snake_case) → app shape (camelCase), filling any blanks with defaults.
 function fromRow(row) {
   return {
-    whatsapp: row.whatsapp || DEFAULT_SETTINGS.whatsapp,
+    whatsapp: row.whatsapp || '',
     phone: row.phone || '',
     contactEmail: row.contact_email || '',
     address: row.address || '',
@@ -46,7 +46,8 @@ function fromRow(row) {
   }
 }
 
-// Public read — always resolves to a usable object (never throws).
+// Public read. Throws when the read fails, so the caller can tell "no settings
+// yet" apart from the real ones; a missing row means defaults.
 export async function fetchSettings() {
   if (!isSupabaseConfigured) return { ...DEFAULT_SETTINGS }
   const { data, error } = await supabase
@@ -54,11 +55,8 @@ export async function fetchSettings() {
     .select('*')
     .eq('id', 1)
     .maybeSingle()
-  if (error || !data) {
-    if (error) console.error('fetchSettings failed, using defaults:', error.message)
-    return { ...DEFAULT_SETTINGS }
-  }
-  return fromRow(data)
+  if (error) throw error
+  return data ? fromRow(data) : { ...DEFAULT_SETTINGS }
 }
 
 // Admin write — upserts the single row (id = 1). Throws on error.

@@ -425,6 +425,10 @@
   filter: brightness(1.03);
 }
 .rv-wa-btn:hover::after { left: 130%; }
+.rv-wa-btn:disabled, .rv-wa-btn:disabled:hover {
+  background: #9ca3af; box-shadow: none; transform: none; cursor: not-allowed;
+}
+.rv-wa-btn:disabled::after { display: none; }
 .rv-wa-btn:active { transform: translateY(0); box-shadow: 0 5px 16px rgba(37,211,102,.4); }
 
 /* ── Guarantees row ───────────────────────────────────────────────────────── */

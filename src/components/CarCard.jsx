@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { effectiveBadge, isCarAvailable } from '../lib/cars'
+import { effectiveBadge, isCarAvailable, unitForColor } from '../lib/cars'
 import { colorName, featureLabel, featureIcon } from '../data'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import AvailabilityModal from './AvailabilityModal'
@@ -35,7 +35,10 @@ export default function CarCard({ car, preferPromo = false }) {
     }
     return colors[0] ?? null
   })
-  const active = units.find(u => u.color === selColor) ?? car
+  /* The visitor's search (ville + dates), when there is a usable one. It also
+     decides which car of the chosen colour the card stands for: the free one. */
+  const ready = completeSearch()
+  const active = unitForColor(car, selColor, ready?.depart, ready?.retour)
 
   // Photo gallery of the selected unit.
   const gallery = useMemo(
@@ -79,7 +82,6 @@ export default function CarCard({ car, preferPromo = false }) {
      colour they are looking at. Only when there is no usable search — or the
      car is taken for those dates — does the availability popup appear, since
      that is where the alternatives live. */
-  const ready = completeSearch()
   const freeForSearch = ready ? isCarAvailable(active, ready.depart, ready.retour) : false
 
   const bookNow = Boolean(ready && freeForSearch)

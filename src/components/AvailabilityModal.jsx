@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { moroccanCities, addDays, colorName } from '../data'
 import { useSettings } from '../lib/SettingsContext'
-import { fetchCars, mergeByModel, isCarAvailable } from '../lib/cars'
+import { fetchCars, mergeByModel, isCarAvailable, unitForColor } from '../lib/cars'
 import { discounted, rateForCar } from '../lib/pricing'
 import { loadSearch, saveSearch } from '../lib/searchPrefs'
 import CityWheel from './CityWheel'
@@ -167,11 +167,11 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
     e.preventDefault()
     if (!validate()) return
 
-    // Is the exact unit the user picked on the card free? We don't silently
+    // Is a car in the colour the user picked on the card free? We don't silently
     // swap to another colour — an available colour shows up as the first
     // suggestion instead, so the change is the user's choice.
     const units = car.units ?? [car]
-    const preferred = initialColor ? units.find(u => u.color === initialColor) : null
+    const preferred = initialColor ? unitForColor(car, initialColor, form.depart, form.retour) : null
     const free = preferred
       ? (isCarAvailable(preferred, form.depart, form.retour) ? preferred : null)
       : units.find(u => isCarAvailable(u, form.depart, form.retour))
@@ -203,7 +203,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
   const isWide = step === 'unavailable'
 
   // Header preview: the colour the user was looking at on the card.
-  const heroUnit = (car.units ?? [car]).find(u => u.color === initialColor) ?? car
+  const heroUnit = unitForColor(car, initialColor, form.depart, form.retour)
   const heroPhoto = galleryOf(heroUnit)[0]
   const promo = discounted(heroUnit.price, rateForCar(heroUnit.id, settings))
   // Live recap once both dates are set.

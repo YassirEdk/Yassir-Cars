@@ -395,6 +395,9 @@
 .rd-btn svg { width: 19px; height: 19px; }
 .rd-btn--wa { background: var(--rd-wa); color: #fff; box-shadow: 0 8px 20px rgba(37, 211, 102, .28); }
 .rd-btn--wa:hover { background: #1fb855; transform: translateY(-1px); }
+.rd-btn--wa:disabled, .rd-btn--wa:disabled:hover {
+  background: #9ca3af; box-shadow: none; transform: none; cursor: not-allowed;
+}
 .rd-btn--ghost {
   flex: 1; background: #fff; color: var(--rd-mute);
   border: 1px solid var(--rd-line); font-size: 13px; padding: 11px 14px;

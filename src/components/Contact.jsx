@@ -7,7 +7,8 @@ import { formatPhone, waLink } from '../lib/contact'
 const subjects = ['Demande de réservation', 'Renseignement sur la flotte', 'Tarifs entreprise', 'Réclamation', 'Autre']
 
 export default function Contact({ onSubmit }) {
-  const { settings } = useSettings()
+  const { settings, reload } = useSettings()
+  const [error, setError] = useState('')
 
   // Built from the admin settings, and each block is dropped when its value is
   // blank — the site never invents an address, a number or an email.
@@ -41,6 +42,11 @@ export default function Contact({ onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!settings.whatsapp) {
+      reload()
+      return setError('Envoi momentanément impossible. Vérifiez votre connexion et réessayez.')
+    }
+    setError('')
     // This form used to only pop a toast — nothing was sent anywhere and every
     // enquiry was lost. It now hands the message to WhatsApp, the same channel
     // the rest of the site books through.
@@ -56,10 +62,14 @@ export default function Contact({ onSubmit }) {
     ].filter(Boolean).join('\n')
 
     const url = waLink(settings.whatsapp, text)
-    const win = window.open(url, '_blank', 'noopener,noreferrer')
+    // No 'noopener' in the features: with it window.open returns null even when
+    // the tab opened, so the fallback below always ran and WhatsApp opened twice.
+    // The opener is cut by hand instead.
+    const win = window.open(url, '_blank')
+    if (win) win.opener = null
     // Popup blocked (common on iOS Safari) — navigate this tab instead so the
     // message still reaches the agency rather than silently disappearing.
-    if (!win) window.location.href = url
+    else window.location.href = url
 
     onSubmit('Votre message a été préparé dans WhatsApp — envoyez-le pour nous joindre.')
     setForm({ prenom: '', nom: '', email: '', tel: '', sujet: subjects[0], message: '' })
@@ -123,6 +133,7 @@ export default function Contact({ onSubmit }) {
               <label>Message</label>
               <textarea rows={5} placeholder="Décrivez votre besoin..." value={form.message} onChange={set('message')} />
             </div>
+            {error && <p className="contact-form__error" role="alert">{error}</p>}
             <button type="submit" className="btn btn-primary btn-lg btn-full">
               <SocialIcon name="whatsapp" /> Envoyer via WhatsApp
             </button>

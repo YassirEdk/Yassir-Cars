@@ -180,8 +180,10 @@ alter table public.app_settings add column if not exists discount_active   boole
 alter table public.app_settings add column if not exists discount_all_cars boolean not null default true;
 alter table public.app_settings add column if not exists discount_car_ids  text[]  not null default '{}';
 
+-- WhatsApp stays NULL until the admin fills in « Réglages »: a placeholder number
+-- would send customers' booking requests to a stranger.
 insert into public.app_settings (id, whatsapp, instagram_url, facebook_url, min_rental_days)
-values (1, '212661000000', '', '', 3)
+values (1, null, '', '', 3)
 on conflict (id) do nothing;
 
 
@@ -246,10 +248,21 @@ create policy "settings admin write"
 -- 6. PUBLIC AVAILABILITY VIEW — exposes ONLY the blocked date ranges (no PII)
 --    so anonymous visitors can compute booking conflicts. Runs with the view
 --    owner's rights, bypassing the admin-only RLS on the table above.
+--    Follows the rental status, not just the planned dates:
+--      terminee → left out: a car returned early is bookable again at once.
+--      en_cours → blocked at least through today: a late car is still out.
+--    "Today" is Morocco's date, not UTC's.
 -- ════════════════════════════════════════════════════════════════════════════
 create or replace view public.car_availability as
-  select id, car_id, start_date, end_date
-  from public.unavailable_periods;
+  select id, car_id,
+         case when status = 'en_cours'
+              then least(start_date, (now() at time zone 'Africa/Casablanca')::date)
+              else start_date end as start_date,
+         case when status = 'en_cours'
+              then greatest(end_date, (now() at time zone 'Africa/Casablanca')::date)
+              else end_date end as end_date
+  from public.unavailable_periods
+  where status <> 'terminee';
 
 grant select on public.car_availability to anon, authenticated;
 

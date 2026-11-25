@@ -1,12 +1,13 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import Logo from '../components/Logo'
 import DatePicker from '../components/DatePicker'
 import FeaturePills from '../components/FeaturePills'
-import { moroccanCities, addDays } from '../data'
+import { moroccanCities, addDays, colorName } from '../data'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { formatMoney } from '../lib/currency'
+import { fetchCars, mergeByModel, isCarAvailable, unitForColor } from '../lib/cars'
 import { waLink } from '../lib/contact'
 import { discounted, discountLabel, rateForCar } from '../lib/pricing'
 import './reserver.css'
@@ -145,7 +146,7 @@ const IcoWhatsApp = () => (
 export default function Reserver() {
   const [params] = useSearchParams()
   const location = useLocation()
-  const { settings } = useSettings()
+  const { settings, reload } = useSettings()
   const minDays = settings.minRentalDays
   const { currency } = useCurrency()
 
@@ -180,7 +181,6 @@ export default function Reserver() {
   const carName    = data.nom     || 'Véhicule'
   const carColor   = data.couleur || ''
   const photo      = data.photo   || ''
-  const prix       = data.prix    || ''
   const initDepart = data.depart  || ''
   const initRetour = data.retour  || ''
   const initLieu   = data.lieu    || ''
@@ -228,6 +228,42 @@ export default function Reserver() {
   const [sent, setSent] = useState(null)   // { url, text }
   const [copied, setCopied] = useState(false)
 
+  /* The car as it is in the fleet now. The details carried in (router state, or
+     an old link) say nothing about bookings, so they can't answer "is it free?".
+     fleet: null while loading, then the merged models. */
+  const [fleet, setFleet] = useState(null)
+  useEffect(() => {
+    let alive = true
+    fetchCars()
+      .then(list => { if (alive) setFleet(mergeByModel(list)) })
+      .catch(() => { if (alive) setFleet([]) })
+    return () => { alive = false }
+  }, [])
+
+  const unit = useMemo(() => {
+    if (!fleet) return null
+    // By id when there is one; old ?query= links only carry the model name.
+    if (data.carId) {
+      const model = fleet.find(m => m.units.some(u => String(u.id) === String(data.carId)))
+      const picked = model?.units.find(u => String(u.id) === String(data.carId))
+      return picked ? unitForColor(model, picked.color, form.depart, form.retour) : null
+    }
+    const name = String(data.nom || '').trim().toLowerCase()
+    const model = fleet.find(m => m.name.trim().toLowerCase() === name)
+    if (!model) return null
+    const named = model.colors.find(hex => colorName(hex) === data.couleur)
+    return named
+      ? unitForColor(model, named, form.depart, form.retour)
+      : model.units.find(u => isCarAvailable(u, form.depart, form.retour)) ?? model.units[0]
+  }, [fleet, data, form.depart, form.retour])
+
+  const checking = fleet === null
+  // A car that can't be found (fleet unreachable) isn't reported as taken: the
+  // agency confirms every request anyway.
+  const taken = Boolean(unit) && !isCarAvailable(unit, form.depart, form.retour)
+
+  const prix = unit?.price ?? data.prix ?? ''
+
   const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const days = (() => {
@@ -238,7 +274,7 @@ export default function Reserver() {
 
   // Resolve the promotion from the car id carried in, so this page can't show a
   // discount the car no longer has.
-  const rate = rateForCar(data.carId, settings)
+  const rate = rateForCar(unit?.id ?? data.carId, settings)
   const promoPrice = prix ? discounted(Number(prix), rate) : null
   const promoLabel = discountLabel(rate)
 
@@ -271,6 +307,13 @@ export default function Reserver() {
     if (!form.retour) return setError('Veuillez choisir la date de retour.')
     if (form.retour < addDays(form.depart, minDays))
       return setError(`La location doit durer au moins ${minDays} jours.`)
+    if (checking) return
+    if (taken)
+      return setError('Ce véhicule est déjà réservé pour ces dates. Choisissez d’autres dates ou un autre véhicule.')
+    if (!settings.whatsapp) {
+      reload()
+      return setError('Envoi momentanément impossible. Vérifiez votre connexion et réessayez.')
+    }
     setError('')
 
     const text = buildMessage()
@@ -511,15 +554,15 @@ export default function Reserver() {
               </div>
             )}
 
-            {error && (
+            {(error || taken) && (
               <p className="rv-error">
-                <IcoAlert /> {error}
+                <IcoAlert /> {error || 'Ce véhicule est déjà réservé pour ces dates. Choisissez d’autres dates ou un autre véhicule.'}
               </p>
             )}
 
-            <button className="rv-wa-btn" onClick={handleWhatsApp}>
-              <IcoWhatsApp />
-              Envoyer via WhatsApp
+            <button className="rv-wa-btn" onClick={handleWhatsApp} disabled={checking || taken}>
+              {!checking && !taken && <IcoWhatsApp />}
+              {checking ? 'Vérification…' : taken ? 'Non disponible' : 'Envoyer via WhatsApp'}
             </button>
 
             {/* Guarantees */}

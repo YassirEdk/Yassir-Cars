@@ -6,7 +6,31 @@ import { fetchCarsAdmin } from '../../lib/cars'
 import { colorName } from '../../data'
 
 /* ── Admin settings: phone/WhatsApp, social links, minimum rental length ───── */
+/* The form is only mounted on settings that were really read: filled in from
+   the blank defaults, saving it would wipe the live contact details and
+   promotion. */
 export default function SettingsModal({ onClose }) {
+  const { status, reload } = useSettings()
+  if (status === 'ready') return <SettingsForm onClose={onClose} />
+  return (
+    <div className="admin-modal" onClick={e => { if (e.target.classList.contains('admin-modal')) onClose() }}>
+      <div className="admin-resa-popup">
+        <div className="admin-resa-popup__head">
+          <h3>⚙️ Réglages du site</h3>
+          <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
+        </div>
+        <p className="admin-muted admin-pad">
+          {status === 'loading' ? 'Chargement…' : 'Impossible de charger les réglages.'}
+        </p>
+        {status === 'error' && (
+          <button className="admin-btn admin-btn--primary" onClick={reload}>Réessayer</button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function SettingsForm({ onClose }) {
   const { settings, reload } = useSettings()
   const [form, setForm] = useState({
     whatsapp: settings.whatsapp || '',

@@ -255,6 +255,7 @@ section[id] { scroll-margin-top: 61px; }
 /* Field errors */
 .booking-form .input-error { border-color: #ff6b6b !important; background: rgba(255,80,80,.1) !important; }
 .booking-form .input-error:focus { border-color: #ff4444 !important; box-shadow: 0 0 0 3px rgba(255,70,70,.25); }
+.contact-form__error { margin: 0 0 12px; font-size: 14px; font-weight: 600; color: #b91c1c; }
 .field-error { display: block; font-size: 11px; color: #ff8080; font-weight: 600; margin-top: 5px; letter-spacing: .2px; }
 
 /* City select placeholder */

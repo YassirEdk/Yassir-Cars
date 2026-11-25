@@ -142,6 +142,17 @@ export function isModelAvailable(model, depart, retour) {
   return units.some(u => isCarAvailable(u, depart, retour))
 }
 
+// The unit to show and book for a colour. Several physical cars can share one
+// colour, so looking up "the first unit of that colour" reported the colour as
+// reserved while an identical car was free. A free unit always wins; otherwise
+// the first of that colour, so the card still has something to show.
+export function unitForColor(model, hex, depart, retour) {
+  const units = model.units ?? [model]
+  const same = units.filter(u => (u.color ?? null) === (hex ?? null))
+  const pool = same.length ? same : units
+  return pool.find(u => isCarAvailable(u, depart, retour)) ?? pool[0]
+}
+
 // ISO date + n days, without touching the local timezone.
 function addIsoDays(iso, n) {
   const d = new Date(`${iso}T00:00:00Z`)

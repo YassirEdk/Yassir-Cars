@@ -7,7 +7,7 @@ import Icon from './Icon'
 import SocialIcon from './SocialIcon'
 import SelectMenu from './SelectMenu'
 import { moroccanCities, addDays, colorName } from '../data'
-import { isCarAvailable } from '../lib/cars'
+import { isCarAvailable, unitForColor } from '../lib/cars'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { formatMoney, CURRENCIES, CURRENCY_CODES } from '../lib/currency'
@@ -44,7 +44,7 @@ function defaultUnit(car, depart, retour) {
    page / fleet once the availability popup has the dates — so booking never
    leaves the page the visitor is on. */
 export default function ReserveDrawer({ car, depart, retour, lieu, initialColor = null, onClose }) {
-  const { settings } = useSettings()
+  const { settings, reload } = useSettings()
   const { currency, setCurrency } = useCurrency()
   const currencyOptions = CURRENCY_CODES.map(code => ({ value: code, label: CURRENCIES[code].label }))
   const minDays = settings.minRentalDays
@@ -138,9 +138,14 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
   const colors = car?.colors ?? (car?.color ? [car.color] : [])
   const active = useMemo(() => {
     if (!car) return null
-    if (selColor) return allUnits.find(u => u.color === selColor) ?? car
-    return defaultUnit(car, depart, retour)
-  }, [car, selColor, depart, retour])
+    // The colour follows the visitor; the unit behind it follows the dates
+    // typed in the panel, so an identical free car is used when there is one.
+    const color = selColor ?? defaultUnit(car, depart, retour).color
+    return unitForColor(car, color, form.depart, form.retour)
+  }, [car, selColor, depart, retour, form.depart, form.retour])
+
+  // Another unit has its own photos: start from its first one.
+  useEffect(() => { setCurPhoto(0) }, [active?.id])
 
   const gallery = useMemo(() => {
     if (!active) return []
@@ -163,10 +168,9 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
   })()
 
   const pickColor = (hex) => {
-    const unit = allUnits.find(u => u.color === hex)
     setSelColor(hex)
     setCurPhoto(0)
-    if (unit) setError('')
+    setError('')
   }
 
   const buildMessage = () => [
@@ -194,6 +198,12 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
     if (!form.retour) return setError('Veuillez choisir la date de retour.')
     if (form.retour < addDays(form.depart, minDays))
       return setError(`La location doit durer au moins ${minDays} jours.`)
+    if (!available)
+      return setError('Ce véhicule est déjà réservé pour ces dates.')
+    if (!settings.whatsapp) {
+      reload()
+      return setError('Envoi momentanément impossible. Vérifiez votre connexion et réessayez.')
+    }
     setError('')
 
     const text = buildMessage()
@@ -361,8 +371,8 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
                     </span>
                     <div className="rd-colors__row">
                       {colors.map(hex => {
-                        const unit = allUnits.find(u => u.color === hex)
-                        const free = !unit || isCarAvailable(unit, form.depart, form.retour)
+                        const free = isCarAvailable(
+                          unitForColor(car, hex, form.depart, form.retour), form.depart, form.retour)
                         return (
                           <button
                             type="button" key={hex}
@@ -512,8 +522,8 @@ export default function ReserveDrawer({ car, depart, retour, lieu, initialColor 
                 {days ? formatMoney(promoPrice * days, currency) : `${formatMoney(promoPrice, currency)} / j`}
               </strong>
             </div>
-            <button type="button" className="rd-btn rd-btn--wa" onClick={handleWhatsApp}>
-              <SocialIcon name="whatsapp" /> Réserver
+            <button type="button" className="rd-btn rd-btn--wa" onClick={handleWhatsApp} disabled={!available}>
+              {available ? <><SocialIcon name="whatsapp" /> Réserver</> : 'Non disponible'}
             </button>
           </footer>
         )}

@@ -13,14 +13,14 @@ export default function AllCars() {
   // Set by the home page's "Voir toute la flotte" button: the section to come
   // back to when leaving this page.
   const backAnchor = useLocation().state?.back ?? null
-  const { settings } = useSettings()
+  const { settings, status } = useSettings()
   /* Arriving from the promo banner (?promo=1) the page opens on the discounted
      cars only — that is what the visitor clicked for. One button widens it to
      the whole fleet, so the rest of the cars are never hidden away. */
   const [params, setParams] = useSearchParams()
   const [promoOnly, setPromoOnly] = useState(params.get('promo') === '1')
   const [cars, setCars] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [carsLoading, setCarsLoading] = useState(true)
   const [activeFilter, setActiveFilter] = useState('all')
 
   const showAll = () => {
@@ -33,9 +33,12 @@ export default function AllCars() {
 
   useEffect(() => {
     let alive = true
-    fetchCars().then(list => { if (alive) { setCars(mergeByModel(list)); setLoading(false) } })
+    fetchCars().then(list => { if (alive) { setCars(mergeByModel(list)); setCarsLoading(false) } })
     return () => { alive = false }
   }, [])
+
+  // Which cars are discounted is only known once the settings are in.
+  const loading = carsLoading || (promoOnly && status === 'loading')
 
   // A merged model is "en promotion" when any of its units is.
   const hasPromo = (model) =>

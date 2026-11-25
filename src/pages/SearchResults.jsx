@@ -5,7 +5,7 @@ import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
 import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currency'
 import SelectMenu from '../components/SelectMenu'
-import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, effectiveBadge, nextFreeDateForModel } from '../lib/cars'
+import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, unitForColor, effectiveBadge, nextFreeDateForModel } from '../lib/cars'
 import Logo from '../components/Logo'
 import BackLink from '../components/BackLink'
 import CityWheel from '../components/CityWheel'
@@ -140,18 +140,20 @@ function PhoneModal({ car, onClose }) {
             </a>
           )}
 
-          <a
-            href={waLink(settings.whatsapp, `Bonjour YASSIR CARS, je suis intéressé par la ${car.name}.`)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="phone-modal__btn phone-modal__btn--whatsapp"
-          >
-            <span className="phone-modal__btn-icon"><SocialIcon name="whatsapp" /></span>
-            <div>
-              <span className="phone-modal__btn-label">WhatsApp</span>
-              <span className="phone-modal__btn-num">{formatPhone(settings.whatsapp)}</span>
-            </div>
-          </a>
+          {settings.whatsapp && (
+            <a
+              href={waLink(settings.whatsapp, `Bonjour YASSIR CARS, je suis intéressé par la ${car.name}.`)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="phone-modal__btn phone-modal__btn--whatsapp"
+            >
+              <span className="phone-modal__btn-icon"><SocialIcon name="whatsapp" /></span>
+              <div>
+                <span className="phone-modal__btn-label">WhatsApp</span>
+                <span className="phone-modal__btn-num">{formatPhone(settings.whatsapp)}</span>
+              </div>
+            </a>
+          )}
         </div>
 
         <p className="phone-modal__hours"><Icon name="clock" /> Disponible Lun–Sam 8h–20h · Dim 9h–18h</p>
@@ -171,7 +173,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
   const allUnits = car.units ?? [car]
   const allColors = car.colors ?? (car.color ? [car.color] : [])
   const unitFree = (u) => !u || isCarAvailable(u, depart, retour)
-  const colorFree = (hex) => unitFree(allUnits.find(u => u.color === hex))
+  const colorFree = (hex) => unitFree(unitForColor(car, hex, depart, retour))
   // "Disponibles seulement" → drop the colours/units reserved for the dates.
   const units = availableOnly ? allUnits.filter(unitFree) : allUnits
   const colors = availableOnly ? allColors.filter(colorFree) : allColors
@@ -180,7 +182,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
   const [selColor, setSelColor] = useState(firstFreeColor)
   // Keep the selection valid when the visible colour set changes (filter toggle).
   const effColor = colors.includes(selColor) ? selColor : (colors[0] ?? selColor)
-  const active = allUnits.find(u => u.color === effColor) ?? car
+  const active = unitForColor(car, effColor, depart, retour)
   // The tag reflects the SELECTED unit, not the whole model.
   const activeAvailable = unitFree(active)
 
@@ -196,7 +198,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
   }
   const pickColor = (hex) => (e) => {
     e.preventDefault(); e.stopPropagation()
-    const unit = units.find(u => u.color === hex) ?? car
+    const unit = unitForColor(car, hex, depart, retour)
     const g = unit.photos?.length ? unit.photos : (unit.photo ? [unit.photo] : [])
     setSelColor(hex); setActivePhoto(g[0] || unit.photo); setPhotoFailed(false)
   }
@@ -364,7 +366,7 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
             <button className="result-phone" onClick={() => onCall(car)}>
               <Icon name="phone" /> Appeler
             </button>
-          ) : (
+          ) : settings.whatsapp && (
             <a
               className="result-phone"
               href={waLink(settings.whatsapp, `Bonjour YASSIR CARS, je suis intéressé par la ${car.name}.`)}
