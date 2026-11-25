@@ -53,8 +53,8 @@ il affiche les 6 voitures de `src/data.js` en secours.
 npm run dev
 ```
 
-- Site public : http://localhost:5173/
-- Espace admin : http://localhost:5173/admin
+- Site public : http://localhost:5998/
+- Espace admin : http://localhost:5998/admin
 
 Connectez-vous avec l'email/mot de passe de l'étape 3.
 

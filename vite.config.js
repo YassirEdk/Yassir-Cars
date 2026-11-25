@@ -26,4 +26,7 @@ function siteUrlPlugin() {
 
 export default defineConfig({
   plugins: [react(), siteUrlPlugin()],
+  // Always the same local address: http://localhost:5998. strictPort so a busy
+  // port fails loudly instead of quietly moving to another one.
+  server: { port: 5998, strictPort: true },
 })
