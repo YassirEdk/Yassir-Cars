@@ -6,3 +6,6 @@ dist/
 .DS_Store
 .ev.examle
 graphify-out/
+
+# Simulated-customer runs: screenshots and reports
+usability/results/

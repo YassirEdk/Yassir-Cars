@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Icon from './Icon'
 import { useOpensUp } from '../hooks/useOpensUp'
-import { formatFriendlyDate, formatLongDate } from '../lib/dates'
+import { daysBetween, formatFriendlyDate, formatLongDate } from '../lib/dates'
 
 const MONTHS = [
   'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -59,12 +59,15 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
       setView({ year: y, month: m - 1 })
     }
     setOpen(true)
+    // The outline must be on the field being filled, not on the one before.
+    inputRef.current?.focus({ preventScroll: true })
   }, [openKey])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep the view in sync when opening with an existing value
+  // Opens on the month of the value, or of the first day that can be picked.
   const openCalendar = () => {
-    if (value) {
-      const [y, m] = value.split('-').map(Number)
+    const anchor = value || min
+    if (!open && anchor) {
+      const [y, m] = anchor.split('-').map(Number)
       setView({ year: y, month: m - 1 })
     }
     setOpen(o => !o)
@@ -78,9 +81,19 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
   const cells = []
   for (let i = 0; i < firstWeekday; i++) cells.push(null)
   for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+  // Always six weeks where the calendar hangs by its bottom or its middle: its
+  // arrows would move under the finger from one month to the next.
+  const spare = 42 - cells.length
 
   const prevMonth = () => setView(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { ...v, month: v.month - 1 })
   const nextMonth = () => setView(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { ...v, month: v.month + 1 })
+
+  // The return calendar greys out the first days after the start: say why.
+  const least = highlight && min ? daysBetween(highlight, min) : 0
+
+  // Nothing to pick before this month.
+  const earliest = min || (allowPast ? '' : todayISO)
+  const atStart = Boolean(earliest) && toISO(year, month, 1).slice(0, 7) <= earliest.slice(0, 7)
 
   const isOff = (iso) => Boolean((min && iso < min) || (!allowPast && iso < todayISO) || blockedDates?.has(iso))
 
@@ -160,9 +173,13 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
       {open && (
         <div className={`datepicker__pop${up ? ' datepicker__pop--up' : ''}`} ref={popRef} role="dialog" aria-label={ariaLabel ?? 'Choisir une date'}>
           <div className="datepicker__head">
-            <button type="button" className="datepicker__nav" onClick={prevMonth} aria-label="Mois précédent"><Icon name="caretLeft" size={13} /></button>
+            <button type="button" className="datepicker__nav" onClick={prevMonth} disabled={atStart} aria-label="Mois précédent">
+              <Icon name="caretLeft" size={13} /> {MONTHS_SHORT[(month + 11) % 12]}
+            </button>
             <span className="datepicker__title" aria-live="polite">{MONTHS[month]} {year}</span>
-            <button type="button" className="datepicker__nav" onClick={nextMonth} aria-label="Mois suivant"><Icon name="caretRight" size={13} /></button>
+            <button type="button" className="datepicker__nav datepicker__nav--next" onClick={nextMonth} aria-label="Mois suivant">
+              {MONTHS_SHORT[(month + 1) % 12]} <Icon name="caretRight" size={13} />
+            </button>
           </div>
 
           <div className="datepicker__grid datepicker__grid--days">
@@ -193,7 +210,10 @@ export default function DatePicker({ value, onChange, min, placeholder, classNam
                 </button>
               )
             })}
+            {Array.from({ length: spare }, (_, i) => <span key={`s${i}`} className="datepicker__spare" />)}
           </div>
+
+          {least > 1 && <p className="datepicker__note">{ariaLabel ?? 'Date de retour'} : {least} jours minimum</p>}
         </div>
       )}
     </div>

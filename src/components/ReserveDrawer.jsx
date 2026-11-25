@@ -6,14 +6,14 @@ import DatePicker from './DatePicker'
 import FeaturePills from './FeaturePills'
 import Icon from './Icon'
 import SocialIcon from './SocialIcon'
-import SelectMenu from './SelectMenu'
+import ToBring from './ToBring'
 import PlaceOptions from './PlaceOptions'
 import { addDays, colorName, categoryLabel } from '../data'
 import { bookingDays, bookingErrors, bookingMessage, focusField, jours } from '../lib/booking'
 import { isCarAvailable, unitForColor } from '../lib/cars'
 import { useSettings } from '../lib/SettingsContext'
 import { useCurrency } from '../lib/CurrencyContext'
-import { formatMoney, CURRENCIES, CURRENCY_CODES } from '../lib/currency'
+import { formatMoney } from '../lib/currency'
 import { waLink } from '../lib/contact'
 import { loadSearch } from '../lib/searchPrefs'
 import { discounted, discountLabel, rateForCar } from '../lib/pricing'
@@ -45,8 +45,7 @@ export default function ReserveDrawer({ car, depart, retour, lieu, lieuRetour, i
   // The page the panel is open on: the full booking page's "back" returns there.
   const { pathname } = useLocation()
   const { settings, reload } = useSettings()
-  const { currency, setCurrency } = useCurrency()
-  const currencyOptions = CURRENCY_CODES.map(code => ({ value: code, label: CURRENCIES[code].label }))
+  const { currency } = useCurrency()
   const minDays = settings.minRentalDays
 
   // Colour picked inside the drawer; reset whenever the visitor moves to
@@ -63,6 +62,13 @@ export default function ReserveDrawer({ car, depart, retour, lieu, lieuRetour, i
   const [error, setError] = useState('')       // about the sending itself
   const [sent, setSent] = useState(null)   // { url, text }
   const [copied, setCopied] = useState(false)
+  // The panel was scrolled down to its form: what is left to do must be on screen.
+  const sentTitle = useRef(null)
+  useEffect(() => {
+    if (!sent) return
+    scrollRef.current?.scrollTo({ top: 0 })
+    sentTitle.current?.focus({ preventScroll: true })
+  }, [sent])
   // Bumped once the start date is picked, to pop the end calendar open.
   const [endKey, setEndKey] = useState(0)
 
@@ -245,14 +251,6 @@ export default function ReserveDrawer({ car, depart, retour, lieu, lieuRetour, i
             <span className="rd-top__eyebrow">Réservation</span>
             <span className="rd-top__name">{car.name}</span>
           </div>
-          {/* Small currency switcher — all prices in the panel update live. */}
-          <SelectMenu
-            value={currency}
-            onChange={setCurrency}
-            options={currencyOptions}
-            ariaLabel="Devise"
-            className="rd-currency"
-          />
           <button type="button" className="rd-top__close" onClick={requestClose} aria-label="Fermer">
             <Icon name="close" size={15} />
           </button>
@@ -264,15 +262,15 @@ export default function ReserveDrawer({ car, depart, retour, lieu, lieuRetour, i
 
           {sent ? (
             <section className="rd-card rd-sent">
-              <div className="rd-sent__icon"><Icon name="checkCircle" /></div>
-              <h3 className="rd-sent__title">Demande envoyée</h3>
+              <div className="rd-sent__icon"><SocialIcon name="whatsapp" /></div>
+              <h3 className="rd-sent__title" ref={sentTitle} tabIndex={-1}>Envoyez le message</h3>
               <p className="rd-sent__sub">
-                Votre demande pour la <strong>{car.name}</strong> a été préparée dans WhatsApp.
-                Envoyez le message pour la confirmer.
+                Votre demande pour la <strong>{car.name}</strong> est prête dans WhatsApp.
+                Elle part quand vous appuyez sur envoyer.
               </p>
               <pre className="rd-sent__msg">{sent.text}</pre>
               <a href={sent.url} target="_blank" rel="noopener noreferrer" className="rd-btn rd-btn--wa">
-                <SocialIcon name="whatsapp" /> WhatsApp ne s’est pas ouvert ?
+                <SocialIcon name="whatsapp" /> Ouvrir WhatsApp
               </a>
               <div className="rd-sent__actions">
                 <button type="button" className="rd-btn rd-btn--ghost" onClick={copyMessage}>
@@ -498,6 +496,8 @@ export default function ReserveDrawer({ car, depart, retour, lieu, lieuRetour, i
                   d’autres dates ou un autre véhicule.
                 </p>
               )}
+
+              <ToBring />
 
               <div className="rd-trust">
                 <span><Icon name="shield" /> Assurance incluse</span>

@@ -130,6 +130,17 @@ function targetOf(snap) {
   return Math.max(0, snap.y ?? 0)
 }
 
+/* Jumps to a snapshot (none: the top) before the page is painted, and tells the
+   page at once: the browser's own scroll event only comes after that first frame,
+   which would show the home header see-through over the middle of the page. */
+export function jumpTo(snap) {
+  const target = snap ? targetOf(snap) : 0
+  const from = window.scrollY
+  if (target == null) return                  // anchor not in the DOM yet
+  window.scrollTo(0, target)
+  if (window.scrollY !== from) window.dispatchEvent(new Event('scroll'))
+}
+
 /* Applies a snapshot and keeps applying it while the page settles: every frame
    the target is recomputed from the anchor, so content loading above the fold
    can't push the reader off the section they left. Stops once the target has

@@ -10,6 +10,7 @@ import PhotoRail from '../components/PhotoRail'
 import PlaceOptions from '../components/PlaceOptions'
 import Icon from '../components/Icon'
 import SocialIcon from '../components/SocialIcon'
+import ToBring from '../components/ToBring'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { addDays, colorName, categoryLabel } from '../data'
 import { useSettings } from '../lib/SettingsContext'
@@ -293,11 +294,11 @@ export default function Reserver() {
             {sent ? (
               /* What left, and a way through if the WhatsApp tab was blocked. */
               <div className="rv-sent">
-                <span className="rv-sent__icon"><Icon name="check" /></span>
-                <h2 className="rv-sent__title">Demande préparée</h2>
+                <span className="rv-sent__icon"><SocialIcon name="whatsapp" /></span>
+                <h2 className="rv-sent__title">Envoyez le message</h2>
                 <p className="rv-sent__sub">
                   Votre demande pour la <strong>{carName}</strong> est prête dans WhatsApp.
-                  Envoyez le message pour la confirmer : l’agence vous répond en général sous 1&nbsp;heure.
+                  Elle part quand vous appuyez sur envoyer : l’agence vous répond en général sous 1&nbsp;heure.
                 </p>
 
                 <pre className="rv-sent__msg">{sent.text}</pre>
@@ -403,6 +404,8 @@ export default function Reserver() {
                     <Icon name="calendarX" /> Ce véhicule est déjà réservé pour ces dates. Choisissez d’autres dates ou un autre véhicule.
                   </p>
                 )}
+                <ToBring />
+
                 {error && <p className="rv-alert" role="alert">{error}</p>}
 
                 <button type="submit" className="btn btn-wa btn-lg btn-full" ref={submitRef} disabled={checking || taken}>

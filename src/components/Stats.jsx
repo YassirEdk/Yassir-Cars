@@ -7,7 +7,8 @@ const STATS = [
   { icon: 'car',     to: 500, suffix: '+',   label: 'Véhicules' },
   { icon: 'pin',     to: 15,  suffix: '+',   label: 'Agences' },
   { icon: 'users',   to: 10,  suffix: 'K+',  label: 'Clients satisfaits' },
-  { icon: 'headset', to: 24,  suffix: '/7',  label: 'Assistance' },
+  // Not a count: "21/7" on the way up means nothing, so it shows as it is.
+  { icon: 'headset', to: 24,  suffix: '/7',  label: 'Assistance', still: true },
 ]
 
 const COUNT_MS = 1500
@@ -46,7 +47,7 @@ export default function Stats() {
       <ul className="container figures__row" ref={ref}>
         {STATS.map(s => (
           <li className="figure" key={s.label}>
-            <span className="figure__num" aria-hidden="true">{Math.round(s.to * progress)}{s.suffix}</span>
+            <span className="figure__num" aria-hidden="true">{s.still ? s.to : Math.round(s.to * progress)}{s.suffix}</span>
             <span className="sr-only">{s.to}{s.suffix} </span>
             <span className="figure__label"><Icon name={s.icon} /> {s.label}</span>
           </li>

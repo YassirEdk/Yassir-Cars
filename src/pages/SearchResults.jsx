@@ -18,6 +18,7 @@ import Logo from '../components/Logo'
 import { BackHome } from '../components/BackLink'
 import Icon from '../components/Icon'
 import SocialIcon from '../components/SocialIcon'
+import OpeningHours from '../components/OpeningHours'
 import ReserveDrawer from '../components/ReserveDrawer'
 import SearchBar from '../components/results/SearchBar'
 import ResultTools from '../components/results/Filters'
@@ -67,7 +68,7 @@ function PhoneModal({ car, onClose }) {
           )}
         </div>
 
-        <p className="phone-modal__hours"><Icon name="clock" /> Lun – sam 8h – 20h, dim. 9h – 18h</p>
+        <OpeningHours className="phone-modal__hours" />
       </div>
     </div>
   )
@@ -224,6 +225,17 @@ export default function SearchResults() {
     runSearch({ lieu, lieuRetour, depart: isoStart, retour: end.toISOString().slice(0, 10), categorie: filters.categorie })
   }
 
+  // The chosen category stays in view when the booking panel narrows the row.
+  const catsRef = useRef(null)
+  const panelOpen = Boolean(bookingCar)
+  useEffect(() => {
+    const row = catsRef.current
+    const pill = row?.querySelector('.active')
+    if (!pill) return
+    const at = pill.offsetLeft - row.offsetLeft
+    if (at < row.scrollLeft || at + pill.offsetWidth > row.scrollLeft + row.clientWidth) row.scrollTo({ left: at - 16 })
+  }, [filters.categorie, panelOpen, loading])
+
   const s = availableCount > 1 ? 's' : ''
   const pills = [
     { value: '', label: 'Tous', count: matching.length },
@@ -233,7 +245,7 @@ export default function SearchResults() {
       .filter(o => o.count > 0 || o.value === filters.categorie),
   ]
   const categoryPills = (
-    <div className="results-cats" role="group" aria-label="Catégorie">
+    <div className="results-cats" role="group" aria-label="Catégorie" ref={catsRef}>
       {pills.map(p => (
         <button
           type="button"

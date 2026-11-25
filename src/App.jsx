@@ -1,24 +1,13 @@
 import { Routes, Route, useLocation, useNavigationType } from 'react-router-dom'
-import { useEffect, useRef, lazy, Suspense } from 'react'
+import { useEffect, useLayoutEffect, useRef, Suspense } from 'react'
 import { recordVisit } from './lib/history'
-import { takeSnapshot, readStored, restoreScroll, scrollToSection, topBarHeight } from './lib/scroll'
+import { takeSnapshot, readStored, restoreScroll, jumpTo, scrollToSection, topBarHeight } from './lib/scroll'
+import { SearchResults, AllCars, Reserver, Admin, ErrorPage, searchKey } from './routes'
 import Home from './pages/Home'
 
-/* Only the home page ships in the first bundle — it is what almost every visit
-   starts with. The other routes are fetched when they are actually opened, so
-   a first visit downloads a fraction of the JavaScript. (Admin also drags in
-   Recharts, which no public visitor should ever pay for.) */
-const SearchResults = lazy(() => import('./pages/SearchResults'))
-const AllCars = lazy(() => import('./pages/AllCars'))
-const Reserver = lazy(() => import('./pages/Reserver'))
-const Admin = lazy(() => import('./pages/Admin'))
-const ErrorPage = lazy(() => import('./pages/ErrorPage'))
-
-/* A new place or new dates start the results page afresh. Its filters are in the
-   URL too, but changing one must not reload the page under the visitor. */
+// A new search is a new results page (routes.js).
 function Results() {
-  const params = new URLSearchParams(useLocation().search)
-  return <SearchResults key={['lieu', 'depart', 'retour', 'car'].map(k => params.get(k) ?? '').join('|')} />
+  return <SearchResults key={searchKey(useLocation().search)} />
 }
 
 const Loading = () => (
@@ -58,9 +47,12 @@ export default function App() {
      an unmount effect runs, React has already removed the old page's DOM, the
      document is short, and the browser has clamped window.scrollY to that
      short page — which is how "2259" turned into "465" and dropped the visitor
-     near the top of the page on the way back. */
+     near the top of the page on the way back.
+
+     A layout effect, so it has moved on to the new entry before that one is
+     scrolled into place. */
   const lastSnap = useRef(null)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const key = location.key
     const path = location.pathname
     let frame = 0
@@ -91,21 +83,31 @@ export default function App() {
   }, [location.key, location.pathname])   // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Restore. A new page starts at the top; coming back returns to the spot the
-     visitor left. */
-  useEffect(() => {
-    if (location.state?.keepScroll && navType !== 'POP') return
+     visitor left. Once before the first paint, then for as long as the page is
+     still settling. */
+  const stays = location.state?.keepScroll && navType !== 'POP'
+  const landing = () => {
     const id = location.state?.scrollToId
-    const snap = id
+    return id
       ? { id, offset: null }                    // "Retour à l'accueil" → that section
       : navType === 'POP'
         ? positions.current.get(location.key)
         : location.state?.restoreScroll
           ? readStored(location.pathname)
           : null
+  }
+  const landingRef = useRef(null)
+  useLayoutEffect(() => {
+    if (stays) return
+    landingRef.current = landing()
+    jumpTo(landingRef.current)
+  }, [location.key, location.state, navType])   // eslint-disable-line react-hooks/exhaustive-deps
 
-    if (!snap) { window.scrollTo(0, 0); return }
-    return restoreScroll(snap)
-  }, [location.key, location.state, navType])
+  useEffect(() => {
+    if (stays) return
+    if (!landingRef.current) { window.scrollTo(0, 0); return }
+    return restoreScroll(landingRef.current)
+  }, [location.key, location.state, navType])   // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <Suspense fallback={<Loading />}>

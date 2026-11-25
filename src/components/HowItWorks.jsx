@@ -1,5 +1,7 @@
 import { steps } from '../data'
 import { useInView } from '../hooks/useInView'
+import { useSettings } from '../lib/SettingsContext'
+import { formatPhone } from '../lib/contact'
 import Icon from './Icon'
 import SectionHead from './SectionHead'
 import './steps.css'
@@ -7,6 +9,11 @@ import './steps.css'
 /* Four stops along a road. The stops have the shape of the logo. */
 export default function HowItWorks() {
   const [ref, seen] = useInView(0.25)
+  // "Appelez-nous" with the number to call, when the agency has one.
+  const phone = useSettings().settings.phone
+  const describe = (step) => step.call && phone
+    ? <>{step.call[0]} <a href={`tel:+${phone}`} className="step__tel">{formatPhone(phone)}</a>{step.call[1]}</>
+    : step.description
   return (
     <section className="section section-dark slanted steps" id="comment">
       <div className="container">
@@ -26,7 +33,7 @@ export default function HowItWorks() {
               <div className="step__text">
                 <p className="step__n">Étape {i + 1}</p>
                 <h3>{step.title}</h3>
-                <p>{step.description}</p>
+                <p>{describe(step)}</p>
               </div>
             </li>
           ))}

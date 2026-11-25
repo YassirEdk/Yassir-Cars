@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { scrollToSection, focusBooking } from '../lib/scroll'
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
@@ -22,6 +22,9 @@ const BOOK = '#reserver'
 
 export default function Navbar({ minimal = false }) {
   const [scrolled, setScrolled] = useState(false)
+  // Just arrived: the bar shows as it is. Coming back to the middle of the page, it
+  // would otherwise fade in from see-through over what is behind it.
+  const [still, setStill] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
   // The menu is sliding in or out. Otherwise it changes place without a transition:
   // turning a tablet would show it sliding away.
@@ -39,6 +42,12 @@ export default function Navbar({ minimal = false }) {
   useEffect(() => { menuOpenRef.current = menuOpen }, [menuOpen])
 
   useEffect(() => {
+    const timer = setTimeout(() => setStill(false), 600)
+    return () => clearTimeout(timer)
+  }, [])
+
+  // Before the first paint: App puts the page back in place then.
+  useLayoutEffect(() => {
     // While the phone menu is open the page is pinned and reads as scrolled to
     // the top: the bar keeps its state instead of sliding away behind the menu.
     const onScroll = () => { if (!menuOpenRef.current) setScrolled(window.scrollY > 40) }
@@ -163,7 +172,7 @@ export default function Navbar({ minimal = false }) {
     : null
 
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} aria-label="Navigation principale">
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''} ${still ? 'is-still' : ''}`} aria-label="Navigation principale">
       {/* The bar spans the screen; the container lines its content up with the page's. */}
       <div className="container">
       <div className="nav-inner">

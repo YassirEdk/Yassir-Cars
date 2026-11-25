@@ -258,6 +258,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                     min={today}
                     ariaLabel="Date de début"
                     placeholder="Choisir une date"
+                    flip
                     className={errors.depart ? 'input-error' : ''}
                   />
                   {errors.depart && <span className="field-error" role="alert">{errors.depart}</span>}
@@ -272,6 +273,7 @@ export default function AvailabilityModal({ car, onClose, mode = 'search', initi
                     openKey={openRetour}
                     ariaLabel="Date de fin"
                     placeholder="Choisir une date"
+                    flip
                     className={errors.retour ? 'input-error' : ''}
                   />
                   {errors.retour && <span className="field-error" role="alert">{errors.retour}</span>}

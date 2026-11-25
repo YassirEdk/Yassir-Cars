@@ -1,8 +1,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
+import TransitionRouter from './lib/TransitionRouter'
 import { SettingsProvider } from './lib/SettingsContext'
 import { CurrencyProvider } from './lib/CurrencyContext'
 
@@ -15,12 +15,12 @@ document.addEventListener('dragstart', (e) => {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <BrowserRouter>
+    <TransitionRouter>
       <SettingsProvider>
         <CurrencyProvider>
           <App />
         </CurrencyProvider>
       </SettingsProvider>
-    </BrowserRouter>
+    </TransitionRouter>
   </StrictMode>,
 )

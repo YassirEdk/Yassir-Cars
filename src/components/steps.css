@@ -18,6 +18,9 @@
 .step__n { font-size: 13px; font-weight: 600; line-height: 1.4; color: rgba(255,255,255,.64); }
 .step h3 { margin: 4px 0 8px; font-family: var(--title-font); font-stretch: 118%; font-size: 18px; font-weight: 700; line-height: 1.25; color: #fff; text-wrap: balance; }
 .step__text > p:last-child { max-width: 34ch; font-size: 14.5px; line-height: 1.65; color: rgba(255,255,255,.76); }
+/* The number to call, in the sentence that says to call: bright, never split. */
+.step__tel { color: #fff; font-weight: 700; white-space: nowrap; text-decoration: underline; text-decoration-color: var(--red-light); text-underline-offset: 3px; text-decoration-thickness: 2px; }
+@media (hover: hover) { .step__tel:hover { color: var(--red-light); } }
 
 /* Each stop lights up as the road gets to it. */
 .steps__list:not(.is-seen) .step { opacity: 0; }

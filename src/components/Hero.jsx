@@ -159,7 +159,9 @@ export default function Hero() {
   const [elsewhere, setElsewhere] = useState(Boolean(form.lieuRetour))
   const [errors, setErrors] = useState({})
   const [shake,  setShake]  = useState(false)
-  // Bumped when a start date is picked, so the return calendar opens by itself.
+  // Bumped when a place is picked, so the start calendar opens by itself, and when
+  // a start date is picked, so the return calendar does: one click per field.
+  const [openDepart, setOpenDepart] = useState(0)
   const [openRetour, setOpenRetour] = useState(0)
   const navigate = useNavigate()
   const { settings, status } = useSettings()
@@ -323,7 +325,11 @@ export default function Hero() {
               <SearchField id="lieu" icon="pin" label="Lieu de prise en charge" error={errors.lieu}>
                 <CityMenu
                   value={form.lieu}
-                  onChange={(lieu) => update({ lieu })}
+                  onChange={(lieu) => {
+                    update({ lieu })
+                    // With a return elsewhere, the return place comes next.
+                    if (!elsewhere) setOpenDepart(n => n + 1)
+                  }}
                   cities={pickupPlaces}
                   ariaLabel="Lieu de prise en charge"
                   className="smenu--field"
@@ -335,7 +341,7 @@ export default function Hero() {
                 <SearchField id="rendu" icon="pin" label="Lieu de retour" error={errors.lieuRetour}>
                   <CityMenu
                     value={form.lieuRetour}
-                    onChange={(lieuRetour) => update({ lieuRetour })}
+                    onChange={(lieuRetour) => { update({ lieuRetour }); setOpenDepart(n => n + 1) }}
                     cities={pickupPlaces}
                     ariaLabel="Lieu de retour"
                     className="smenu--field"
@@ -353,6 +359,7 @@ export default function Hero() {
                     setOpenRetour(n => n + 1)
                   }}
                   min={today}
+                  openKey={openDepart}
                   ariaLabel="Date de début"
                   friendly
                   placeholder="Choisir une date"

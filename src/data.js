@@ -152,8 +152,9 @@ export const services = [
 
 export const steps = [
   { number: '01', icon: 'search', title: 'Choisissez votre véhicule', description: 'Parcourez notre catalogue et sélectionnez le véhicule qui correspond à vos besoins et votre budget.' },
-  { number: '02', icon: 'clipboard', title: 'Faites votre réservation', description: 'Remplissez le formulaire de réservation en ligne ou appelez-nous directement. Confirmation immédiate.' },
-  { number: '03', icon: 'key', title: 'Récupérez les clés', description: 'Présentez-vous à notre agence avec vos documents. Notre équipe vous remet le véhicule prêt à partir.' },
+  // `call`: the same sentence when the agency has a phone number, which follows it (HowItWorks).
+  { number: '02', icon: 'clipboard', title: 'Faites votre réservation', description: 'Remplissez le formulaire de réservation en ligne ou appelez-nous directement. Confirmation immédiate.', call: ['Remplissez le formulaire de réservation en ligne ou appelez-nous au', '. Confirmation immédiate.'] },
+  { number: '03', icon: 'key', title: 'Récupérez les clés', description: 'Venez avec votre permis, votre CIN ou passeport et la caution, rendue au retour du véhicule.' },
   { number: '04', icon: 'road', title: 'Profitez de la route', description: 'Partez l\'esprit tranquille. Notre assistance 24h/24 est disponible tout au long de votre trajet.' },
 ]
 
