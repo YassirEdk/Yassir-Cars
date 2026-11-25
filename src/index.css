@@ -644,52 +644,83 @@ section[id] { scroll-margin-top: 61px; }
 }
 .results-nav__currency .smenu__btn:hover { border-color: rgba(255,255,255,.35); }
 .results-nav__currency .smenu__chev { color: rgba(255,255,255,.6); }
-.results-nav__back { white-space: nowrap; }
+
+/* "Retour à l'accueil": the round arrow chip of the error-page buttons. */
+.back-btn {
+  display: inline-flex; align-items: center; gap: 10px; flex-shrink: 0;
+  padding: 5px 18px 5px 5px; border-radius: 50px;
+  background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16);
+  color: rgba(255,255,255,.92); font-size: 14px; font-weight: 600; line-height: 1; white-space: nowrap;
+  transition: background .2s, border-color .2s, color .2s, transform .06s;
+}
+.back-btn__arrow {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: rgba(255,255,255,.1); color: #fff;
+  transition: background .2s;
+}
+.back-btn__arrow svg { transition: transform .25s ease; }
+.back-btn:hover { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.32); color: #fff; }
+.back-btn:hover .back-btn__arrow { background: var(--red); }
+.back-btn:hover .back-btn__arrow svg { transform: translateX(-3px); }
+.back-btn:active { transform: scale(.97); }
+.back-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 @media (max-width: 640px) {
   .results-nav__currency { min-width: 104px; }
   .results-nav__currency .smenu__btn { font-size: 12px; padding: 7px 10px; }
   /* The full "à l'accueil" tail is what pushed the nav past the screen edge on a
-     phone — drop it so the row reads "← Retour" and fits. */
-  .results-nav__back-long { display: none; }
+     phone — drop it so the row reads "Retour" and fits. */
+  .back-btn__long { display: none; }
+  .back-btn { gap: 8px; padding-right: 15px; }
   .results-nav__actions { gap: 8px; }
 }
 
 /* Mini search */
-.mini-search { background: linear-gradient(135deg, var(--dark-2) 0%, var(--dark-3) 100%); padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
-.mini-search-form { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.mini-field { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 140px; }
-.mini-field label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.5); letter-spacing: .5px; }
-.mini-field input, .mini-field select { padding: 10px 14px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: var(--radius-sm); color: #fff; font-size: 14px; outline: none; transition: var(--transition); font-family: inherit; }
-.mini-field input::placeholder { color: rgba(255,255,255,.35); }
-.mini-field input:focus, .mini-field select:focus { border-color: var(--red); background: rgba(255,255,255,.12); }
-.mini-field select option { background: #1a1a2e; }
-.mini-field input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: .5; }
+.mini-search { background: linear-gradient(135deg, var(--dark-2) 0%, var(--dark-3) 100%); padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+/* A size container: the booking panel narrows this bar without the window
+   changing. z-index: its lists open over the sticky toolbar (90). */
+.mini-search .container { container: minisearch / inline-size; position: relative; z-index: 95; }
+.mini-search-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
+.mini-search .smenu__list, .mini-search .datepicker__pop { z-index: 200; }
 
-/* Custom DatePicker inside the mini-search — dark theme, click anywhere to open */
-.mini-field .datepicker { width: 100%; }
-.datepicker__input.mini-datepicker {
-  width: 100%; box-sizing: border-box;
-  padding: 10px 36px 10px 14px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: var(--radius-sm);
-  color: #fff; font-size: 14px; font-family: inherit;
-  outline: none; cursor: pointer;
-  transition: var(--transition);
+.mini-search__go {
+  min-height: 62px; padding: 0 24px; gap: 9px; border-radius: 16px;
+  font-size: 15px; font-weight: 700; justify-content: center;
+  box-shadow: 0 10px 24px -10px rgba(230,57,70,.8), inset 0 1px 0 rgba(255,255,255,.24);
 }
-.datepicker__input.mini-datepicker::placeholder { color: rgba(255,255,255,.35); }
-.datepicker__input.mini-datepicker:focus { border-color: var(--red); background: rgba(255,255,255,.12); }
-/* Lift the popup above the sticky results toolbar (z-index 90) + compact it */
-.mini-field .datepicker__pop {
-  z-index: 200;
-  width: 250px;
-  padding: 12px;
+.mini-search__go:hover {
+  transform: translateY(-1px); filter: brightness(1.07);
+  box-shadow: 0 14px 28px -10px rgba(230,57,70,.95), inset 0 1px 0 rgba(255,255,255,.3);
 }
-.mini-field .datepicker__title { font-size: 13px; }
-.mini-field .datepicker__nav { width: 26px; height: 26px; font-size: 16px; }
-.mini-field .datepicker__wd { font-size: 10px; padding: 2px 0; }
-.mini-field .datepicker__day { font-size: 12px; }
-.mini-field .datepicker__grid { gap: 1px; }
+.mini-search__go:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.mini-search__go-icon { flex-shrink: 0; transition: transform .5s cubic-bezier(.3,.9,.3,1); }
+.mini-search__go:hover .mini-search__go-icon { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) {
+  .mini-search__go-icon, .back-btn__arrow svg { transition: none; }
+}
+
+@media (max-width: 860px) {
+  .mini-search-form { grid-template-columns: minmax(0, 1fr); }
+  .mini-search__go { min-height: 50px; }
+}
+/* Booking panel open: the bar narrows while the window doesn't. First tighter
+   cells, then the button underneath, then the fields two by two. */
+@media (min-width: 861px) {
+  @container minisearch (max-width: 900px) {
+    .mini-search .bk-fields {
+      --bk-text: 36px; --bk-end: 8px; --bk-size: 13.5px; --bk-icon: 18px; --bk-icon-x: 11px;
+    }
+    .mini-search__go { padding: 0 18px; }
+  }
+  @container minisearch (max-width: 720px) {
+    .mini-search-form { grid-template-columns: minmax(0, 1fr); }
+    .mini-search__go { min-height: 50px; }
+  }
+  @container minisearch (max-width: 610px) {
+    .mini-search .bk-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mini-search .bk-field:nth-child(odd)::before { display: none; }
+    .mini-search .bk-field:nth-child(n+3) { box-shadow: 0 -1px 0 rgba(255,255,255,.12); }
+  }
+}
 
 /* Summary banner */
 .results-summary { background: linear-gradient(180deg, #ffffff 0%, #f7f8fa 100%); border-bottom: 1px solid var(--gray-200); padding: 26px 0; }
@@ -875,6 +906,11 @@ section[id] { scroll-margin-top: 61px; }
 
 /* Car équipements / options (cruise control, toit panoramique, GPS…) */
 .result-card__equip { display: flex; gap: 7px; flex-wrap: wrap; }
+/* Labels, not text to copy: no selection and no text cursor, on the cards,
+   the booking panel and the booking page. */
+.equip-pill, .rd-equip-pill, .rv-equip-pill {
+  -webkit-user-select: none; user-select: none; cursor: default;
+}
 .equip-pill {
   display: inline-flex; align-items: center; gap: 5px;
   font-size: 12px; font-weight: 600; color: var(--gray-700);
@@ -902,26 +938,32 @@ section[id] { scroll-margin-top: 61px; }
 /* "Réserver maintenant" — solid primary button, last in the footer */
 .result-reserve {
   order: 2;
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
   font-family: inherit; font-size: 15px; font-weight: 700;
   color: #fff; background: var(--red); border: none;
   padding: 11px 22px; border-radius: 50px;
   cursor: pointer; text-decoration: none;
+  -webkit-user-select: none; user-select: none;
   box-shadow: 0 8px 20px rgba(230,57,70,.28);
-  transition: background .25s ease, transform .2s ease, box-shadow .25s ease, gap .25s ease;
+  transition: background .25s ease, transform .2s ease, box-shadow .25s ease;
 }
-.result-reserve:hover {
-  background: #c92c39;
-  gap: 12px;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 26px rgba(230,57,70,.34);
+/* The whole button moves, never the words inside it, so they stay centred.
+   Real pointers only: a tap would leave a phone stuck in the hover state. */
+@media (hover: hover) {
+  .result-reserve:hover {
+    background: #c92c39;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px rgba(230,57,70,.34);
+  }
 }
-.result-reserve:active { transform: translateY(0); }
-.result-reserve__arrow {
-  display: inline-block;
-  transition: transform .3s ease;
+/* A press: the button shrinks around its centre, then springs back. */
+.result-reserve:active {
+  background: #b8242f;
+  transform: scale(.95);
+  box-shadow: 0 3px 10px rgba(230,57,70,.34);
+  transition-duration: .07s;
 }
-.result-reserve:hover .result-reserve__arrow { transform: translateX(4px); }
+.result-reserve:focus-visible { outline: 2px solid var(--red); outline-offset: 3px; }
 
 /* Card whose booking drawer is currently open */
 .result-card--open { border-color: var(--red); box-shadow: 0 0 0 2px rgba(230,57,70,.18); }
@@ -954,7 +996,6 @@ a.result-phone { text-decoration: none; }
 .unavail-notice__btn { width: 100%; }
 
 /* Emoji replaced by Icon.jsx SVGs — keep glyph and text on a shared baseline. */
-.mini-field label,
 .results-summary__meta span,
 .avail-tag { display: inline-flex; align-items: center; gap: 6px; }
 .results-search-icon { display: inline-flex; align-items: center; }
@@ -1262,8 +1303,6 @@ a.result-phone { text-decoration: none; }
   .result-card__pricing { text-align: left; }
   .result-card__day { justify-content: flex-start; }
   .result-price-old-row { justify-content: flex-start; }
-  .mini-search-form { flex-direction: column; }
-  .mini-field { min-width: 100%; }
 
   .results-toolbar { padding: 12px 0; }
   .results-toolbar__inner { flex-direction: column; align-items: stretch; gap: 12px; }
@@ -1317,9 +1356,12 @@ a.result-phone { text-decoration: none; }
   .result-thumbs { gap: 4px; bottom: 8px; left: 8px; right: 8px; }
   .result-thumb { width: 38px; height: 30px; }
   .result-card__name { font-size: 18px; }
-  /* Compact the "← Retour à l'accueil" button so it + the logo fit on narrow
-     phones (≤360px) without pushing the top nav past the viewport edge. */
-  .results-nav__inner .btn-sm { padding: 8px 12px; font-size: 12px; }
+}
+
+/* Smallest phones: the back button and the logo share one row. */
+@media (max-width: 360px) {
+  .back-btn { gap: 6px; padding: 4px 11px 4px 4px; font-size: 12.5px; }
+  .back-btn__arrow { width: 28px; height: 28px; }
 }
 
 /* ===== RESPONSIVE ===== */

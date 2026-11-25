@@ -7,8 +7,9 @@ import { CURRENCIES, CURRENCY_CODES, convert, formatMoney } from '../lib/currenc
 import SelectMenu from '../components/SelectMenu'
 import { fetchCars, mergeByModel, isModelAvailable, isCarAvailable, unitForColor, effectiveBadge, nextFreeDateForModel } from '../lib/cars'
 import Logo from '../components/Logo'
-import BackLink from '../components/BackLink'
-import CityWheel from '../components/CityWheel'
+import { BackHome } from '../components/BackLink'
+import CityMenu from '../components/CityMenu'
+import SearchField from '../components/SearchField'
 import DatePicker from '../components/DatePicker'
 import Icon from '../components/Icon'
 import SocialIcon from '../components/SocialIcon'
@@ -32,6 +33,7 @@ function fmt(dateStr) {
 }
 
 const CATEGORIES = ['Toutes catégories', 'Économique', 'Citadine', 'Berline', 'SUV / 4x4', 'Luxe', 'Utilitaire']
+const CATEGORY_OPTIONS = CATEGORIES.map((c, i) => ({ value: i === 0 ? '' : c, label: c }))
 const SORT_OPTIONS = [
   { value: 'prix-asc',  label: 'Prix croissant' },
   { value: 'prix-desc', label: 'Prix décroissant' },
@@ -47,7 +49,6 @@ function MiniSearch({ params, onSearch }) {
     retour:    params.get('retour')    || '',
     categorie: params.get('categorie') || '',
   })
-  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }))
 
   const handleSubmit = e => {
     e.preventDefault()
@@ -58,41 +59,55 @@ function MiniSearch({ params, onSearch }) {
     <div className="mini-search">
       <div className="container">
         <form className="mini-search-form" onSubmit={handleSubmit}>
-          <div className="mini-field">
-            <label><Icon name="pin" /> Lieu</label>
-            <CityWheel
-              value={form.lieu}
-              onChange={(city) => setForm(f => ({ ...f, lieu: city }))}
-              cities={moroccanCities}
-            />
+          <div className="bk-fields bk-fields--compact">
+            <SearchField id="lieu" icon="pin" label="Lieu">
+              <CityMenu
+                value={form.lieu}
+                onChange={(city) => setForm(f => ({ ...f, lieu: city }))}
+                cities={moroccanCities}
+                className="smenu--dark"
+                flip
+              />
+            </SearchField>
+            <SearchField id="depart" icon="calendar" label="Départ">
+              <DatePicker
+                value={form.depart}
+                onChange={(iso) => setForm(f => ({ ...f, depart: iso }))}
+                placeholder="Choisir une date"
+                flip
+              />
+            </SearchField>
+            <SearchField id="retour" icon="calendar" label="Retour">
+              <DatePicker
+                value={form.retour}
+                onChange={(iso) => setForm(f => ({ ...f, retour: iso }))}
+                min={form.depart ? addDays(form.depart, settings.minRentalDays) : undefined}
+                highlight={form.depart || undefined}
+                placeholder="Choisir une date"
+                flip
+              />
+            </SearchField>
+            <SearchField id="categorie" icon="car" label="Catégorie">
+              <SelectMenu
+                // An unknown category in the URL reads as "Toutes catégories".
+                value={CATEGORY_OPTIONS.some(o => o.value === form.categorie) ? form.categorie : ''}
+                onChange={(categorie) => setForm(f => ({ ...f, categorie }))}
+                options={CATEGORY_OPTIONS}
+                ariaLabel="Catégorie"
+                className="smenu--dark"
+                flip
+              />
+            </SearchField>
           </div>
-          <div className="mini-field">
-            <label><Icon name="calendar" /> Départ</label>
-            <DatePicker
-              value={form.depart}
-              onChange={(iso) => setForm(f => ({ ...f, depart: iso }))}
-              placeholder="Choisir une date"
-              className="mini-datepicker"
-            />
-          </div>
-          <div className="mini-field">
-            <label><Icon name="calendar" /> Retour</label>
-            <DatePicker
-              value={form.retour}
-              onChange={(iso) => setForm(f => ({ ...f, retour: iso }))}
-              min={form.depart ? addDays(form.depart, settings.minRentalDays) : undefined}
-              highlight={form.depart || undefined}
-              placeholder="Choisir une date"
-              className="mini-datepicker"
-            />
-          </div>
-          <div className="mini-field">
-            <label><Icon name="car" /> Catégorie</label>
-            <select value={form.categorie} onChange={set('categorie')}>
-              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-          <button type="submit" className="btn btn-accent">Relancer →</button>
+          <button type="submit" className="btn btn-accent mini-search__go">
+            <svg className="mini-search__go-icon" viewBox="0 0 24 24" width="17" height="17" fill="none"
+              stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+              focusable="false" aria-hidden="true">
+              <path d="M23 4v6h-6" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+            Relancer
+          </button>
         </form>
       </div>
     </div>
@@ -240,8 +255,8 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
         )}
         <span className={`avail-tag ${activeAvailable ? 'avail-tag--ok' : 'avail-tag--no'}`}>
           {activeAvailable
-            ? <><Icon name="checkCircle" /> Disponible</>
-            : <><Icon name="clock" /> Non disponible</>}
+            ? <><Icon name="calendarCheck" size="1.3em" /> Disponible</>
+            : <><Icon name="calendarX" size="1.3em" /> Non disponible</>}
         </span>
 
         {gallery.length > 1 && (
@@ -344,14 +359,14 @@ function ResultCard({ car, days, available, depart, retour, lieu, availableOnly,
               onClick={() => onReserve(car)}
               aria-expanded={isOpen}
             >
-              <span className="result-reserve__arrow">Réserver maintenant </span>
+              Réserver maintenant
             </button>
           ) : (
             /* Rather than dead-ending, offer the first date this model frees up
                — the blocked ranges are already loaded on the card. */
             <div className="result-unavailable">
               <span className="result-unavailable-label">
-                <Icon name="clock" /> Indisponible pour ces dates
+                <Icon name="calendarX" size="1.25em" /> Indisponible pour ces dates
               </span>
               {freeFrom && (
                 <button type="button" className="result-freefrom" onClick={() => onSearchFrom(freeFrom)}>
@@ -406,11 +421,7 @@ function UnavailableNotice({ info, onClose }) {
         <button className="phone-modal__close" onClick={onClose} aria-label="Fermer">✕</button>
 
         <div className="unavail-notice__icon" aria-hidden>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-            strokeLinecap="round" width="30" height="30">
-            <circle cx="12" cy="12" r="9" />
-            <path d="m15 9-6 6M9 9l6 6" />
-          </svg>
+          <Icon name="calendarX" size={32} />
         </div>
 
         <h3 className="phone-modal__title" id="unavail-title">Véhicule non disponible</h3>
@@ -653,7 +664,7 @@ export default function SearchResults() {
               ariaLabel="Devise"
               className="results-nav__currency"
             />
-            <BackLink to="/" className="btn btn-outline-white btn-sm results-nav__back">← Retour<span className="results-nav__back-long"> à l'accueil</span></BackLink>
+            <BackHome />
           </div>
         </div>
       </header>

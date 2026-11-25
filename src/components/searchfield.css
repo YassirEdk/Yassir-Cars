@@ -1,0 +1,121 @@
+/* ── Search strip (home hero, results page) ───────────────────────────────────
+   Four fields that read as one strip, split by hairlines. Sizes are variables,
+   so a variant or a breakpoint sets them once. */
+.bk-fields {
+  --bk-h: 72px;         /* cell height */
+  --bk-top: 24px;       /* room for the label above the value */
+  --bk-text: 52px;      /* where label and value start */
+  --bk-end: 16px;
+  --bk-size: 15px;
+  --bk-icon: 22px;
+  --bk-icon-x: 18px;
+  --bk-label-y: 14px;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: rgba(255,255,255,.055);
+  border: 1px solid rgba(255,255,255,.13); border-radius: 16px;
+}
+/* --tall: the home hero, as above. --compact: lower, on top of the results. */
+.bk-fields--compact {
+  --bk-h: 60px; --bk-top: 22px; --bk-text: 48px; --bk-size: 14.5px;
+  --bk-icon: 20px; --bk-icon-x: 17px; --bk-label-y: 10px;
+  /* "Toutes catégories" is the longest value, a date the shortest. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, .92fr) minmax(0, .92fr) minmax(0, 1.16fr);
+}
+
+.bk-field { position: relative; min-width: 0; }
+.bk-field + .bk-field::before {
+  content: ''; position: absolute; left: -.5px; top: 25%; bottom: 25%;
+  width: 1px; background: rgba(255,255,255,.14);
+}
+.bk-field__icon {
+  position: absolute; left: var(--bk-icon-x); top: calc(var(--bk-h) / 2); transform: translateY(-50%); z-index: 1;
+  width: var(--bk-icon); height: var(--bk-icon); color: #ff7d6b; pointer-events: none;
+}
+.bk-field__label {
+  position: absolute; left: var(--bk-text); right: 10px; top: var(--bk-label-y); z-index: 1;
+  font-size: 12px; font-weight: 500; line-height: 1.3; color: rgba(255,255,255,.64);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* The three controls (city, date, category), stripped to the same look. */
+.bk-field .datepicker__input,
+.bk-field .smenu__btn {
+  display: flex; align-items: center;
+  width: 100%; min-width: 0; height: var(--bk-h);
+  padding: var(--bk-top) var(--bk-end) 4px var(--bk-text) !important;   /* DatePicker sets its own with !important */
+  background: transparent; border: 0; border-radius: 15px; box-shadow: none;
+  color: #fff; font-family: inherit; font-size: var(--bk-size); font-weight: 600; text-align: left;
+  cursor: pointer; outline: none;
+  transition: background .2s, box-shadow .2s;
+}
+.bk-field .datepicker__input { text-overflow: ellipsis; }
+.bk-field .datepicker__input::placeholder,
+.bk-field .smenu__value.is-placeholder {
+  color: rgba(255,255,255,.58); font-weight: 500; opacity: 1;
+}
+.bk-field .smenu__value { overflow: hidden; text-overflow: ellipsis; }
+.bk-field .smenu__chev { color: #fff; opacity: .5; }
+.bk-field .datepicker__icon { display: none; }   /* the cell has its own */
+
+.bk-field .datepicker__input:hover,
+.bk-field .smenu__btn:hover { background: rgba(255,255,255,.06); border: 0; }
+.bk-field .datepicker__input:focus,
+.bk-field .smenu__btn:focus-visible,
+.bk-field .smenu__btn.open {
+  background: rgba(255,255,255,.07);
+  box-shadow: inset 0 0 0 2px var(--red);
+}
+.bk-field .smenu__btn:active { transform: none; }   /* it's a cell, not a pill */
+
+.bk-field .datepicker__pop--up { bottom: calc(100% + 10px); }
+.bk-field__error {
+  display: block; padding: 0 12px 12px var(--bk-text); margin-top: -4px;
+  font-size: 12px; font-weight: 600; line-height: 1.35; color: #ff9d94;
+}
+.bk-field.has-error .bk-field__label { color: #ff9d94; }
+
+@media (max-width: 1100px) {
+  .bk-fields { --bk-icon-x: 14px; --bk-text: 44px; --bk-end: 12px; }
+}
+
+/* Phones and upright tablets: city, then both dates side by side, then category.
+   The compact strip still fits four across on a tablet, so it waits for phones. */
+@media (max-width: 860px) {
+  .bk-fields--tall { --bk-h: 66px; --bk-label-y: 12px; }
+  .bk-fields--tall { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bk-fields--tall .bk-field--lieu, .bk-fields--tall .bk-field--categorie { grid-column: 1 / -1; }
+  .bk-fields--tall .bk-field--depart::before, .bk-fields--tall .bk-field--categorie::before {
+    left: 16px; right: 16px; top: 0; bottom: auto; width: auto; height: 1px;
+  }
+  .bk-fields--tall .bk-field--depart::before { right: 0; }
+  /* The rule carries on above the return date, next to its own left divider. */
+  .bk-fields--tall .bk-field--retour { background: linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,.14)) 0 0 / calc(100% - 16px) 1px no-repeat; }
+  /* Right-hand column: the calendar would run off the screen. */
+  .bk-fields--tall .bk-field--retour .datepicker__pop { left: auto; right: 0; }
+}
+@media (max-width: 700px) {
+  .bk-fields--compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bk-fields--compact .bk-field--lieu, .bk-fields--compact .bk-field--categorie { grid-column: 1 / -1; }
+  .bk-fields--compact .bk-field--depart::before, .bk-fields--compact .bk-field--categorie::before {
+    left: 16px; right: 16px; top: 0; bottom: auto; width: auto; height: 1px;
+  }
+  .bk-fields--compact .bk-field--depart::before { right: 0; }
+  /* The rule carries on above the return date, next to its own left divider. */
+  .bk-fields--compact .bk-field--retour { background: linear-gradient(rgba(255,255,255,.14), rgba(255,255,255,.14)) 0 0 / calc(100% - 16px) 1px no-repeat; }
+  /* Right-hand column: the calendar would run off the screen. */
+  .bk-fields--compact .bk-field--retour .datepicker__pop { left: auto; right: 0; }
+}
+
+@media (max-width: 640px) {
+  .bk-fields { --bk-icon: 20px; --bk-icon-x: 12px; --bk-text: 40px; --bk-size: 14px; }
+  .bk-field__label { right: 6px; }
+  .bk-field .datepicker__input { padding-right: 4px !important; }
+  .bk-field__error { padding-right: 8px; }
+}
+
+/* Smallest phones: the date needs the room more than its icon does. */
+@media (max-width: 370px) {
+  .bk-field--depart, .bk-field--retour { --bk-text: 14px; }
+  .bk-field--depart .bk-field__icon, .bk-field--retour .bk-field__icon { display: none; }
+}

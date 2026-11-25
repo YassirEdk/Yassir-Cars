@@ -175,7 +175,7 @@ export default function CarCard({ car, preferPromo = false }) {
         {active.features?.length > 0 && (
           <div className="car-equip">
             {active.features.slice(0, 6).map(f => (
-              <span className="equip-pill" key={f} title={featureLabel(f)}>
+              <span className="equip-pill" key={f}>
                 <Icon name={featureIcon(f)} className="equip-pill__icon" /> {featureLabel(f)}
               </span>
             ))}

@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react'
 import { createPortal } from 'react-dom'
 import Icon from './Icon'
+import { popularCities, searchCities } from '../lib/cities'
 import './citywheel.css'
 
 const ITEM_H = 46          // px height of each row
-const POPULAR = ['Casablanca', 'Marrakech', 'Rabat', 'Tanger', 'Agadir', 'Fès']
 
 const clamp = (n, max) => Math.max(0, Math.min(max, n))
-// Accent-insensitive: "fes" finds Fès, "kenitra" finds Kénitra.
-const norm = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
 export default function CityWheel({ value, onChange, cities, placeholder = 'Choisissez une ville…', error }) {
   const [open, setOpen] = useState(false)
@@ -21,16 +19,9 @@ export default function CityWheel({ value, onChange, cities, placeholder = 'Choi
   const drag = useRef({ active: false, startY: 0, startTop: 0, moved: false })
   const titleId = useId()
 
-  // Prefix matches first, then matches anywhere in the name.
-  const list = useMemo(() => {
-    const q = norm(query.trim())
-    if (!q) return cities
-    const starts = cities.filter(c => norm(c).startsWith(q))
-    const inside = cities.filter(c => !norm(c).startsWith(q) && norm(c).includes(q))
-    return [...starts, ...inside]
-  }, [query, cities])
+  const list = useMemo(() => searchCities(cities, query), [query, cities])
 
-  const popular = useMemo(() => POPULAR.filter(c => cities.includes(c)), [cities])
+  const popular = useMemo(() => popularCities(cities), [cities])
 
   // Center the wheel on the current value each time it opens.
   useEffect(() => {

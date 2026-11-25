@@ -32,7 +32,7 @@ export default function FeaturePills({
   return (
     <div className={className}>
       {shown.map((f) => (
-        <span className={pillClass} key={f} title={featureLabel(f)}>
+        <span className={pillClass} key={f}>
           <Icon name={featureIcon(f)} className={`${pillClass}__icon`} /> {featureLabel(f)}
         </span>
       ))}

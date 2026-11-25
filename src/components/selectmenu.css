@@ -41,3 +41,51 @@
 .smenu__item.active { color: var(--red); }
 .smenu__name { flex: 1; text-align: left; }
 .smenu__check { color: var(--red); flex-shrink: 0; }
+
+/* ── With a search box on top (CityMenu) ─────────────────────────────────── */
+.smenu__value.is-placeholder { font-weight: 500; opacity: .6; }
+.smenu__list--search { width: max(100%, 264px); max-width: calc(100vw - 32px); padding: 8px; }
+.smenu__search { position: relative; margin-bottom: 6px; }
+.smenu__search svg {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  width: 16px; height: 16px; color: var(--gray-400); pointer-events: none;
+}
+/* 16px font: anything smaller makes iOS Safari zoom the page on focus. */
+.smenu__search input {
+  width: 100%; padding: 9px 12px 9px 36px;
+  background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 9px;
+  color: var(--dark); font-family: inherit; font-size: 16px; outline: none;
+  transition: border-color .15s;
+}
+.smenu__search input:focus { border-color: var(--red); }
+/* Fixed height: the box must not jump while the results change. */
+.smenu__scroll {
+  position: relative; height: 222px; overflow-y: auto;
+  overscroll-behavior: contain; scrollbar-width: thin;
+}
+.smenu__group {
+  padding: 8px 12px 4px; font-size: 11.5px; font-weight: 600; letter-spacing: .02em;
+  color: var(--gray-600);
+}
+.smenu__item.is-cursor { background: var(--gray-100); }
+.smenu__empty { padding: 28px 14px; font-size: 13.5px; line-height: 1.45; text-align: center; color: var(--gray-600); }
+
+/* ── Dark list, for the dark search bars (home hero, results page) ───────── */
+.smenu--dark .smenu__list {
+  background: linear-gradient(180deg, #1c1f2e, #14161f);
+  border: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 20px 50px rgba(0,0,0,.55);
+}
+.smenu--dark .smenu__item { color: rgba(255,255,255,.82); font-weight: 500; font-size: 14px; padding: 10px 12px; }
+.smenu--dark .smenu__item:hover { background: rgba(255,255,255,.08); color: #fff; }
+.smenu--dark .smenu__item.active { color: #ff8080; background: rgba(230,57,70,.12); }
+.smenu--dark .smenu__check { color: #ff8080; }
+.smenu--dark .smenu__item.is-cursor:not(.active) { background: rgba(255,255,255,.08); color: #fff; }
+.smenu--dark .smenu__search svg { color: rgba(255,255,255,.5); }
+.smenu--dark .smenu__search input {
+  background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.12); color: #fff;
+}
+.smenu--dark .smenu__search input::placeholder { color: rgba(255,255,255,.5); }
+.smenu--dark .smenu__search input:focus { border-color: var(--red); }
+.smenu--dark .smenu__scroll { scrollbar-color: rgba(255,255,255,.28) transparent; }
+.smenu--dark .smenu__group, .smenu--dark .smenu__empty { color: rgba(255,255,255,.56); }

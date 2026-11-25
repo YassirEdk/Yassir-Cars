@@ -5,7 +5,7 @@ import { fetchCars, mergeByModel } from '../lib/cars'
 import { rateForCar, discountLabel } from '../lib/pricing'
 import { useSettings } from '../lib/SettingsContext'
 import CarCard from '../components/CarCard'
-import BackLink from '../components/BackLink'
+import { BackHome } from '../components/BackLink'
 import Logo from '../components/Logo'
 import Icon from '../components/Icon'
 
@@ -58,7 +58,7 @@ export default function AllCars() {
           <Link to="/" style={{ textDecoration: 'none' }}>
             <Logo size={36} animated={false} />
           </Link>
-          <BackLink to="/" anchor={backAnchor} className="btn btn-outline-white btn-sm">← Retour à l'accueil</BackLink>
+          <BackHome anchor={backAnchor} />
         </div>
       </header>
 

@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import DatePicker from './DatePicker'
-import CityWheel from './CityWheel'
+import CityMenu from './CityMenu'
 import SelectMenu from './SelectMenu'
+import SearchField from './SearchField'
 import Icon from './Icon'
 import { moroccanCities, addDays } from '../data'
 import { useSettings } from '../lib/SettingsContext'
@@ -34,23 +35,6 @@ const jours = (n) => `${n} jour${n > 1 ? 's' : ''}`
 function rentalLength(depart, retour) {
   if (!depart || !retour || retour <= depart) return 0
   return Math.ceil((new Date(retour) - new Date(depart)) / 86_400_000)
-}
-
-/* One cell of the search strip. The control fills the whole cell, so the icon
-   and the label sit on top of it and the entire cell is clickable. */
-function Field({ id, icon, label, error, children }) {
-  return (
-    <div
-      className={`bk-field bk-field--${id}${error ? ' has-error' : ''}`}
-      role="group"
-      aria-labelledby={`bk-${id}`}
-    >
-      <Icon name={icon} className="bk-field__icon" />
-      <span className="bk-field__label" id={`bk-${id}`}>{label}</span>
-      {children}
-      {error && <span className="bk-field__error" role="alert">{error}</span>}
-    </div>
-  )
 }
 
 export default function Hero() {
@@ -158,20 +142,21 @@ export default function Hero() {
           </div>
 
           <form className={`booking-form ${shake ? 'form-shake' : ''}`} onSubmit={handleSubmit}>
-            <div className="bk-fields">
-              <Field id="lieu" icon="pin" label="Lieu de prise en charge" error={errors.lieu}>
-                <CityWheel
+            <div className="bk-fields bk-fields--tall">
+              <SearchField id="lieu" icon="pin" label="Lieu de prise en charge" error={errors.lieu}>
+                <CityMenu
                   value={form.lieu}
                   onChange={(city) => {
                     setForm(f => { const next = { ...f, lieu: city }; saveSearch(next); return next })
                     if (errors.lieu) setErrors(prev => ({ ...prev, lieu: '' }))
                   }}
                   cities={moroccanCities}
-                  placeholder="Choisir une ville"
+                  className="smenu--dark"
+                  flip
                 />
-              </Field>
+              </SearchField>
 
-              <Field id="depart" icon="calendar" label="Date de début" error={errors.depart}>
+              <SearchField id="depart" icon="calendar" label="Date de début" error={errors.depart}>
                 <DatePicker
                   value={form.depart}
                   onChange={(iso) => {
@@ -183,9 +168,9 @@ export default function Hero() {
                   placeholder="Choisir une date"
                   flip
                 />
-              </Field>
+              </SearchField>
 
-              <Field id="retour" icon="calendar" label="Date de retour" error={errors.retour}>
+              <SearchField id="retour" icon="calendar" label="Date de retour" error={errors.retour}>
                 <DatePicker
                   value={form.retour}
                   onChange={(iso) => {
@@ -198,17 +183,18 @@ export default function Hero() {
                   placeholder="Choisir une date"
                   flip
                 />
-              </Field>
+              </SearchField>
 
-              <Field id="categorie" icon="car" label="Catégorie">
+              <SearchField id="categorie" icon="car" label="Catégorie">
                 <SelectMenu
                   value={form.categorie === categories[0] ? '' : form.categorie}
                   onChange={(v) => setForm(f => { const next = { ...f, categorie: v }; saveSearch(next); return next })}
                   options={categoryOptions}
                   ariaLabel="Catégorie"
+                  className="smenu--dark"
                   flip
                 />
-              </Field>
+              </SearchField>
             </div>
 
             <button type="submit" className="btn btn-accent booking-submit">
